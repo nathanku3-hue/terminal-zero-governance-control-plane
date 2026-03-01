@@ -1,72 +1,12 @@
 {
-  "generated_utc": "2026-03-01T13:57:53.694292Z",
-  "workers": [
-    {
-      "worker_id": "@qa-1",
-      "lane": "qa",
-      "heartbeat": {
-        "status": "executing",
-        "last_write_utc": "2026-03-01T08:00:00Z",
-        "ttl_seconds": 300,
-        "current_task": {
-          "task_id": "T-100"
-        }
-      },
-      "expert_gate": {
-        "qa": "WARNING",
-        "riskops": "PASS"
-      },
-      "completion_log": [],
-      "sla": {
-        "escalation_status": "ESCALATED"
-      }
-    },
-    {
-      "worker_id": "@backend-1",
-      "lane": "backend",
-      "heartbeat": {
-        "status": "idle",
-        "last_write_utc": "2026-03-01T20:00:00Z",
-        "ttl_seconds": 300000,
-        "clock_skew_grace_seconds": 30,
-        "current_task": {}
-      },
-      "sla": {
-        "escalation_status": "OK"
-      },
-      "expert_gate": {
-        "system_eng": "PASS",
-        "architect": "PASS",
-        "principal": "PASS",
-        "riskops": "PASS",
-        "devsecops": "PASS",
-        "qa": "PASS"
-      },
-      "completion_log": [
-        {
-          "task_id": "T-001",
-          "implementer_id": "@backend-1",
-          "status": "completed",
-          "expert_signoffs": {
-            "actual": [
-              {
-                "expert": "qa",
-                "signoff_by": "@qa-1",
-                "evidence_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-              }
-            ]
-          }
-        }
-      ],
-      "blockers": []
-    }
-  ],
+  "generated_utc": "2026-03-01T17:18:41.096780Z",
+  "workers": [],
   "summary": {
-    "total_workers": 2,
-    "executing": 1,
-    "idle": 1,
+    "total_workers": 0,
+    "executing": 0,
+    "idle": 0,
     "stale": 0,
-    "escalated": 1,
-    "overall_health": "ESCALATED"
+    "escalated": 0,
+    "overall_health": "OK"
   }
 }

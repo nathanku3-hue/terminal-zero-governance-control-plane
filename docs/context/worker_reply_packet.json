@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "task_id": "T-BOOTSTRAP",
+      "decision": "Bootstrap scaffold created. Replace this packet with real worker output before phase-end.",
+      "dod_result": "PARTIAL",
+      "evidence_ids": [
+        "BOOTSTRAP"
+      ],
+      "open_risks": [
+        "bootstrap placeholder must be replaced with real task evidence"
+      ],
+      "confidence": {
+        "score": 0.3,
+        "band": "LOW",
+        "rationale": "placeholder scaffold, not execution evidence"
+      },
+      "citations": [
+        {
+          "type": "doc",
+          "path": "docs/context/worker_reply_packet.json",
+          "locator": "items[0]",
+          "claim": "bootstrap placeholder exists and should be replaced before handover"
+        }
+      ]
+    }
+  ],
+  "generated_at_utc": "2026-03-01T17:16:15Z",
+  "worker_id": "@bootstrap",
+  "phase": "phase_bootstrap",
+  "schema_version": "1.0.0"
+}
