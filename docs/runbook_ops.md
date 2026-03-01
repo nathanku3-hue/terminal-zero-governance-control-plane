@@ -191,15 +191,21 @@ These scripts enforce the closed architecture. Add `--dry-run` to any command fo
   - First-time bootstrap (create minimal required files/dirs):
     - `powershell -ExecutionPolicy Bypass -File scripts/bootstrap_repo_profile.ps1 -RepoProfile Quant`
     - `powershell -ExecutionPolicy Bypass -File scripts/bootstrap_repo_profile.ps1 -RepoProfile Film`
-    - add `-WithContextSkeleton` when initializing a brand new repo (also creates `phase0` brief/handover + decision log + lessons + `top_level_PM.md`).
+    - bootstrap now defaults to `-EnsureMinimalContext $true` and auto-runs `build_context_packet.py` + `--validate` to generate:
+      - `docs/context/current_context.json`
+      - `docs/context/current_context.md`
+      - `docs/handover/gemini/phase<NN>_gemini_handover.md`
+    - add `-WithContextSkeleton` when initializing a brand new repo to force-create missing context source docs (`phase0` brief/handover + decision log + lessons + `top_level_PM.md`).
+    - add `-SkipContextBuild` only when intentionally deferring context artifact generation.
     - add `-Force` to overwrite scaffold files.
   - Profile mode (auto defaults for repo paths):
     - `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoProfile Quant`
     - `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoProfile Film`
+    - profile/default `scan_root` is now pinned to `<repo>/docs` to avoid `tmp/e2e_test` false escalations.
   - New repo note:
     - before first git baseline commit, run with `-SkipOrphanGate` (or provide `-SinceCommit <commit>` explicitly after commit exists).
   - Explicit argument always overrides profile defaults (for local exceptions):
-    - `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoProfile Quant -TraceabilityPath docs/context/pm_to_code_traceability.yaml -DispatchManifestPath docs/context/dispatch_manifest.json -ScanRoot .`
+    - `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoProfile Quant -TraceabilityPath docs/context/pm_to_code_traceability.yaml -DispatchManifestPath docs/context/dispatch_manifest.json -ScanRoot docs`
   - On any gate failure, run exits non-zero and writes:
     - `docs/context/phase_end_logs/phase_end_handover_status_<run_id>.json`
     - `docs/context/phase_end_logs/phase_end_handover_summary_<run_id>.md`
@@ -208,7 +214,7 @@ These scripts enforce the closed architecture. Add `--dry-run` to any command fo
 - **0. Worker Reply Packet Scaffold (one-time per repo)**:
   `Copy-Item docs/context/schemas/worker_reply_packet.json.template docs/context/worker_reply_packet.json`
 - **1. Status Aggregation & Escalation**:
-  `.venv\Scripts\python scripts/aggregate_worker_status.py --scan-root ../ --output docs/context/worker_status_aggregate.json --escalation-output docs/context/escalation_events.json`
+  `.venv\Scripts\python scripts/aggregate_worker_status.py --scan-root docs --output docs/context/worker_status_aggregate.json --escalation-output docs/context/escalation_events.json`
 - **2. Traceability Alignment Gate**:
   `.venv\Scripts\python scripts/validate_traceability.py --input docs/pm_to_code_traceability.yaml --strict --require-test`
 - **3. Evidence Hash Anti-Tamper Verification**:
@@ -219,7 +225,7 @@ These scripts enforce the closed architecture. Add `--dry-run` to any command fo
   `git merge-base HEAD origin/main` (Find since-commit)
   `.venv\Scripts\python scripts/validate_orphan_changes.py --traceability docs/pm_to_code_traceability.yaml --since-commit <COMMIT_HASH>`
 - **6. Dispatch ACK & Lifecycle Verification**:
-  `.venv\Scripts\python scripts/validate_dispatch_acks.py --manifest docs/context/dispatch_manifest.json --scan-root ../ --timeout-minutes 10`
+  `.venv\Scripts\python scripts/validate_dispatch_acks.py --manifest docs/context/dispatch_manifest.json --scan-root docs --timeout-minutes 10`
 - **7. Worker Reply Confidence/Citation Gate**:
   `.venv\Scripts\python scripts/validate_worker_reply_packet.py --input docs/context/worker_reply_packet.json --repo-root . --require-existing-paths`
 - **8. Build CEO Bridge Digest**:

@@ -39,7 +39,7 @@ function Get-RepoProfileDefaults {
         "Quant" {
             return [ordered]@{
                 repo_root               = "E:/Code/Quant"
-                scan_root               = "E:/Code/Quant"
+                scan_root               = "E:/Code/Quant/docs"
                 traceability_candidates = @(
                     "docs/pm_to_code_traceability.yaml",
                     "docs/context/pm_to_code_traceability.yaml"
@@ -52,7 +52,7 @@ function Get-RepoProfileDefaults {
         "Film" {
             return [ordered]@{
                 repo_root               = "E:/Code/Film"
-                scan_root               = "E:/Code/Film"
+                scan_root               = "E:/Code/Film/docs"
                 traceability_candidates = @(
                     "docs/pm_to_code_traceability.yaml",
                     "docs/context/pm_to_code_traceability.yaml"
@@ -65,7 +65,7 @@ function Get-RepoProfileDefaults {
         default {
             return [ordered]@{
                 repo_root               = "."
-                scan_root               = ""
+                scan_root               = "docs"
                 traceability_candidates = @(
                     "docs/pm_to_code_traceability.yaml",
                     "docs/context/pm_to_code_traceability.yaml"

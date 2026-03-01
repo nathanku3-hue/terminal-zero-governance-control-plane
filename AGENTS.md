@@ -1,7 +1,7 @@
 # AGENTS.md
 
 > SYSTEM CONTEXT: You are a contributor to Terminal Zero (T0), a local-first quantitative research console.
-> ROOT PATH: `E:\code\Quant`
+> ROOT PATH: `E:\Code\SOP\quant_current_scope`
 
 ## 1. Tech Stack (Hard Constraints)
 - Runtime: Python 3.12+ with strict `.venv` usage.

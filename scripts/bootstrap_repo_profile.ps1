@@ -3,6 +3,9 @@ param(
     [string]$RepoProfile = "",
     [string]$RepoRoot = "",
     [switch]$WithContextSkeleton,
+    [bool]$EnsureMinimalContext = $true,
+    [switch]$SkipContextBuild,
+    [string]$PythonExe = "",
     [switch]$Force,
     [switch]$DryRun
 )
@@ -33,6 +36,26 @@ function Get-RepoProfileRoot {
 
 function Get-UtcIso {
     return [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+}
+
+function Resolve-PythonExecutable {
+    param([string]$Requested)
+    if (-not [string]::IsNullOrWhiteSpace($Requested)) {
+        if (Test-Path -LiteralPath $Requested) {
+            return [System.IO.Path]::GetFullPath($Requested)
+        }
+        $cmd = Get-Command $Requested -ErrorAction SilentlyContinue
+        if ($null -ne $cmd) {
+            return $cmd.Source
+        }
+        throw "Python executable not found: $Requested"
+    }
+
+    $globalPython = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -eq $globalPython) {
+        throw "Python executable not found. Provide -PythonExe."
+    }
+    return $globalPython.Source
 }
 
 function Ensure-Directory {
@@ -86,6 +109,22 @@ function Write-JsonFile {
     Write-TextFile -PathValue $PathValue -Content $json -Overwrite:$Overwrite
 }
 
+function Test-ContextSourceBaseline {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRootAbs
+    )
+    $phaseBriefMatches = @(Get-ChildItem -Path (Join-Path $RepoRootAbs "docs/phase_brief") -Filter "phase*-brief.md" -File -ErrorAction SilentlyContinue)
+    $phaseHandoverMatches = @(Get-ChildItem -Path (Join-Path $RepoRootAbs "docs/handover") -Filter "phase*_handover.md" -File -ErrorAction SilentlyContinue)
+
+    $hasBrief = $phaseBriefMatches.Count -gt 0
+    $hasHandover = $phaseHandoverMatches.Count -gt 0
+    $hasDecisionLog = Test-Path -LiteralPath (Join-Path $RepoRootAbs "docs/decision log.md")
+    $hasLessons = Test-Path -LiteralPath (Join-Path $RepoRootAbs "docs/lessonss.md")
+    $hasTopLevelPm = Test-Path -LiteralPath (Join-Path $RepoRootAbs "top_level_PM.md")
+    return ($hasBrief -and $hasHandover -and $hasDecisionLog -and $hasLessons -and $hasTopLevelPm)
+}
+
 $effectiveRepoRoot = if (-not [string]::IsNullOrWhiteSpace($RepoRoot)) {
     $RepoRoot
 }
@@ -101,6 +140,8 @@ if (-not (Test-Path -LiteralPath $repoRootAbs)) {
 $profileLabel = if ([string]::IsNullOrWhiteSpace($RepoProfile)) { "default" } else { $RepoProfile }
 $nowUtc = Get-UtcIso
 $deadlineUtc = [DateTime]::UtcNow.AddHours(24).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$hasContextBaseline = Test-ContextSourceBaseline -RepoRootAbs $repoRootAbs
+$emitContextSkeleton = [bool]$WithContextSkeleton -or ([bool]$EnsureMinimalContext -and (-not $hasContextBaseline))
 
 $docsDir = Resolve-AbsolutePath -BasePath $repoRootAbs -PathValue "docs"
 $contextDir = Resolve-AbsolutePath -BasePath $repoRootAbs -PathValue "docs/context"
@@ -121,13 +162,17 @@ Write-Host "Bootstrap target:"
 Write-Host ("  profile: {0}" -f $profileLabel)
 Write-Host ("  repo_root: {0}" -f $repoRootAbs)
 Write-Host ("  with_context_skeleton: {0}" -f [bool]$WithContextSkeleton)
+Write-Host ("  ensure_minimal_context: {0}" -f [bool]$EnsureMinimalContext)
+Write-Host ("  has_context_baseline: {0}" -f [bool]$hasContextBaseline)
+Write-Host ("  emit_context_skeleton: {0}" -f [bool]$emitContextSkeleton)
+Write-Host ("  skip_context_build: {0}" -f [bool]$SkipContextBuild)
 Write-Host ("  force: {0}" -f [bool]$Force)
 Write-Host ("  dry_run: {0}" -f [bool]$DryRun)
 
 Ensure-Directory -PathValue $docsDir
 Ensure-Directory -PathValue $contextDir
 Ensure-Directory -PathValue $evidenceHashesDir
-if ($WithContextSkeleton) {
+if ($emitContextSkeleton) {
     Ensure-Directory -PathValue $phaseBriefDir
     Ensure-Directory -PathValue $handoverDir
 }
@@ -181,7 +226,7 @@ $dispatchPayload = [ordered]@{
 }
 Write-JsonFile -PathValue $dispatchManifestPath -Payload $dispatchPayload -Overwrite:$Force
 
-if ($WithContextSkeleton) {
+if ($emitContextSkeleton) {
     $phaseBriefContent = @(
         "# Phase 0 Brief",
         "",
@@ -260,19 +305,72 @@ if ($WithContextSkeleton) {
     Write-TextFile -PathValue $topLevelPmPath -Content $topLevelPmContent -Overwrite:$Force
 }
 
+$contextScriptPath = Resolve-AbsolutePath -BasePath $PSScriptRoot -PathValue "build_context_packet.py"
+$contextBuildState = "SKIPPED"
+$contextBuildMessage = ""
+if ($SkipContextBuild) {
+    $contextBuildState = "SKIPPED"
+    $contextBuildMessage = "Skipped by -SkipContextBuild."
+}
+elseif (-not (Test-Path -LiteralPath $contextScriptPath)) {
+    throw "Context build script not found: $contextScriptPath"
+}
+else {
+    $pythonPath = Resolve-PythonExecutable -Requested $PythonExe
+    if ($DryRun) {
+        Write-Host ("[DRY-RUN] Context build: {0} {1} --repo-root {2}" -f $pythonPath, $contextScriptPath, $repoRootAbs)
+        Write-Host ("[DRY-RUN] Context validate: {0} {1} --repo-root {2} --validate" -f $pythonPath, $contextScriptPath, $repoRootAbs)
+        $contextBuildState = "PREVIEW"
+        $contextBuildMessage = "Dry-run only."
+    }
+    else {
+        $previousNativePref = $null
+        if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+            $previousNativePref = $PSNativeCommandUseErrorActionPreference
+            $PSNativeCommandUseErrorActionPreference = $false
+        }
+        $previousErrorAction = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            & $pythonPath $contextScriptPath --repo-root $repoRootAbs
+            $buildExit = $LASTEXITCODE
+            if ($buildExit -ne 0) {
+                throw "Context build failed (exit=$buildExit)."
+            }
+            & $pythonPath $contextScriptPath --repo-root $repoRootAbs --validate
+            $validateExit = $LASTEXITCODE
+            if ($validateExit -ne 0) {
+                throw "Context validate failed (exit=$validateExit)."
+            }
+        }
+        finally {
+            $ErrorActionPreference = $previousErrorAction
+            if ($null -ne $previousNativePref) {
+                $PSNativeCommandUseErrorActionPreference = $previousNativePref
+            }
+        }
+        $contextBuildState = "PASS"
+        $contextBuildMessage = "current_context.json/current_context.md and phase handover artifact generated."
+    }
+}
+
 Write-Host ""
 Write-Host "Bootstrap completed."
 Write-Host ("  traceability: {0}" -f $traceabilityPath)
 Write-Host ("  worker_reply: {0}" -f $workerReplyPath)
 Write-Host ("  dispatch_manifest: {0}" -f $dispatchManifestPath)
 Write-Host ("  evidence_hashes_dir: {0}" -f $evidenceHashesDir)
-if ($WithContextSkeleton) {
+if ($emitContextSkeleton) {
     Write-Host ("  phase_brief: {0}" -f $phaseBriefPath)
     Write-Host ("  phase_handover: {0}" -f $phaseHandoverPath)
     Write-Host ("  decision_log: {0}" -f $decisionLogPath)
     Write-Host ("  lessons: {0}" -f $lessonsPath)
     Write-Host ("  top_level_pm: {0}" -f $topLevelPmPath)
 }
+Write-Host ("  context_build_state: {0}" -f $contextBuildState)
+if (-not [string]::IsNullOrWhiteSpace($contextBuildMessage)) {
+    Write-Host ("  context_build_message: {0}" -f $contextBuildMessage)
+}
 Write-Host ""
 Write-Host "Next:"
-Write-Host ("  powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot '{0}' -SkipOrphanGate -SkipDispatchGate -DryRun" -f $repoRootAbs)
+Write-Host ("  powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot '{0}' -ScanRoot '{0}\docs' -SkipOrphanGate -SkipDispatchGate -DryRun" -f $repoRootAbs)

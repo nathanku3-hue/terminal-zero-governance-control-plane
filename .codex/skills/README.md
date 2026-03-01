@@ -2,6 +2,11 @@
 
 This is the canonical agent-skill root for this project.
 
+## Hard Stop
+- Always load skills from `.codex/skills/`.
+- Do not execute workflow logic from `skills/` mirror paths.
+- If both paths contain similar names, `.codex/skills/` is source of truth.
+
 ## Structure
 - `_shared/`: shared hierarchy templates
 - `saw/`: SAW execution/review skill
