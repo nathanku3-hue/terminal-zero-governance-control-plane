@@ -1,0 +1,40 @@
+{
+  "events": [
+    {
+      "event_id": "ESC-20260301135444-@qa-1",
+      "worker_id": "@qa-1",
+      "task_id": "T-100",
+      "stale_since_utc": "2026-03-01T08:00:00Z",
+      "stale_duration_minutes": 354.74147121666664,
+      "clock_skew_suspect": false,
+      "escalated_utc": "2026-03-01T13:54:44.488273Z",
+      "recommended_action": "CHECK_WORKER_ALIVE",
+      "action_taken": null,
+      "resolved": false
+    },
+    {
+      "event_id": "ESC-20260301135713-@qa-1",
+      "worker_id": "@qa-1",
+      "task_id": "T-100",
+      "stale_since_utc": "2026-03-01T08:00:00Z",
+      "stale_duration_minutes": 357.23161178333334,
+      "clock_skew_suspect": false,
+      "escalated_utc": "2026-03-01T13:57:13.896707Z",
+      "recommended_action": "CHECK_WORKER_ALIVE",
+      "action_taken": null,
+      "resolved": false
+    },
+    {
+      "event_id": "ESC-20260301135753-@qa-1",
+      "worker_id": "@qa-1",
+      "task_id": "T-100",
+      "stale_since_utc": "2026-03-01T08:00:00Z",
+      "stale_duration_minutes": 357.89490486666665,
+      "clock_skew_suspect": false,
+      "escalated_utc": "2026-03-01T13:57:53.694292Z",
+      "recommended_action": "CHECK_WORKER_ALIVE",
+      "action_taken": null,
+      "resolved": false
+    }
+  ]
+}

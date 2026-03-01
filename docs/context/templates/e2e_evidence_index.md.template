@@ -1,0 +1,12 @@
+| ID | Gate | Result | Date | Evidence |
+|---|---|---|---|---|
+| gate1 | Status Aggregation | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate1_{{DATE_COMPACT}}.log) |
+| gate2 | Traceability Gate | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate2_{{DATE_COMPACT}}.log) |
+| gate3 | Evidence Hashes | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate3_{{DATE_COMPACT}}.log) |
+| gate4 | Gemini Freshness Gate | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate4_{{DATE_COMPACT}}.log) |
+| gate5 | Orphan Change Gate | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate5_{{DATE_COMPACT}}.log) |
+| gate6 | Dispatch Lifecycle | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate6_{{DATE_COMPACT}}.log) |
+| gate7 | Build CEO Digest | PASS | {{DATE_DASH}} | [Log]({{TASK_ID}}_gate7_{{DATE_COMPACT}}.log) |
+| manual1 | CEO Paste Test | Machine PASS + Manual Pending | {{DATE_DASH}} | [Img](REAL_CAPTURE_MISSING) <br> *Criteria: CEO Bridge Digest successfully pasted without formatting breaks.* |
+| manual2 | CommandPlan Round-Trip | Machine PASS + Manual Pending | {{DATE_DASH}} | [Img](REAL_CAPTURE_MISSING) <br> *Criteria: JSON dispatch manifest processed and acknowledged by workers.* |
+| manual3 | Digest Readability | Machine PASS + Manual Pending | {{DATE_DASH}} | [Img](REAL_CAPTURE_MISSING) <br> *Criteria: Expert Verdict Matrix renders correctly as a readable table.* |

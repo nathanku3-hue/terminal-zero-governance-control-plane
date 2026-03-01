@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Analysis"
+  short_description: "Extract methodology/findings from PDFs and cross-reference deltas"
+  default_prompt: "Use $research-analysis to analyze PDFs in docs/research, compare against researches*.md, and output logic-chain plus formula one-liners. Always include claim-level citations (ClaimID with SourceID plus page/section), source_text_path, support strength, and evidence snippets for every high-confidence claim, closure metrics (claims_total and claims_cited), closure verdict (PASS/BLOCK), Open Risks, and Next verification step when BLOCK. Emit claims JSON path plus ClosurePacket. Run shared validators and output both ClaimValidation: PASS/BLOCK and ClosureValidation: PASS/BLOCK. Missing claim locator/grounding gate, claims_total != claims_cited, missing field, or failed validation => BLOCK."
+policy:
+  allow_implicit_invocation: true

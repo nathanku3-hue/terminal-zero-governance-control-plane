@@ -1,0 +1,63 @@
+{
+  "$schema": "worker_status_v1",
+  "schema_version": "1.0.0",
+  "worker_id": "@LANE-N",
+  "repo_path": "E:/Code/PROJECT",
+  "lane": "backend|frontend|data|qa|security",
+  "heartbeat": {
+    "timestamp_utc": "2026-01-01T00:00:00Z",
+    "ttl_seconds": 300,
+    "clock_skew_grace_seconds": 30,
+    "last_write_utc": "2026-01-01T00:00:00Z",
+    "monotonic_elapsed_seconds": 0,
+    "status": "executing|idle|blocked|completed",
+    "phase": "phaseNN",
+    "current_task": {
+      "task_id": "T-000",
+      "goal": "one-line atomic goal",
+      "started_utc": "2026-01-01T00:00:00Z",
+      "elapsed_minutes": 0,
+      "estimated_remaining_minutes": 0
+    }
+  },
+  "sla": {
+    "max_task_duration_minutes": 120,
+    "escalation_threshold_minutes": 90,
+    "escalation_status": "OK|WARNING|ESCALATED"
+  },
+  "expert_gate": {
+    "system_eng": "PASS|WARNING|BLOCK",
+    "architect": "PASS|WARNING|BLOCK",
+    "principal": "PASS|WARNING|BLOCK",
+    "riskops": "PASS|WARNING|BLOCK",
+    "devsecops": "PASS|WARNING|BLOCK",
+    "qa": "PASS|WARNING|BLOCK"
+  },
+  "completion_log": [
+    {
+      "task_id": "T-000",
+      "goal": "example task",
+      "status": "completed|failed",
+      "implementer_id": "@LANE-N",
+      "started_utc": "2026-01-01T00:00:00Z",
+      "completed_utc": "2026-01-01T00:00:00Z",
+      "evidence": ["tests/test_x.py::PASS"],
+      "saw_verdict": "PASS|FAIL",
+      "expert_signoffs": {
+        "required": ["qa", "riskops"],
+        "actual": [
+          {"expert": "qa", "signoff_by": "@qa-1", "timestamp_utc": "2026-01-01T00:00:00Z", "evidence_hash": "sha256:..."},
+          {"expert": "riskops", "signoff_by": "@riskops-1", "timestamp_utc": "2026-01-01T00:00:00Z", "evidence_hash": "sha256:..."}
+        ],
+        "status": "PASS|BLOCK"
+      }
+    }
+  ],
+  "blockers": [],
+  "aggregate_stats": {
+    "tasks_completed_session": 0,
+    "tasks_failed_session": 0,
+    "tasks_blocked_session": 0,
+    "saw_pass_rate": 1.0
+  }
+}

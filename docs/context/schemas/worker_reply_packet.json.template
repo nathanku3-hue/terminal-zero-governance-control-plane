@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "worker_id": "@LANE-N",
+  "phase": "phaseNN",
+  "generated_at_utc": "2026-01-01T00:00:00Z",
+  "items": [
+    {
+      "task_id": "T-000",
+      "decision": "one-line what changed and why",
+      "dod_result": "PASS|PARTIAL|FAIL",
+      "evidence_ids": ["EV-001"],
+      "open_risks": ["none|risk statement"],
+      "confidence": {
+        "score": 0.85,
+        "band": "HIGH|MEDIUM|LOW",
+        "rationale": "short reason for score"
+      },
+      "citations": [
+        {
+          "type": "code|test|doc|log",
+          "path": "relative/path/to/artifact",
+          "locator": "line:test-or-section",
+          "claim": "claim supported by this citation"
+        }
+      ]
+    }
+  ]
+}

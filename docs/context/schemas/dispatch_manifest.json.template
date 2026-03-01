@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "dispatch_id": "DISP-YYYYMMDD-NNN",
+  "dispatched_utc": "2026-01-01T00:00:00Z",
+  "command_plan_hash_sha256": "sha256:...",
+  "tasks": [
+    {
+      "correlation_id": "COR-001",
+      "lane": "backend|frontend|data|qa|security",
+      "tool": "Codex|Claude|Gemini",
+      "project_path": "E:\\Code\\PROJECT",
+      "expected_worker_id": "@LANE-N"
+    }
+  ],
+  "total_tasks": 1,
+  "ack_deadline_utc": "2026-01-01T00:10:00Z"
+}

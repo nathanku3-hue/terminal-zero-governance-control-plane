@@ -1,0 +1,6 @@
+interface:
+  display_name: "SE Executor"
+  short_description: "Run implementation with artifact-tied tasks and proof-first verification"
+  default_prompt: "Use $se-executor for multi-file or high-risk implementation rounds with explicit artifacts, checks, and done conditions. Always output TaskID->EvidenceID mapping for every task, Verdict (PASS/BLOCK), failed-check handling, Open Risks, and Next action when BLOCK. Emit machine lines: TaskEvidenceMap and EvidenceRows, plus ClosurePacket. Run shared validators and output both EvidenceValidation: PASS/BLOCK and ClosureValidation: PASS/BLOCK. Any unlinked task, stale evidence, missing field, or failed validation => BLOCK."
+policy:
+  allow_implicit_invocation: true

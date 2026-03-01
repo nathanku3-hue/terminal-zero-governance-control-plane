@@ -1,0 +1,6 @@
+interface:
+  display_name: "SAW Review Gate"
+  short_description: "Run Subagents-After-Work review and reconciliation"
+  default_prompt: "Use $saw to run the post-work Implementer plus Reviewer A/B/C gate and output: SAW Verdict (PASS/BLOCK), in-scope vs inherited scope split, Open Risks, Next action, and Hierarchy Confirmation/FallbackSource stamp. Emit one machine-check line: ClosurePacket: RoundID=<...>; ScopeID=<...>; ChecksTotal=<int>; ChecksPassed=<int>; ChecksFailed=<int>; Verdict=<PASS|BLOCK>; OpenRisks=<...>; NextAction=<...>. Run shared validators and output both ClosureValidation: PASS/BLOCK and SAWBlockValidation: PASS/BLOCK. For no-change rounds, include NoChangeReason. Any missing required field or failed validation => BLOCK."
+policy:
+  allow_implicit_invocation: true

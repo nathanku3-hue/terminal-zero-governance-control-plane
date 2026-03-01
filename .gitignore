@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+
+# Local temp artifacts
+.tmp/
+.tmp_pytest/
+.ptemp/
+tmp_test/
+e2e_test/
+
+# Generated gate logs
+docs/context/phase_end_logs/
+
+# OS
+.DS_Store
+Thumbs.db

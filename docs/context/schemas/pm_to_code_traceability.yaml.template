@@ -1,0 +1,33 @@
+schema_version: "1.0.0"
+phase: "phaseNN"
+last_updated_utc: "2026-01-01T00:00:00Z"
+
+directives:
+  - directive_id: "PM-YYYY-NNN"
+    source: "top_level_PM.md#section-name"
+    statement: "one-line PM directive statement"
+    priority: "CRITICAL|HIGH|MEDIUM|LOW"
+    required_signoff_experts: ["riskops", "qa"]
+    actual_signoff_experts:
+      - expert: "riskops"
+        signoff_by: "@riskops-1"
+        timestamp_utc: "2026-01-01T00:00:00Z"
+        evidence_hash: "sha256:..."
+      - expert: "qa"
+        signoff_by: "@qa-1"
+        timestamp_utc: "2026-01-01T00:00:00Z"
+        evidence_hash: "sha256:..."
+    signoff_status: "PASS|BLOCK"
+    traceability:
+      code_diffs:
+        - file: "path/to/file.py"
+          function: "function_name"
+          change_type: "new|modified|deleted"
+          commit: "abc1234"
+          description: "what changed and why"
+      validators:
+        - type: "unit_test|integration_test|runtime_check|behavioral_contract"
+          path: "tests/test_x.py::test_function"
+          last_pass_utc: "2026-01-01T00:00:00Z"
+          output_hash_sha256: "sha256:..."
+    status: "VERIFIED|UNMAPPED|PARTIAL"

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "dispatch_id": "DISP-YYYYMMDD-NNN",
+  "correlation_id": "COR-001",
+  "worker_id": "@LANE-N",
+  "command_plan_hash_sha256": "sha256:...",
+  "lifecycle": [
+    {"state": "ACKED",        "utc": "2026-01-01T00:02:00Z"},
+    {"state": "ACCEPTED",     "utc": "2026-01-01T00:02:05Z"},
+    {"state": "STARTED",      "utc": "2026-01-01T00:03:00Z"},
+    {"state": "HEARTBEATING", "utc": "2026-01-01T00:08:00Z"},
+    {"state": "COMPLETED",    "utc": "2026-01-01T00:45:00Z",
+     "evidence_hash": "sha256:...",
+     "bound_artifacts": ["path/to/output.parquet"],
+     "bound_tests": ["tests/test_x.py::PASS"]}
+  ],
+  "current_state": "COMPLETED"
+}

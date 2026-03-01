@@ -1,0 +1,6 @@
+interface:
+  display_name: "Architect Review"
+  short_description: "Assess boundaries, coupling, scaling, and security tradeoffs"
+  default_prompt: "Use $architect-review for architecture-impacting changes and produce optioned recommendations before implementation. Always include calibrated risk-profile weights, normalized option scoring (impact/risk/effort/maintainability with computed weighted OptionScore), closure verdict (PASS/BLOCK), and BLOCK when key inputs or score components are missing. Emit ClosurePacket and run shared validators to output ClosureValidation: PASS/BLOCK and CalibrationValidation: PASS/DRIFT/INSUFFICIENT. If recommendation_certainty < 75 and option_score_diff <= 1, ask for explicit direction before lock-in. CalibrationValidation=DRIFT requires user risk acceptance or BLOCK."
+policy:
+  allow_implicit_invocation: true
