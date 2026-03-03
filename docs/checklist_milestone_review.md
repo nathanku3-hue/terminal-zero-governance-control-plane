@@ -47,8 +47,16 @@
 - [ ] **Gemini Bridge Freshness**: Is `ceo_bridge_digest.md` < 60 min old (`validate_digest_freshness.py` passed with `exit 0`)?
 - [ ] **Orphan Change Gate**: Did `validate_orphan_changes.py` pass (`exit 0`), proving all production code changes map to PM directives?
 - [ ] **Dispatch Lifecycle**: Did `validate_dispatch_acks.py` pass (`exit 0`), affirming all dispatched tasks reached COMPLETED state with bound artifacts/tests?
-- [ ] **Worker Reply Gate**: Did `validate_worker_reply_packet.py` pass (`exit 0`), with mandatory confidence and citations for each task item?
-- [ ] **CEO Digest Generated**: Is `ceo_bridge_digest.md` updated, readable, and containing the latest Expert Verdict Matrix plus Worker Confidence/Citations?
+- [ ] **Worker Reply Gate**: Did `validate_worker_reply_packet.py` pass (`exit 0`), with mandatory confidence and citations for each task item, and (for v2 packets) `machine_optimized` and `pm_first_principles` blocks?
+- [ ] **Triad Coverage (when `-EnforceScoreThresholds` enabled)**: Does each v2 item include all 3 triad domains (principal, riskops, qa) in `expertise_coverage`, with at least one marked APPLIED or NOT_REQUIRED?
+- [ ] **Score Threshold Gate (when `-EnforceScoreThresholds` enabled)**: Does each v2 item have `confidence_level.score >= 0.70` and `problem_solving_alignment_score >= 0.75`?
+- [ ] **Cross-Repo Readiness (when `-EnforceScoreThresholds` enabled)**: Did G05b pass with `-CrossRepoRoots` covering all active repos?
+- [ ] **CEO Digest Generated**: Is `ceo_bridge_digest.md` updated, readable, and containing the latest First Principles Engineering Summary, Strategic Expertise Coverage, Expert Verdict Matrix, Per-Round Score Gates, and Worker Confidence/Citations?
+- [ ] **Schema Version Declared**: Does `worker_reply_packet.json` declare `schema_version: 2.0.0` for Phase 24+ work?
+- [ ] **Auditor Review (G11)**: Did `run_auditor_review.py` run in the configured `-AuditMode` (shadow/enforce/none)? If shadow: verify findings logged, no policy blocks. If enforce: verify Critical/High = 0 or justified. Infra errors (exit 2) always block regardless of mode.
+- [ ] **Auditor Findings in Digest**: Does CEO digest Section IX contain fresh auditor findings from the current run (not stale from a previous run)? If `-AuditMode none`: Section IX should show "Auditor review not available."
+- [ ] **Auditor FP Ledger**: Are all C/H findings annotated in `auditor_fp_ledger.json`?
+- [ ] **Calibration Report**: Does `auditor_calibration_report.py` produce current report with no infra errors?
 
 ## 7. Manual Capture Policy (Strict Enforcement)
 - **Rule 1 (No Mockups):** E2E evidence only accepts `REAL_CAPTURE` and script `.log`. AI-generated mockups are strictly prohibited.

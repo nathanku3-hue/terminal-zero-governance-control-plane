@@ -81,6 +81,7 @@ Risk tier checks:
 - `Confidence: Y/10` for proposals/analysis.
 - For strict-schema subagent review outputs, the rating may be emitted once in the parent orchestration summary for that round.
 - If `Confidence < 7/10`, include `Unknowns:` and `Next verification step:`.
+- Score thresholds: confidence < 0.70 blocks execution (HOLD); relatability < 0.75 blocks dispatch (REFRAME). Machine-enforced via `--enforce-score-thresholds` in G06; visually rendered in digest score gate section.
 - Milestone report footer format is required:
 - `Evidence:`
 - `Assumptions:`
@@ -165,7 +166,9 @@ SAW must run after each work round (even docs-only rounds):
    - Record ownership check: implementer and reviewers must be different agents; include this check in the SAW report.
 3. Reconciliation pass
    - Fix all Critical/High findings in current-round scope.
-   - For inherited out-of-scope Critical/High findings, carry them in `Open Risks` with owner and target milestone, and request explicit user acceptance before milestone close if they remain unresolved.
+   - In-scope Critical findings: auto-BLOCK, no user override. Must be resolved before round close.
+   - In-scope High findings: do not close while unresolved unless user explicitly accepts risk.
+   - For inherited out-of-scope Critical/High findings, carry them in `Open Risks` with owner, TargetDate, and target milestone. User acceptance is allowed before milestone close.
 4. SAW report format
    - `SAW Verdict: PASS/BLOCK`
    - Findings table (Severity, Impact, Fix, Owner, Status)
@@ -212,6 +215,20 @@ SAW must run after each work round (even docs-only rounds):
   - `$se-executor`: emit `EvidenceValidation: PASS/BLOCK` from `validate_se_evidence.py`.
   - `$research-analysis`: emit `ClaimValidation: PASS/BLOCK` from `validate_research_claims.py`.
   - `$architect-review`: emit `CalibrationValidation: PASS/DRIFT/INSUFFICIENT` from `validate_architect_calibration.py`.
+
+## 13b. Auditor Protocol
+- Independent automated review of `worker_reply_packet.json` at phase-end via `scripts/run_auditor_review.py`.
+- Shadow mode (default): policy findings logged, non-blocking. Infra/finalize failures still block. Severity is canonical (same in both modes).
+- Enforce mode: Critical/High block handover (G11). Infra errors (exit 2) always block.
+- Auditor is orthogonal to SAW: SAW reviews implementation process, auditor reviews final output packet.
+- `dod_result=FAIL` is MEDIUM (informative), not CRITICAL. FAIL is valid data per validator contract.
+- Calibration data tracked by `scripts/auditor_calibration_report.py` (weekly). Promotion verified by same script (dossier mode).
+- Promotion gate (shadow → enforce):
+  (a) 24B operational close complete.
+  (b) Minimum 30 audited items across ≥ 2 consecutive weekly windows.
+  (c) Critical+High false-positive rate < 5% (formula: false_positives among C/H findings / total C/H findings).
+  (d) Explicit signoff by PM or designated owner in decision log.
+  (e) All packets must be `schema_version=2.0.0`. Enforce mode rejects v1 packets (AUD-R000 is HIGH + blocking in enforce).
 
 ## 14. Interactive Review Protocol (Plan/Code Review Requests)
 When the user asks for review-mode analysis (architecture/code quality/tests/performance), follow this sequence:

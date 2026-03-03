@@ -1,0 +1,33 @@
+{
+  "_comment": "Schema template for auditor_findings.json — output of scripts/run_auditor_review.py",
+  "_note_gate_verdict": "gate_verdict can be PASS even with CRITICAL/HIGH counts in shadow mode because blocking is mode-driven, not severity-driven",
+  "schema_version": "1.0.0",
+  "auditor_id": "auditor-v1",
+  "audit_timestamp_utc": "2026-01-01T00:00:00Z",
+  "mode": "shadow|enforce",
+  "reviewed_packet_path": "docs/context/worker_reply_packet.json",
+  "reviewed_packet_schema_version": "2.0.0",
+  "findings": [
+    {
+      "finding_id": "AUD-001",
+      "rule_id": "AUD-R001",
+      "item_index": 0,
+      "task_id": "T-000",
+      "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",
+      "category": "confidence|relatability|triad_missing|triad_skipped|citations_count|citation_path_missing|placeholder_text|dod_fail|open_risks_with_pass|schema_version",
+      "description": "human-readable finding description",
+      "blocking": false
+    }
+  ],
+  "summary": {
+    "total_findings": 0,
+    "items_reviewed": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0,
+    "gate_verdict": "PASS|BLOCK",
+    "infra_error": false
+  }
+}

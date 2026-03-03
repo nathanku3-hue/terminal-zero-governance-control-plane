@@ -213,6 +213,7 @@ These scripts enforce the closed architecture. Add `--dry-run` to any command fo
   - `G00_preflight` blocks early when required paths are missing before running the Python gates.
 - **0. Worker Reply Packet Scaffold (one-time per repo)**:
   `Copy-Item docs/context/schemas/worker_reply_packet.json.template docs/context/worker_reply_packet.json`
+  - Template is now v2.0.0 (includes `machine_optimized` and `pm_first_principles` blocks).
 - **1. Status Aggregation & Escalation**:
   `.venv\Scripts\python scripts/aggregate_worker_status.py --scan-root docs --output docs/context/worker_status_aggregate.json --escalation-output docs/context/escalation_events.json`
 - **2. Traceability Alignment Gate**:
@@ -228,8 +229,58 @@ These scripts enforce the closed architecture. Add `--dry-run` to any command fo
   `.venv\Scripts\python scripts/validate_dispatch_acks.py --manifest docs/context/dispatch_manifest.json --scan-root docs --timeout-minutes 10`
 - **7. Worker Reply Confidence/Citation Gate**:
   `.venv\Scripts\python scripts/validate_worker_reply_packet.py --input docs/context/worker_reply_packet.json --repo-root . --require-existing-paths`
+  - Worker reply packets declare their own `schema_version`. The validator auto-detects v1.0.0 vs v2.0.0 rules.
+  - Use `--schema-version-override 2.0.0` to force strict v2 enforcement (v2 requires `machine_optimized` and `pm_first_principles` blocks).
+  - Use `--enforce-score-thresholds` to enable hard threshold enforcement: confidence >= 0.70, relatability >= 0.75, triad coverage (principal/riskops/qa present), and triad substantive quality (at least one triad domain APPLIED or NOT_REQUIRED).
+  - **Bootstrap incompatibility rule**: `--enforce-score-thresholds` must NOT be enabled while `worker_reply_packet.json` contains `phase: "phase_bootstrap"` or `worker_id: "@bootstrap"`. Bootstrap packets have placeholder scores (confidence=0.30, relatability=0.0, all-SKIPPED) that will hard-fail threshold enforcement by design. Replace bootstrap packet with real worker output before enabling threshold mode.
 - **8. Build CEO Bridge Digest**:
   `.venv\Scripts\python scripts/build_ceo_bridge_digest.py --sources docs/context/worker_status_aggregate.json,docs/pm_to_code_traceability.yaml,docs/context/escalation_events.json,docs/context/worker_reply_packet.json --output docs/context/ceo_bridge_digest.md`
+  - Digest v2.0.0 sections: I. First Principles Engineering Summary, II. Strategic Expertise Coverage, III. System Health, IV. Expert Verdict Matrix, V. Traceability Summary, VI. Recent Completions, VII. Active Escalations, VIII. Worker Confidence and Citations, X. Per-Round Score Gates, XI. Recommended PM Actions.
+  - Score Gates section renders GO/HOLD/REFRAME per task based on confidence and relatability thresholds.
+  - v1 packets render gracefully ("Not available (v1 packet)" for sections I and II).
+
+### Cutover Readiness Gate (Phase 24B prerequisite)
+Before enabling `-EnforceScoreThresholds` in `phase_end_handover.ps1`, validate all active repos:
+```
+python scripts/validate_worker_reply_packet.py --input docs/context/worker_reply_packet.json --repo-root . --schema-version-override 2.0.0 --enforce-score-thresholds
+```
+- Run for: SOP repo, Quant repo (`E:\Code\Quant`), Film repo (`E:\Code\Film`).
+- All must exit 0 before enabling `-EnforceScoreThresholds` in `phase_end_handover.ps1`.
+- Alternatively, use `-CrossRepoRoots "E:\Code\Quant,E:\Code\Film"` with `-EnforceScoreThresholds` in phase_end_handover.ps1 — G05b gate validates automatically.
+- Record results in `docs/context/phase_end_logs/cutover_readiness_v2_<timestamp>.json`.
+
+### Auditor Review (Phase 24C)
+Independent auditor gate (G11) reviews worker reply packets and emits structured findings.
+
+**Run auditor manually**:
+```
+python scripts/run_auditor_review.py --input docs/context/worker_reply_packet.json --repo-root . --output docs/context/auditor_findings.json --mode shadow
+```
+
+**Exit codes**: `0` = PASS, `1` = BLOCK (enforce mode, Critical/High findings), `2` = INFRA_ERROR (always blocks).
+
+**Output write contract**: Exit 0 and 1 always write valid JSON. Exit 2 may not.
+
+**Gate verdict interpretation**: `summary.gate_verdict` can be PASS even with CRITICAL/HIGH counts in shadow mode. This is expected — verdict is driven by `blocking` flags, not severity counts.
+
+**Phase-end integration**:
+- Default: `-AuditMode shadow` (non-blocking for policy findings, blocks on infra errors).
+- Enforce: `-AuditMode enforce` (Critical/High block handover).
+- Skip: `-AuditMode none` (G11 SKIPPED, no auditor source passed to digest).
+
+**Promotion gate (shadow → enforce)** — all 5 conditions must be met:
+1. Phase 24B operational close complete (real worker packet, cross-repo readiness, one successful enforced run).
+2. Minimum 30 audited items across ≥ 2 consecutive weekly windows.
+3. Critical+High false-positive rate < 5% (formula: false_positives among C/H findings / total C/H findings).
+4. Explicit signoff by PM or designated owner in decision log.
+5. All packets must be `schema_version=2.0.0` (enforce mode rejects v1 packets via AUD-R000 HIGH + blocking).
+
+### Weekly Metrics Reference
+Manual derivation one-liners for CEO weekly review KPIs:
+- **Rework Rate**: `python -c "import json; p=json.load(open('docs/context/worker_reply_packet.json')); items=[i for i in p['items'] if i['dod_result'] in ('PARTIAL','FAIL')]; print(f'{len(items)/len(p[\"items\"])*100:.1f}%')"` — compare across consecutive packets for same task_id within current phase
+- **False-Pass Rate**: count items with `dod_result=PASS` in worker packet that later received `SAW Verdict: BLOCK` or failed a phase-end gate in `logs/` — divide by total PASS items
+- **Time-to-Decision**: `dispatch_manifest.json` → `dispatched_utc` vs `worker_reply_packet.json` → `generated_at_utc` — compute per-item delta in hours, report median
+- **Expertise Coverage %**: `python -c "import json; p=json.load(open('docs/context/worker_reply_packet.json')); triad={'principal','riskops','qa'}; covered=[i for i in p['items'] if all(any(e['domain']==d and e['verdict']=='APPLIED' for e in i.get('machine_optimized',{}).get('expertise_coverage',[])) for d in triad)]; print(f'{len(covered)/len(p[\"items\"])*100:.1f}%')"` — count items where all 3 triad domains have `verdict=APPLIED`
 
 ## 7. Manual Capture Alert Protocol
 Workers must handle missing visual evidence according to the strict E2E capture policy:
@@ -278,3 +329,135 @@ Use this when at most two repos are active in parallel.
   - `powershell -ExecutionPolicy Bypass -File scripts/register_dual_repo_manual_capture_tasks.ps1 -RepoARoot E:\Code\Quant -RepoADropDir C:\Users\Lenovo\OneDrive\桌面\Evidence_Drop_Quant -RepoAName Quant -RepoBRoot E:\Code\Film -RepoBDropDir C:\Users\Lenovo\OneDrive\桌面\Evidence_Drop_Film -RepoBName Film`
 - **D. Verify task registration**:
   - `Get-ScheduledTask -TaskName "ManualCapture-*"`
+
+## 8. Auditor Calibration Reporting
+
+### Weekly Calibration Report
+Generate weekly FP rate and rule-level statistics for shadow-mode auditor runs:
+
+```bash
+python scripts/auditor_calibration_report.py \
+  --logs-dir docs/context/phase_end_logs \
+  --repo-id quant_current_scope \
+  --ledger docs/context/auditor_fp_ledger.json \
+  --output-json docs/context/auditor_calibration_report.json \
+  --output-md docs/context/auditor_calibration_report.md \
+  --mode weekly
+```
+
+**Outputs:**
+- `docs/context/auditor_calibration_report.json` - Machine-readable report
+- `docs/context/auditor_calibration_report.md` - Human-readable summary
+
+### Promotion Dossier
+Verify all 5 promotion criteria before shadow-to-enforce transition:
+
+```bash
+python scripts/auditor_calibration_report.py \
+  --logs-dir docs/context/phase_end_logs \
+  --repo-id quant_current_scope \
+  --ledger docs/context/auditor_fp_ledger.json \
+  --output-json docs/context/auditor_promotion_dossier.json \
+  --output-md docs/context/auditor_promotion_dossier.md \
+  --mode dossier \
+  --min-items 30 \
+  --min-items-per-week 10 \
+  --min-weeks 2 \
+  --max-fp-rate 0.05
+```
+
+**Exit codes:**
+- `0` = All automated criteria met (C0, C2-C5)
+- `1` = One or more criteria not met
+- `2` = Infra error (bad ledger, missing dir)
+
+### FP Annotation Workflow
+1. Review C/H findings in `docs/context/phase_end_logs/auditor_findings_<run_id>.json`
+2. Annotate each C/H finding in `docs/context/auditor_fp_ledger.json`:
+   ```json
+   {
+     "repo_id": "quant_current_scope",
+     "run_id": "20260301_120000",
+     "finding_id": "AUD-001",
+     "verdict": "TP",
+     "annotated_by": "username",
+     "annotated_at_utc": "2026-03-01T13:00:00Z",
+     "notes": "Confirmed low confidence"
+   }
+   ```
+3. Run weekly report to track annotation coverage
+
+### Time Filtering
+Filter runs by audit timestamp (useful after schema version upgrades):
+
+```bash
+python scripts/auditor_calibration_report.py \
+  --logs-dir docs/context/phase_end_logs \
+  --repo-id quant_current_scope \
+  --output-json docs/context/auditor_calibration_report_filtered.json \
+  --output-md docs/context/auditor_calibration_report_filtered.md \
+  --from-utc 2026-03-03T00:00:00Z \
+  --to-utc 2026-03-17T00:00:00Z
+```
+
+## 9. Shadow-to-Enforce Operational Workflow
+
+### 10-Step Promotion Procedure
+
+**1. Freeze + Tag**
+```bash
+git tag phase24c-shadow-ready
+git push origin phase24c-shadow-ready
+```
+
+**2. Archive Baseline**
+Create snapshot of pre-shadow state (PowerShell):
+```powershell
+New-Item -ItemType Directory -Force -Path docs\context\phase24c_baseline
+Copy-Item docs\context\phase_end_logs\*.json docs\context\phase24c_baseline\
+Copy-Item docs\context\auditor_calibration_report.md docs\context\phase24c_baseline\
+Copy-Item docs\context\ceo_bridge_digest.md docs\context\phase24c_baseline\
+```
+
+**3. Weekly Shadow Runs**
+Run phase-end with `-AuditMode shadow` across all repos for 2+ weeks:
+```powershell
+.\scripts\phase_end_handover.ps1 -AuditMode shadow
+```
+
+**4. FP Annotation**
+After each run, annotate all C/H findings in `auditor_fp_ledger.json` (see Section 8).
+
+**5. Weekly Calibration Reports**
+Generate weekly reports to track FP rate trends:
+```bash
+python scripts/auditor_calibration_report.py --mode weekly ...
+```
+
+**6. Close 24B Prerequisites**
+- Replace bootstrap packet with real worker reply
+- Verify cross-repo readiness
+- Run one enforce-mode auditor cycle to validate blocking behavior (findings will block if C/H present)
+
+**7. Promotion Dossier**
+When ready, generate dossier and verify all criteria:
+```bash
+python scripts/auditor_calibration_report.py --mode dossier ...
+```
+Expected: Exit 0, all criteria met (C0-C5).
+
+**8. Canary Enforce**
+Enable enforce mode on one repo for 3-5 cycles:
+```powershell
+.\scripts\phase_end_handover.ps1 -AuditMode enforce
+```
+Monitor for false positives and policy blocks.
+
+**9. Full Enforce Rollout**
+After canary success, enable enforce across all repos.
+
+**10. Rollback (if needed)**
+Revert to shadow mode (findings still visible in digest):
+```powershell
+.\scripts\phase_end_handover.ps1 -AuditMode shadow
+```

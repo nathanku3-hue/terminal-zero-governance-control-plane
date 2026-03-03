@@ -1,0 +1,18 @@
+{
+  "_comment": "Schema template for auditor_fp_ledger.json — human-reviewed FP annotations for auditor findings",
+  "_note_composite_key": "Each annotation is keyed by (repo_id, run_id, finding_id). Duplicate composite keys are rejected.",
+  "_note_verdict": "verdict is strictly TP (true positive) or FP (false positive). FP rate uses only CRITICAL/HIGH findings.",
+  "_note_provenance": "annotated_by and annotated_at_utc are required for governance provenance. Missing provenance causes annotation to be ignored.",
+  "schema_version": "1.0.0",
+  "annotations": [
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "run-20260303-120000",
+      "finding_id": "AUD-001",
+      "verdict": "TP|FP",
+      "rationale": "human-readable explanation of why this is TP or FP",
+      "annotated_by": "@worker-id",
+      "annotated_at_utc": "2026-03-03T12:00:00Z"
+    }
+  ]
+}
