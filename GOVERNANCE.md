@@ -3,6 +3,7 @@
 ## Purpose
 
 This project maintains a script-driven AI engineering governance control plane with auditable startup, loop, closure, and takeover artifacts.
+For deeper internal operating details, use `docs/loop_operating_contract.md` and `docs/runbook_ops.md`.
 
 Governance decisions should preserve:
 - deterministic local execution,

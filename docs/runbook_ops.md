@@ -1,5 +1,8 @@
 # Terminal Zero Operations Runbook
 
+> Internal operator runbook for governance-loop execution in this repository.
+> External readers: start with `README.md`; use `SECURITY.md` for vulnerability reporting and `SUPPORT.md` for support channels.
+
 ## 1. Startup
 - **Environment note**: `.venv\Scripts\python ...` examples assume a repo-local virtual environment. If `.venv` is unavailable, use `python ...` from a compatible Python 3.12+ interpreter and record that interpreter in validation evidence.
 - **Codex Startup Helper (required before planning loop)**:

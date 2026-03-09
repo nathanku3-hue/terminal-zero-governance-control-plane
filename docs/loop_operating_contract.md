@@ -1,5 +1,8 @@
 # Loop Operating Contract (Freeze Mode) v1.2
 
+> Internal governance contract for operator/worker/auditor loop behavior in this repository.
+> External readers: start with `README.md`; use `SECURITY.md` for vulnerability reporting and `SUPPORT.md` for support channels.
+
 Owner: PM  
 Status: ACTIVE  
 Last Updated: 2026-03-08  

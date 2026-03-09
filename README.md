@@ -2,6 +2,12 @@
 
 `quant_current_scope` is a script-driven AI engineering governance control plane. It is built to run a bounded startup -> execution -> closure -> takeover loop, generate auditable artifacts, and keep escalation decisions tied to explicit evidence instead of informal prompt state.
 
+## Start Here
+
+- External/public orientation: start with this README, then `CONTRIBUTING.md`, `SUPPORT.md`, and `SECURITY.md`.
+- Local operator flow: use `OPERATOR_LOOP_GUIDE.md`.
+- Internal governance/contract depth: use `docs/loop_operating_contract.md` and `docs/runbook_ops.md`.
+
 ## Who This Repository Is For
 
 This repository is primarily for:
@@ -30,6 +36,8 @@ It is not packaged as a consumer application or hosted service.
 - `scripts/print_takeover_entrypoint.py` — print takeover guidance from current artifacts.
 
 ## Quickstart
+
+This README is the minimal public quickstart, while `OPERATOR_LOOP_GUIDE.md` is the fuller operator run sequence for local execution.
 
 ### 1) Create and activate a virtual environment
 
@@ -92,26 +100,29 @@ python -m pytest tests -v --tb=short
 
 Some root-level `*_LATEST.md` files are runtime convenience mirrors for operators. They are not the public API surface of the repository and should not be treated as canonical documentation for external readers.
 
-For authoritative source material, start with:
+For authoritative internal operator procedures, start with:
 - `docs/runbook_ops.md`
 - `docs/loop_operating_contract.md`
 - `OPERATOR_LOOP_GUIDE.md`
 
-## Additional Operator Docs
+## Documentation Routing
 
-- `OPERATOR_LOOP_GUIDE.md` — concise operator command sequence and expected outputs.
+### Public / External Docs
+
+- `README.md` — minimal public quickstart and project framing.
+- `CONTRIBUTING.md` — contribution workflow and validation expectations.
+- `SUPPORT.md` — support scope and help channels.
+- `CODE_OF_CONDUCT.md` — community participation standards.
+- `GOVERNANCE.md` — maintainer decision model and repository governance.
+- `SECURITY.md` — public vulnerability disclosure policy.
+
+### Internal Operator Docs
+
+- `OPERATOR_LOOP_GUIDE.md` — fuller local operator command sequence and expected outputs.
 - `docs/runbook_ops.md` — detailed operating runbook.
-- `docs/loop_operating_contract.md` — current governance contract and authority model.
-- `SECURITY.md` — public vulnerability disclosure policy for external reporters.
+- `docs/loop_operating_contract.md` — governance contract and authority model.
 - `docs/security.md` — internal security operations policy.
-
-## Contributing and Community
-
-- `CONTRIBUTING.md` — development workflow, contribution expectations, and validation checklist.
-- `GOVERNANCE.md` — project decision model and maintainer responsibilities.
-- `CODE_OF_CONDUCT.md` — community standards for participation.
-- `SUPPORT.md` — support scope and where to ask for help.
-- `.github/pull_request_template.md` — pull request checklist for governance, tests, and docs.
+- `.github/pull_request_template.md` — PR evidence checklist used by maintainers/contributors.
 
 ## CI Surface
 
