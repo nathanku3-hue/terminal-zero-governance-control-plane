@@ -156,44 +156,6 @@ def _collect_available_checks(
     return available, None
 
 
-def _emit_phase_b_warnings(fields: dict[str, str]) -> None:
-    """Phase B: Emit warnings for QA/Socratic/WORKFLOW_LANE validation (non-blocking)."""
-
-    # Parse relevant fields
-    qa_required = fields.get("QA_PRE_ESCALATION_REQUIRED", "").strip().upper()
-    qa_verdict = fields.get("QA_VERDICT", "").strip().upper()
-    qa_exception = fields.get("QA_EXCEPTION_APPROVED", "").strip().upper()
-
-    socratic_required = fields.get("SOCRATIC_CHALLENGE_REQUIRED", "").strip().upper()
-    socratic_resolved = fields.get("SOCRATIC_CHALLENGE_RESOLVED", "").strip().upper()
-    socratic_exception = fields.get("SOCRATIC_EXCEPTION_APPROVED", "").strip().upper()
-
-    workflow_lane = fields.get("WORKFLOW_LANE", "").strip().upper()
-
-    # QA Pre-Escalation validation
-    if qa_required == "YES":
-        if qa_exception == "YES":
-            # Exception approved, no warning needed
-            pass
-        elif qa_verdict != "PASS":
-            print("[WARNING] QA_PRE_ESCALATION_REQUIRED=YES but QA_VERDICT is not PASS")
-
-    # Socratic Challenge validation
-    if socratic_required == "YES":
-        if socratic_exception == "YES":
-            # Exception approved, no warning needed
-            pass
-        elif socratic_resolved != "YES":
-            print("[WARNING] SOCRATIC_CHALLENGE_REQUIRED=YES but SOCRATIC_CHALLENGE_RESOLVED is not YES")
-
-    # WORKFLOW_LANE=HIGH_RISK validation
-    if workflow_lane == "HIGH_RISK":
-        if qa_required != "YES":
-            print("[WARNING] WORKFLOW_LANE=HIGH_RISK requires QA_PRE_ESCALATION_REQUIRED=YES")
-        if socratic_required != "YES":
-            print("[WARNING] WORKFLOW_LANE=HIGH_RISK requires SOCRATIC_CHALLENGE_REQUIRED=YES")
-
-
 def _validate_phase_c_requirements(fields: dict[str, str]) -> list[str]:
     """Phase C: Fail-closed validation for QA/Socratic/WORKFLOW_LANE requirements.
 
