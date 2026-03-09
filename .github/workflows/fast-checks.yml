@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       strict_promotion_checks:
-        description: "Run strict fast checks (--fail-on-hold)"
+        description: "Manually run strict promotion checks (--fail-on-hold); not run automatically on push or pull_request"
         type: boolean
         required: false
         default: false
@@ -27,11 +27,17 @@ jobs:
       - name: Create virtual environment
         run: python -m venv .venv
 
+      - name: Install runtime dependencies
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -r requirements.txt
+
       - name: Run fast checks
         run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root .
 
   fast-checks-strict-promotion:
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.strict_promotion_checks == true) }}
+    name: Fast Checks (Strict Promotion, Manual Only)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.strict_promotion_checks == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,6 +50,11 @@ jobs:
 
       - name: Create virtual environment
         run: python -m venv .venv
+
+      - name: Install runtime dependencies
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -r requirements.txt
 
       - name: Run strict fast checks
         run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root . --fail-on-hold

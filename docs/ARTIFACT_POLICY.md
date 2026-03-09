@@ -9,8 +9,9 @@ This policy establishes clear boundaries between source files (committed to vers
 These files represent human-authored logic, templates, and documentation:
 
 - **Scripts**: `scripts/*.py`, `scripts/*.ps1`, `scripts/*.sh`
-- **Tests**: `tests/test_*.py`, `e2e_test/*.py`
-- **Documentation**: `docs/*.md`, `docs/templates/*.md`, `docs/phase_brief/*.md`
+- **Tests**: `tests/**/*.py`
+- **Documentation**: `AGENTS.md`, `OPERATOR_LOOP_GUIDE.md`, `docs/*.md`, `docs/templates/*.md`, `docs/phase_brief/*.md`
+- **Curated repo-root docs**: hand-maintained mirrors such as `THESIS_PULL_LATEST.md` when they are intentionally authored operator docs rather than runtime output
 - **Configuration**: `*.json` (when hand-authored), `*.yaml`, `*.toml`
 - **Skills**: `.codex/skills/**/*`, `skills/**/*`
 
@@ -20,10 +21,19 @@ These files are produced by scripts and represent ephemeral runtime state:
 
 - **Latest state files**: `docs/context/*_latest.json`, `docs/context/*_latest.md`
   - Examples: `exec_memory_packet_latest.json`, `board_decision_brief_latest.md`
-  - Rationale: These are regenerated on every loop cycle and represent current state, not historical record
+  - Rationale: these are regenerated on every loop cycle and represent current state, not historical record
 
-- **Temporary directories**: `.tmp/`, `tmp/`, `temp/`
-  - Used for scratch work, test fixtures, intermediate processing
+- **Generated repo-root convenience mirrors**:
+  - `NEXT_ROUND_HANDOFF_LATEST.md`
+  - `EXPERT_REQUEST_LATEST.md`
+  - `PM_CEO_RESEARCH_BRIEF_LATEST.md`
+  - `BOARD_DECISION_BRIEF_LATEST.md`
+  - `MILESTONE_OPTIMALITY_REVIEW_LATEST.md`
+  - `TAKEOVER_LATEST.md`
+  - These are convenience copies of authoritative artifacts and should not be treated as primary source files
+
+- **Temporary directories**: `.tmp/`, `.tmp_pytest/`, `.ptemp/`, `tmp_test/`, `e2e_test/`
+  - Used for scratch work, transient test repos, exploratory end-to-end fixtures, and intermediate processing
 
 - **Python artifacts**: `__pycache__/`, `*.pyc`, `.pytest_cache/`
 
@@ -31,34 +41,35 @@ These files are produced by scripts and represent ephemeral runtime state:
 
 ## Rationale
 
-1. **Avoid merge conflicts**: Generated artifacts change frequently and mechanically. Committing them creates noise and conflicts when multiple agents or humans work in paral**Single source of truth**: Scripts are the source of truth. Artifacts are derived state. If artifacts are lost, they can be regenerated from source.
-
-3. **Clear intent**: Developers can immediately distinguish between "what the system does" (source) and "what the system produced" (artifacts).
-
-4. **Audit trail**: Historical artifacts (e.g., `docs/context/phase_end_logs/*.md`) are committed because they represent point-in-time snapshots for audit purposes, not current state.
+1. **Avoid merge conflicts**: generated artifacts change frequently and mechanically. Committing them creates noise and conflicts when multiple agents or humans work in parallel.
+2. **Single source of truth**: scripts, tests, and hand-authored docs are the source of truth. Runtime artifacts are derived state and should be regenerated when needed.
+3. **Clear intent**: contributors should be able to distinguish between what the system is (`scripts/`, `tests/`, contracts, runbooks) and what the system most recently produced (`docs/context/*_latest.*`, repo-root convenience mirrors).
+4. **Historical records are selective exceptions**: some dated artifacts are intentionally committed as audit records, but current-state mirrors should not crowd the repo surface.
+5. **Filename alone is not enough**: `_LATEST` in a filename does not automatically make a file generated. Commit status depends on whether the file is curated source documentation or machine-produced state.
 
 ## Exceptions
 
-Some generated files ARE committed when they serve as historical records:
+Some generated files are committed when they serve as historical records:
 
-- **Phase end logs**: `docs/context/phase_end_logs/phase_end_handover_summary_*.md`
+- **Phase-end logs**: timestamped files under `docs/context/phase_end_logs/` when intentionally retained for audit history
 - **Weekly summaries**: `docs/context/ceo_weekly_summary_YYYYMMDD.md`
-- **Audit records**: Files with timestamps that represent completed milestones
-
-The key distinction: if it has a timestamp and represents a completed event, it's a record (commit it). If it has `_latest` in the name, it's ephemeral state (ignore it).
+- **Completed milestone records**: dated artifacts that capture a finished event rather than mutable current state
+- **Curated operator mirrors**: `THESIS_PULL_LATEST.md` remains committed because it is currently maintained as a thin human-authored operator document, not an auto-generated loop artifact
 
 ## Verification
 
 To verify this policy is working:
 
-```bash
-# Check that _latest files are ignored
-git status | grep -i latest
-# Should return nothing
+```powershell
+# Generated convenience mirrors and _latest state should be ignored
+git check-ignore NEXT_ROUND_HANDOFF_LATEST.md TAKEOVER_LATEST.md docs/context/exec_memory_packet_latest.json
 
-# Check that source files are tracked
-git ls-files scripts/ tests/ docs/*.md
-# Should show all source files
+# Source docs should not be ignored
+git check-ignore OPERATOR_LOOP_GUIDE.md
+# `git check-ignore` should print nothing and exit non-zero for this path
+
+# Scratch/e2e sandbox content should be ignored
+git check-ignore e2e_test\example_test.py
 ```
 
 ## Maintenance
@@ -66,4 +77,4 @@ git ls-files scripts/ tests/ docs/*.md
 When adding new generated artifacts:
 1. Add the pattern to `.gitignore`
 2. Document the rationale in this file
-3. Verify with `git status` that existing artifacts are now ignored
+3. Verify with `git check-ignore` and `git status --short` that the behavior matches the intended boundary

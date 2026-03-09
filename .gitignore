@@ -5,7 +5,7 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Local temp artifacts
+# Local temp artifacts / scratch repos
 .tmp/
 .tmp_pytest/
 .ptemp/
@@ -22,7 +22,7 @@ EXPERT_REQUEST_LATEST.md
 PM_CEO_RESEARCH_BRIEF_LATEST.md
 BOARD_DECISION_BRIEF_LATEST.md
 MILESTONE_OPTIMALITY_REVIEW_LATEST.md
-OPERATOR_LOOP_GUIDE.md
+TAKEOVER_LATEST.md
 
 # OS
 .DS_Store

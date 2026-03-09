@@ -1,0 +1,29 @@
+name: Full Test Suite
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  full-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install development dependencies
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Run full test suite
+        run: ./.venv/bin/python -m pytest -q
