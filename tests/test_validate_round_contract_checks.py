@@ -281,3 +281,120 @@ def test_large_change_scope_passes_with_boundary_and_manifest_refs(tmp_path: Pat
     result = _run(round_md, loop_json, closure_json)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "[OK] DONE_WHEN_CHECKS validation passed." in result.stdout
+
+
+# Phase B: QA/Socratic/WORKFLOW_LANE validation tests (warning mode)
+
+
+def test_phase_b_qa_required_missing_verdict_emits_warning(tmp_path: Path) -> None:
+    """Phase B: QA_PRE_ESCALATION_REQUIRED=YES with missing QA_VERDICT should warn, not fail."""
+    round_md = tmp_path / "docs" / "context" / "round_contract_latest.md"
+    loop_json = tmp_path / "docs" / "context" / "loop_cycle_summary_latest.json"
+    closure_json = tmp_path / "docs" / "context" / "loop_closure_status_latest.json"
+
+    _write_text(
+        round_md,
+        "\n".join([
+            "# Round Contract",
+            "- DECISION_CLASS: TWO_WAY",
+            "- RISK_TIER: MEDIUM",
+            "- QA_PRE_ESCALATION_REQUIRED: YES",
+            "- QA_VERDICT: N/A",
+            "- DONE_WHEN_CHECKS: refresh_dossier",
+            "",
+        ]),
+    )
+    _write_json(loop_json, {"steps": [{"name": "refresh_dossier"}]})
+    _write_json(closure_json, {"checks": []})
+
+    result = _run(round_md, loop_json, closure_json)
+    # Phase B: Should pass with warning, not fail
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[WARNING]" in result.stdout
+    assert "QA_PRE_ESCALATION_REQUIRED=YES but QA_VERDICT is not PASS" in result.stdout
+
+
+
+def test_phase_b_qa_exception_approved_bypasses_warning(tmp_path: Path) -> None:
+    """Phase B: QA_EXCEPTION_APPROVED=YES should bypass QA warning."""
+    round_md = tmp_path / "docs" / "context" / "round_contract_latest.md"
+    loop_json = tmp_path / "docs" / "context" / "loop_cycle_summary_latest.json"
+    closure_json = tmp_path / "docs" / "context" / "loop_closure_status_latest.json"
+
+    _write_text(
+        round_md,
+        "\n".join([
+            "# Round Contract",
+            "- DECISION_CLASS: TWO_WAY",
+            "- RISK_TIER: MEDIUM",
+            "- QA_PRE_ESCALATION_REQUIRED: YES",
+            "- QA_VERDICT: BLOCK",
+            "- QA_EXCEPTION_APPROVED: YES",
+            "- QA_EXCEPTION_RATIONALE: PM approved exception for time-critical fix",
+            "- DONE_WHEN_CHECKS: refresh_dossier",
+            "",
+        ]),
+    )
+    _write_json(loop_json, {"steps": [{"name": "refresh_dossier"}]})
+    _write_json(closure_json, {"checks": []})
+
+    result = _run(round_md, loop_json, closure_json)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[OK] DONE_WHEN_CHECKS validation passed." in result.stdout
+
+
+def test_phase_b_socratic_required_missing_resolved_emits_warning(tmp_path: Path) -> None:
+    """Phase B: SOCRATIC_CHALLENGE_REQUIRED=YES with missing RESOLVED should warn, not fail."""
+    round_md = tmp_path / "docs" / "context" / "round_contract_latest.md"
+    loop_json = tmp_path / "docs" / "context" / "loop_cycle_summary_latest.json"
+    closure_json = tmp_path / "docs" / "context" / "loop_closure_status_latest.json"
+
+    _write_text(
+        round_md,
+        "\n".join([
+            "# Round Contract",
+            "- DECISION_CLASS: TWO_WAY",
+            "- RISK_TIER: MEDIUM",
+            "- SOCRATIC_CHALLENGE_REQUIRED: YES",
+            "- SOCRATIC_CHALLENGE_RESOLVED: NO",
+            "- SOCRATIC_CHALLENGE_UNRESOLVED_COUNT: 3",
+            "- DONE_WHEN_CHECKS: refresh_dossier",
+            "",
+        ]),
+    )
+    _write_json(loop_json, {"steps": [{"name": "refresh_dossier"}]})
+    _write_json(closure_json, {"checks": []})
+
+    result = _run(round_md, loop_json, closure_json)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[WARNING]" in result.stdout
+    assert "SOCRATIC_CHALLENGE_REQUIRED=YES but SOCRATIC_CHALLENGE_RESOLVED is not YES" in result.stdout
+
+
+def test_phase_b_workflow_lane_high_risk_triggers_warnings(tmp_path: Path) -> None:
+    """Phase B: WORKFLOW_LANE=HIGH_RISK should trigger QA/Socratic warnings if missing."""
+    round_md = tmp_path / "docs" / "context" / "round_contract_latest.md"
+    loop_json = tmp_path / "docs" / "context" / "loop_cycle_summary_latest.json"
+    closure_json = tmp_path / "docs" / "context" / "loop_closure_status_latest.json"
+
+    _write_text(
+        round_md,
+        "\n".join([
+            "# Round Contract",
+            "- DECISION_CLASS: TWO_WAY",
+            "- RISK_TIER: LOW",
+            "- WORKFLOW_LANE: HIGH_RISK",
+            "- QA_PRE_ESCALATION_REQUIRED: NO",
+            "- SOCRATIC_CHALLENGE_REQUIRED: NO",
+            "- DONE_WHEN_CHECKS: refresh_dossier",
+            "",
+        ]),
+    )
+    _write_json(loop_json, {"steps": [{"name": "refresh_dossier"}]})
+    _write_json(closure_json, {"checks": []})
+
+    result = _run(round_md, loop_json, closure_json)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[WARNING]" in result.stdout
+    assert "WORKFLOW_LANE=HIGH_RISK requires QA_PRE_ESCALATION_REQUIRED=YES" in result.stdout
+    assert "WORKFLOW_LANE=HIGH_RISK requires SOCRATIC_CHALLENGE_REQUIRED=YES" in result.stdout
