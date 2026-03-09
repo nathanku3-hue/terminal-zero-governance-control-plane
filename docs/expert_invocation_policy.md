@@ -28,12 +28,15 @@
 
 | Expert | Scope | NOT in Scope |
 |--------|-------|--------------|
+| **socratic_investigator** | Assumption challenges, false confidence detection, pre-execution risk probing, counterexample generation | Implementation details, post-execution review, architecture decisions |
 | **principal** | Architecture decisions, design patterns, system-level trade-offs | Implementation details, routine fixes |
 | **system_eng** | Integration, gate orchestration, workflow design | Single-script changes, business logic |
 | **riskops** | Infra health, fail-closed validation, FP rate tracking | Business logic, UI, general code quality |
-| **qa** | Test coverage, edge cases, validation scenarios | Implementation code, architecture |
+| **qa** | Test coverage, edge cases, validation scenarios, pre-escalation quality review | Implementation code, architecture |
 | **devsecops** | Security vulnerabilities, access control, audit trails | General code quality, performance |
 | **architect** | Component design, module boundaries, API contracts | Implementation details, system-level decisions |
+
+**Note:** Socratic Investigator and QA are advisory roles that gate readiness operationally but do not have veto authority. PM/CEO can approve exceptions via QA_EXCEPTION_APPROVED or SOCRATIC_EXCEPTION_APPROVED.
 
 ---
 
@@ -353,11 +356,43 @@ Verdict: PASS
 - Edge case validation needed
 - Test coverage gaps identified
 - Complex validation scenarios
+- **Mandatory pre-escalation evidence when RISK_TIER=HIGH or DECISION_CLASS=ONE_WAY or WORKFLOW_LANE=HIGH_RISK (Phase B/C enforcement target)**
 
 **NOT triggered by:**
 - Implementation code
 - Architecture decisions
 - Minor test updates
+- LOW risk + TWO_WAY decisions with adequate coverage (unless WORKFLOW_LANE=HIGH_RISK)
+
+**Pre-Escalation Evidence Requirements (Phase B/C enforcement target):**
+- When QA_PRE_ESCALATION_REQUIRED=YES, Worker must obtain QA_VERDICT=PASS before CEO escalation
+- QA provides advisory findings; PM/CEO can approve QA_EXCEPTION_APPROVED=YES with rationale to bypass gate
+- **Phase A rollout state:** Fields are present in contract template; fail-closed enforcement begins in Phase C
+
+### Socratic Investigator
+**Trigger conditions:**
+- DECISION_CLASS=ONE_WAY (Phase B/C enforcement target)
+- RISK_TIER=HIGH (Phase B/C enforcement target)
+- WORKFLOW_LANE=HIGH_RISK (Phase B/C enforcement target)
+- Worker explicit request (SOCRATIC_CHALLENGE_REQUEST=YES)
+- Auditor flags potential false confidence in pre-execution capture
+
+**NOT triggered by:**
+- Implementation details
+- Post-execution review
+- Architecture decisions
+- LOW risk + TWO_WAY decisions (unless WORKFLOW_LANE=HIGH_RISK or explicit request)
+
+**Challenge Protocol:**
+- Socratic Investigator poses assumption challenges using standard template (5 questions)
+- Worker must provide evidence/mitigation for each challenge
+- If SOCRATIC_CHALLENGE_UNRESOLVED_COUNT >= 2, escalate to PM/Auditor for scope clarification
+- PM/CEO can approve SOCRATIC_EXCEPTION_APPROVED=YES with rationale to bypass gate
+
+**Authority Boundary:**
+- Socratic Investigator is advisory-only; cannot veto execution directly
+- Creates operational gate (SOCRATIC_CHALLENGE_RESOLVED=YES) but not decision authority
+- **Phase A rollout state:** Fields are present in contract template; fail-closed enforcement begins in Phase C
 
 ### DevSecOps
 **Trigger conditions:**

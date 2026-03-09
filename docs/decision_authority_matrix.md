@@ -29,6 +29,14 @@ Use this matrix for:
 | **Exception Approval** | PM | Expert cap exceptions, policy overrides, prioritization, resource allocation | Worker, Auditor | CEO (strategic override) |
 | **Milestone Expert Lineup** | PM/CEO | Approve milestone domain roster, reentry triggers, and additions when `ROSTER_MISSING` / `UNKNOWN_EXPERT_DOMAIN` is emitted | Worker, Auditor | CEO (final authority) |
 | **Strategic Direction** | CEO | GO/HOLD/REFRAME decisions, promotion approval, unresolved escalations, policy changes | Worker, Auditor, PM | None (final authority) |
+| **QA Pre-Escalation Verdict** | QA (advisory) | Test coverage analysis, edge case validation, quality findings before CEO escalation | Worker (cannot self-override QA BLOCK without exception) | PM (can approve QA_EXCEPTION_APPROVED with rationale), CEO (final authority) |
+| **Socratic Challenge Resolution** | Socratic Investigator (advisory) | Assumption challenges, false confidence detection, pre-execution risk probing | Worker (cannot proceed with 2+ unresolved challenges without exception) | Auditor (escalates if 2+ unresolved), PM (can approve SOCRATIC_EXCEPTION_APPROVED or scope clarification), CEO (final authority) |
+
+**Authority Clarification for QA and Socratic Investigator:**
+- Both roles are **advisory** and gate readiness **operationally** but do not have veto authority in the decision authority hierarchy.
+- QA findings and Socratic challenges create operational gates (QA_VERDICT=PASS, SOCRATIC_CHALLENGE_RESOLVED=YES) that must be satisfied before CEO escalation.
+- PM/CEO can approve exceptions via `QA_EXCEPTION_APPROVED=YES` or `SOCRATIC_EXCEPTION_APPROVED=YES` with explicit rationale to bypass the operational gate while maintaining the advisory authority structure.
+- Worker cannot self-override QA BLOCK or proceed with 2+ unresolved Socratic challenges without PM/CEO exception approval.
 
 ---
 

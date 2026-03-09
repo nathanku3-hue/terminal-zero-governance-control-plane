@@ -705,3 +705,168 @@ def test_startup_helper_fails_for_invalid_intuition_gate(tmp_path: Path) -> None
 
     assert result.returncode == 1
     assert "intuition_gate(invalid; use MACHINE_DEFAULT|HUMAN_REQUIRED)" in result.stderr
+
+
+def test_phase_a_workflow_lane_field_appears_in_seed(tmp_path: Path) -> None:
+    """Phase A: Verify WORKFLOW_LANE field appears in round contract seed."""
+    _touch_files(tmp_path)
+
+    output_round_seed = tmp_path / "docs/context/round_contract_seed_latest.md"
+
+    result = _run(
+        tmp_path,
+        "--output-round-seed",
+        str(output_round_seed),
+        "--no-interactive",
+        "--original-intent",
+        "Test Phase A WORKFLOW_LANE field",
+        "--deliverable-this-scope",
+        "Verify WORKFLOW_LANE appears in seed",
+        "--non-goals",
+        "none",
+        "--done-when",
+        "Field visible in seed",
+        "--positioning-lock",
+        "Test only",
+        "--task-granularity-limit",
+        "1",
+        "--decision-class",
+        "TWO_WAY",
+        "--execution-lane",
+        "STANDARD",
+        "--workflow-lane",
+        "HIGH_RISK",
+        "--intuition-gate",
+        "MACHINE_DEFAULT",
+        "--intuition-gate-rationale",
+        "Test run",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    seed_text = output_round_seed.read_text(encoding="utf-8")
+    assert "WORKFLOW_LANE: HIGH_RISK" in seed_text
+    assert "WORKFLOW_LANE_RATIONALE: TODO" in seed_text
+
+
+def test_phase_a_qa_socratic_request_fields_appear_in_seed(tmp_path: Path) -> None:
+    """Phase A: Verify QA and Socratic request fields appear in round contract seed."""
+    _touch_files(tmp_path)
+
+    output_round_seed = tmp_path / "docs/context/round_contract_seed_latest.md"
+    output_json = tmp_path / "docs/context/startup_intake_latest.json"
+
+    result = _run(
+        tmp_path,
+        "--output-round-seed",
+        str(output_round_seed),
+        "--output-json",
+        str(output_json),
+        "--no-interactive",
+        "--original-intent",
+        "Test Phase A QA/Socratic fields",
+        "--deliverable-this-scope",
+        "Verify QA_PRE_ESCALATION_REQUEST and SOCRATIC_CHALLENGE_REQUEST appear",
+        "--non-goals",
+        "none",
+        "--done-when",
+        "Fields visible",
+        "--positioning-lock",
+        "Test only",
+        "--task-granularity-limit",
+        "1",
+        "--decision-class",
+        "ONE_WAY",
+        "--execution-lane",
+        "STANDARD",
+        "--workflow-lane",
+        "DEFAULT",
+        "--qa-pre-escalation-request",
+        "YES",
+        "--socratic-challenge-request",
+        "YES",
+        "--intuition-gate",
+        "MACHINE_DEFAULT",
+        "--intuition-gate-rationale",
+        "Test run",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    
+    seed_text = output_round_seed.read_text(encoding="utf-8")
+    assert "QA_PRE_ESCALATION_REQUEST: YES" in seed_text
+    assert "SOCRATIC_CHALLENGE_REQUEST: YES" in seed_text
+    
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    assert payload["interrogation"]["workflow_lane"] == "DEFAULT"
+    assert payload["interrogation"]["qa_pre_escalation_request"] == "YES"
+    assert payload["interrogation"]["socratic_challenge_request"] == "YES"
+
+
+def test_phase_a_workflow_lane_validation_rejects_invalid_values(tmp_path: Path) -> None:
+    """Phase A: Verify WORKFLOW_LANE validation rejects invalid values."""
+    _touch_files(tmp_path)
+
+    result = _run(
+        tmp_path,
+        "--no-interactive",
+        "--original-intent",
+        "Test validation",
+        "--deliverable-this-scope",
+        "Verify validation",
+        "--non-goals",
+        "none",
+        "--done-when",
+        "Validation works",
+        "--positioning-lock",
+        "Test only",
+        "--task-granularity-limit",
+        "1",
+        "--decision-class",
+        "TWO_WAY",
+        "--execution-lane",
+        "STANDARD",
+        "--workflow-lane",
+        "INVALID_LANE",
+        "--intuition-gate",
+        "MACHINE_DEFAULT",
+   "--intuition-gate-rationale",
+        "Test run",
+    )
+
+    assert result.returncode == 1
+    assert "workflow_lane(invalid; use DEFAULT|PROTOTYPE|HIGH_RISK|MILESTONE_REVIEW)" in result.stderr
+
+
+def test_phase_a_qa_request_validation_rejects_invalid_values(tmp_path: Path) -> None:
+    """Phase A: Verify QA_PRE_ESCALATION_REQUEST validation rejects invalid values."""
+    _touch_files(tmp_path)
+
+    result = _run(
+        tmp_path,
+        "--no-interactive",
+        "--original-intent",
+        "Test validation",
+        "--deliverable-this-scope",
+        "Verify validation",
+        "--non-goals",
+        "none",
+        "--done-when",
+        "Validation works",
+        "--positioning-lock",
+        "Test only",
+        "--task-granularity-limit",
+        "1",
+        "--decision-class",
+        "TWO_WAY",
+        "--execution-lane",
+        "STANDARD",
+        "--qa-pre-escalation-request",
+        "MAYBE",
+        "--intuition-gate",
+        "MACHINE_DEFAULT",
+        "--intuition-gate-rationale",
+        "Test run",
+    )
+
+    assert result.returncode == 1
+    assert "qa_pre_escalation_request(invalid; use YES|NO)" in result.stderr

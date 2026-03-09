@@ -29,6 +29,11 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 - `MOCK_POLICY_MODE=STRICT` requires non-empty `MOCKED_DEPENDENCIES` and `INTEGRATION_COVERAGE_FOR_MOCKS=YES`.
 - `MOCK_POLICY_MODE=NOT_APPLICABLE` requires `INTEGRATION_COVERAGE_FOR_MOCKS=N/A`.
 - If `RISK_TIER=HIGH` or `DECISION_CLASS=ONE_WAY`, `COUNTEREXAMPLE_TEST_*` must be executable evidence (not `N/A`) and dual-judge evidence is required before escalation.
+- If `RISK_TIER=HIGH` or `DECISION_CLASS=ONE_WAY` or `WORKFLOW_LANE=HIGH_RISK`, QA pre-escalation is required (`QA_PRE_ESCALATION_REQUIRED=YES` and `QA_VERDICT=PASS`) unless `QA_EXCEPTION_APPROVED=YES` with rationale. (Phase B/C enforcement target; Phase A: fields present but not fail-closed)
+- If `DECISION_CLASS=ONE_WAY` or `RISK_TIER=HIGH` or `WORKFLOW_LANE=HIGH_RISK`, Socratic challenge is required (`SOCRATIC_CHALLENGE_REQUIRED=YES` and `SOCRATIC_CHALLENGE_RESOLVED=YES`) unless `SOCRATIC_EXCEPTION_APPROVED=YES` with rationale. (Phase B/C enforcement target; Phase A: fields present but not fail-closed)
+- If `WORKFLOW_LANE=MILESTONE_REVIEW`, `INTUITION_GATE=HUMAN_REQUIRED` is mandatory.
+- If `WORKFLOW_LANE=PROTOTYPE` and `RISK_TIER=LOW` and `DECISION_CLASS=TWO_WAY`, QA/Socratic requirements may be relaxed (does NOT relax TDD/mock/closure gates).
+- `WORKFLOW_LANE` is optional during Phase A rollout; defaults to `DEFAULT` if not specified.
 - `DONE_WHEN_CHECKS` entries must resolve to `PASS` in latest closure/cycle outputs before escalation.
 - Allowed closure check IDs include: `go_signal_action_gate`, `tdd_contract_gate`, `freshness_gate`, `go_signal_truth_gate`, `weekly_summary_truth_gate`, `exec_memory_truth_gate`, and required artifact checks.
 - If `INTUITION_GATE=HUMAN_REQUIRED`, execution cannot start until PM/CEO acknowledgment is recorded (`INTUITION_GATE_ACK` + `INTUITION_GATE_ACK_AT_UTC`).
@@ -81,12 +86,22 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 - DECISION_CLASS_RATIONALE: `<one line on reversibility and blast radius>`
 - EXECUTION_LANE: `STANDARD` or `FAST`
 - RISK_TIER: `LOW` or `MEDIUM` or `HIGH`
+- WORKFLOW_LANE: `DEFAULT` or `PROTOTYPE` or `HIGH_RISK` or `MILESTONE_REVIEW` (optional in Phase A rollout; defaults to DEFAULT if not specified)
+- WORKFLOW_LANE_RATIONALE: `<one line on why this governance lane is appropriate>`
 - FAST_LANE_REQUEST: `YES` or `NO`
 - FAST_LANE_ELIGIBILITY_LOC_LE_20: `YES/NO`
 - FAST_LANE_ELIGIBILITY_FILES_LE_2: `YES/NO`
 - FAST_LANE_ELIGIBILITY_NO_SCHEMA_API_CHANGE: `YES/NO`
 - FAST_LANE_ELIGIBILITY_NO_SECURITY_COMPLIANCE_IMPACT: `YES/NO`
 - FAST_LANE_ELIGIBILITY_NO_NEW_DEP_OR_INFRA: `YES/NO`
+
+**WORKFLOW_LANE Definitions:**
+- `DEFAULT`: Standard governance (no extra gates beyond RISK_TIER/DECISION_CLASS)
+- `PROTOTYPE`: Experimental/spike work (relaxed QA/Socratic for LOW+TWO_WAY only; does NOT relax TDD/mock/closure gates)
+- `HIGH_RISK`: Extra scrutiny (mandatory QA + Socratic, regardless of RISK_TIER)
+- `MILESTONE_REVIEW`: End-of-phase checkpoint (mandatory PM/CEO pre-approval via INTUITION_GATE=HUMAN_REQUIRED)
+
+**Note:** WORKFLOW_LANE is orthogonal to EXECUTION_LANE. EXECUTION_LANE controls speed/strictness (STANDARD vs FAST), while WORKFLOW_LANE controls governance/review requirements.
 
 ### 5) Scope Boundaries
 - NON_GOALS: `<explicit out-of-scope list>`
@@ -110,10 +125,56 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 - REFACTOR_BUDGET_EXCEEDED_REASON: `<required only if spend exceeds budget; else N/A>`
 - STOP_CONDITION: `<what causes immediate stop/escalation>`
 
+### 6a) QA Pre-Escalation Gate
+- QA_PRE_ESCALATION_REQUIRED: `YES` or `NO`
+- QA_PRE_ESCALATION_TRIGGER: `<high_risk|one_way|workflow_lane_high_risk|worker_request|none>`
+- QA_PRE_ESCALATION_REQUEST: `YES` or `NO` (worker explicit request)
+- QA_VERDICT: `PASS` or `BLOCK` or `N/A`
+- QA_FINDINGS: `<list of test coverage/edge case findings, or none>`
+- QA_REVIEWED_AT_UTC: `<ISO8601 or N/A>`
+- QA_REVIEWER_ID: `<qa_agent_name or N/A>`
+- QA_EXCEPTION_APPROVED: `YES` or `NO` (PM/CEO can approve exception to QA gate)
+- QA_EXCEPTION_RATIONALE: `<one line rationale if exception approved, else N/A>`
+
+**QA Pre-Escalation Rules:**
+- REQUIRED when: `RISK_TIER=HIGH` OR `DECISION_CLASS=ONE_WAY` OR `WORKFLOW_LANE=HIGH_RISK` (Phase B/C enforcement target)
+- OPTIONAL when: Worker explicitly requests (`QA_PRE_ESCALATION_REQUEST=YES`)
+- SKIPPED when: `RISK_TIER=LOW` AND `DECISION_CLASS=TWO_WAY` AND `WORKFLOW_LANE!=HIGH_RISK` and no explicit request
+- Exception path: PM/CEO can approve `QA_EXCEPTION_APPROVED=YES` with rationale to bypass QA gate operationally while maintaining advisory authority structure
+- **Phase A rollout state:** Fields are present and validated; fail-closed enforcement begins in Phase C
+
 ### 7) Pre-Execution Disagreement Capture
 - PRE_EXEC_DISAGREEMENT_CAPTURE: `<none or list: D-code | disagreement_risk | owner | due_utc>`
 - PRE_EXEC_CAPTURED_AT_UTC: `<ISO8601, must be before first execution command>`
 - PRE_EXEC_ALIGNMENT_ACK: `WORKER_ACK` and `AUDITOR_ACK`
+
+### 7a) Socratic Investigator Challenge
+- SOCRATIC_CHALLENGE_REQUIRED: `YES` or `NO`
+- SOCRATIC_CHALLENGE_TRIGGER: `<one_way|high_risk|workflow_lane_high_risk|worker_request|none>`
+- SOCRATIC_CHALLENGE_REQUEST: `YES` or `NO` (worker explicit request)
+- SOCRATIC_CHALLENGE_QUESTIONS: `<numbered list of assumption challenges>`
+- SOCRATIC_CHALLENGE_RESPONSES: `<numbered list of worker responses with evidence>`
+- SOCRATIC_CHALLENGE_RESOLVED: `YES` or `NO`
+- SOCRATIC_CHALLENGE_UNRESOLVED_COUNT: `<number of unresolved challenges>`
+- SOCRATIC_INVESTIGATOR_ID: `<investigator_agent_name or N/A>`
+- SOCRATIC_CHALLENGE_AT_UTC: `<ISO8601 or N/A>`
+- SOCRATIC_EXCEPTION_APPROVED: `YES` or `NO` (PM/CEO can approve exception to Socratic gate)
+- SOCRATIC_EXCEPTION_RATIONALE: `<one line rationale if exception approved, else N/A>`
+
+**Socratic Challenge Rules:**
+- REQUIRED when: `DECISION_CLASS=ONE_WAY` OR `RISK_TIER=HIGH` OR `WORKFLOW_LANE=HIGH_RISK` (Phase B/C enforcement target)
+- OPTIONAL when: Worker explicitly requests (`SOCRATIC_CHALLENGE_REQUEST=YES`)
+- Authority: Socratic Investigator is advisory-only; cannot veto execution directly
+- Escalation: If `SOCRATIC_CHALLENGE_UNRESOLVED_COUNT >= 2`, escalate to PM/Auditor for scope clarification
+- Exception path: PM/CEO can approve `SOCRATIC_EXCEPTION_APPROVED=YES` with rationale to bypass Socratic gate operationally while maintaining advisory authority structure
+- **Phase A rollout state:** Fields are present and validated; fail-closed enforcement begins in Phase C
+
+**Challenge Questions Template:**
+1. "What would make this approach fail catastrophically?"
+2. "What assumption, if wrong, would invalidate the entire deliverable?"
+3. "What evidence would disprove your confidence level?"
+4. "What's the strongest counterargument to your positioning lock?"
+5. "What are you NOT testing that could break in production?"
 
 ### 8) Evidence Plan
 - EVIDENCE_REQUIRED: `<tests, logs, artifacts required>`

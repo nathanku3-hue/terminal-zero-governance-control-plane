@@ -516,6 +516,19 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
             else:
                 interrogation["task_granularity_limit"] = granularity
 
+    # Phase A: New fields are optional but validated if present
+    workflow_lane = str(interrogation.get("workflow_lane", "DEFAULT")).strip()
+    if workflow_lane and workflow_lane not in {"DEFAULT", "PROTOTYPE", "HIGH_RISK", "MILESTONE_REVIEW"}:
+        errors.append("workflow_lane(invalid; use DEFAULT|PROTOTYPE|HIGH_RISK|MILESTONE_REVIEW)")
+
+    qa_request = str(interrogation.get("qa_pre_escalation_request", "NO")).strip().upper()
+    if qa_request and qa_request not in {"YES", "NO"}:
+        errors.append("qa_pre_escalation_request(invalid; use YES|NO)")
+
+    socratic_request = str(interrogation.get("socratic_challenge_request", "NO")).strip().upper()
+    if socratic_request and socratic_request not in {"YES", "NO"}:
+        errors.append("socratic_challenge_request(invalid; use YES|NO)")
+
     return errors
 
 
@@ -798,6 +811,10 @@ def _render_round_contract_seed(payload: dict[str, Any]) -> str:
         f"- DECISION_CLASS: {interrogation['decision_class']}",
         "- RISK_TIER: TODO(LOW|MEDIUM|HIGH)",
         f"- EXECUTION_LANE: {interrogation['execution_lane']}",
+        f"- WORKFLOW_LANE: {interrogation.get('workflow_lane', 'DEFAULT')}",
+        f"- WORKFLOW_LANE_RATIONALE: TODO(one line on why this governance lane is appropriate)",
+        f"- QA_PRE_ESCALATION_REQUEST: {interrogation.get('qa_pre_escalation_request', 'NO')}",
+        f"- SOCRATIC_CHALLENGE_REQUEST: {interrogation.get('socratic_challenge_request', 'NO')}",
         f"- INTUITION_GATE: {interrogation['intuition_gate']}",
         f"- INTUITION_GATE_RATIONALE: {interrogation['intuition_gate_rationale']}",
         f"- PROJECT_PROFILE: {domain_bucket_bootstrap['project_profile']}",
@@ -959,6 +976,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task-granularity-limit", type=str, default="")
     parser.add_argument("--decision-class", type=str, default="")
     parser.add_argument("--execution-lane", type=str, default="")
+    parser.add_argument(
+        "--workflow-lane",
+        type=str,
+        default="DEFAULT",
+        help="Governance lane: DEFAULT, PROTOTYPE, HIGH_RISK, or MILESTONE_REVIEW (Phase A: optional)",
+    )
+    parser.add_argument(
+        "--qa-pre-escalation-request",
+        type=str,
+        default="NO",
+        help="Worker explicit request for QA pre-escalation review (YES or NO)",
+    )
+    parser.add_argument(
+        "--socratic-challenge-request",
+        type=str,
+        default="NO",
+        help="Worker explicit request for Socratic assumption challenge (YES or NO)",
+    )
     parser.add_argument("--intuition-gate", type=str, default="")
     parser.add_argument("--intuition-gate-rationale", type=str, default="")
     parser.add_argument(
@@ -1073,6 +1108,21 @@ def main() -> int:
         "execution_lane": _prompt_or_value(
             current=args.execution_lane,
             prompt="EXECUTION_LANE (STANDARD|FAST): ",
+            no_interactive=args.no_interactive,
+        ),
+        "workflow_lane": _prompt_or_value(
+            current=args.workflow_lane,
+            prompt="WORKFLOW_LANE (DEFAULT|PROTOTYPE|HIGH_RISK|MILESTONE_REVIEW): ",
+            no_interactive=args.no_interactive,
+        ),
+        "qa_pre_escalation_request": _prompt_or_value(
+            current=args.qa_pre_escalation_request,
+            prompt="QA_PRE_ESCALATION_REQUEST (YES|NO): ",
+            no_interactive=args.no_interactive,
+        ),
+        "socratic_challenge_request": _prompt_or_value(
+            current=args.socratic_challenge_request,
+            prompt="SOCRATIC_CHALLENGE_REQUEST (YES|NO): ",
             no_interactive=args.no_interactive,
         ),
         "intuition_gate": _prompt_or_value(
