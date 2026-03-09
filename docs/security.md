@@ -1,7 +1,13 @@
-# Security Operations Policy
+# Security Operations Policy (Internal Companion)
 
 ## Purpose
-Define mandatory security controls for loop operations in `quant_current_scope` with fail-closed behavior.
+Define mandatory internal security controls for loop operations in this repository with fail-closed behavior.
+
+## Relationship to Root `SECURITY.md`
+- Root `SECURITY.md` is the public disclosure entrypoint for external reporters.
+- This file is the internal operator/worker/auditor security operations companion.
+- If there is any wording tension, use root `SECURITY.md` for external disclosure flow and this file for internal execution controls.
+- This file does not define a bug bounty program or SLA commitment.
 
 ## Scope
 - Applies to Worker, Auditor, and Operator actions in this repo.

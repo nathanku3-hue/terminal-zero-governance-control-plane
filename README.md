@@ -96,7 +96,16 @@ For authoritative source material, start with:
 - `OPERATOR_LOOP_GUIDE.md` — concise operator command sequence and expected outputs.
 - `docs/runbook_ops.md` — detailed operating runbook.
 - `docs/loop_operating_contract.md` — current governance contract and authority model.
+- `SECURITY.md` — public vulnerability disclosure policy for external reporters.
 - `docs/security.md` — internal security operations policy.
+
+## Contributing and Community
+
+- `CONTRIBUTING.md` — development workflow, contribution expectations, and validation checklist.
+- `GOVERNANCE.md` — project decision model and maintainer responsibilities.
+- `CODE_OF_CONDUCT.md` — community standards for participation.
+- `SUPPORT.md` — support scope and where to ask for help.
+- `.github/pull_request_template.md` — pull request checklist for governance, tests, and docs.
 
 ## CI Surface
 
