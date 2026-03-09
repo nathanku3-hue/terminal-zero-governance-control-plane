@@ -12,6 +12,24 @@ from datetime import timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.utils.atomic_io import atomic_write_text
+except ModuleNotFoundError:
+    # Fallback for direct script execution
+    def atomic_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=".tmp_", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding=encoding, newline="\n") as handle:
+                handle.write(content)
+            os.replace(tmp_path, path)
+        except Exception:
+            try:
+                os.unlink(tmp_path)
+            except FileNotFoundError:
+                pass
+            raise
+
 GO_ACTION_PATTERN = re.compile(
     r"^\s*-\s*Recommended Action:\s*([A-Za-z_]+)\s*$",
     re.IGNORECASE,
@@ -39,21 +57,6 @@ def _resolve_path(repo_root: Path, candidate: Path) -> Path:
     if candidate.is_absolute():
         return candidate
     return repo_root / candidate
-
-
-def _atomic_write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=".tmp_", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-        os.replace(tmp_path, path)
-    except Exception:
-        try:
-            os.unlink(tmp_path)
-        except FileNotFoundError:
-            pass
-        raise
 
 
 def _safe_load_json_object(path: Path) -> tuple[dict[str, Any] | None, str | None]:
@@ -687,8 +690,8 @@ def main(argv: list[str] | None = None) -> int:
                 cycle_index=cycle,
             )
             markdown = _build_alerts_markdown(payload)
-            _atomic_write_text(status_output, json.dumps(payload, indent=2) + "\n")
-            _atomic_write_text(alerts_output, markdown)
+            atomic_write_text(status_output, json.dumps(payload, indent=2) + "\n")
+            atomic_write_text(alerts_output, markdown)
             any_critical = any_critical or critical_found
 
             if cycle < args.max_cycles and args.check_interval_seconds > 0:

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-03-07T05:50:29.735440Z",
+  "generated_utc": "2026-03-09T07:54:59Z",
   "workers": [],
   "summary": {
     "total_workers": 0,
@@ -8,5 +8,6 @@
     "stale": 0,
     "escalated": 0,
     "overall_health": "OK"
-  }
+  },
+  "parse_failures": []
 }

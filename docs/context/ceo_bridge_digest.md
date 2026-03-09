@@ -1,5 +1,5 @@
 # CEO Bridge Digest
-Generated: 2026-03-07T05:50:30.990298Z
+Generated: 2026-03-09T07:55:20.950791Z
 Digest Version: 2.0.0
 
 ## I. First Principles Engineering Summary
@@ -66,10 +66,10 @@ Digest Version: 2.0.0
 | PM-24C-013 | docs/decision log.md | ✅ VERIFIED | 4 diff, 2 tests |
 | PM-24C-014 | docs/decision log.md | ✅ VERIFIED | 6 diff, 8 tests |
 | PM-24C-015 | docs/decision log.md | ✅ VERIFIED | 4 diff, 3 tests |
-| PM-24C-016 | docs/decision log.md | ✅ VERIFIED | 12 diff, 12 tests |
-| PM-24C-017 | docs/decision log.md | ✅ VERIFIED | 8 diff, 6 tests |
+| PM-24C-016 | docs/decision log.md | ✅ VERIFIED | 16 diff, 17 tests |
+| PM-24C-017 | docs/decision log.md | ✅ VERIFIED | 10 diff, 7 tests |
 | PM-24C-018 | docs/decision log.md | ✅ VERIFIED | 3 diff, 2 tests |
-| PM-24C-019 | docs/decision log.md | ✅ VERIFIED | 7 diff, 6 tests |
+| PM-24C-019 | docs/decision log.md | ✅ VERIFIED | 33 diff, 14 tests |
 | PM-24C-020 | docs/decision log.md | ✅ VERIFIED | 6 diff, 4 tests |
 
 **Traceability Score: 32/32 (100.0%)**
@@ -93,6 +93,15 @@ Digest Version: 2.0.0
 | codex_auditor_calibration_v1 | PM-24C-004 | PASS | 0.86 (HIGH) | scripts/build_ceo_bridge_digest.py@300-400 |
 | codex_auditor_calibration_v1 | PM-24C-005 | PASS | 0.89 (HIGH) | docs/decision log.md@2006-2007 |
 | codex_auditor_calibration_v1 | PM-24C-006 | PASS | 0.85 (HIGH) | scripts/auditor_calibration_report.py@1-517; tests/test_auditor_calibration_report.py@1-914 (+2 more) |
+
+### PM-Style Worker Summaries
+
+- codex_auditor_calibration_v1 / PM-24C-001: Implemented independent auditor review system with 10 governance checks (AUD-R000 through AUD-R009). Canonical severity model ensures stable FP rate measurement across shadow and enforce modes. Shadow mode allows policy findings but blocks on infra errors.
+- codex_auditor_calibration_v1 / PM-24C-002: Established FP ledger schema with composite key (repo_id, run_id, finding_id) and strict annotation workflow. Supports TP/FP verdicts with provenance tracking.
+- codex_auditor_calibration_v1 / PM-24C-003: Integrated auditor review into phase-end handover as G11 gate. Added finalize path (G09b/G10b) to ensure digest reflects auditor findings even on BLOCK.
+- codex_auditor_calibration_v1 / PM-24C-004: Added Section IX (Auditor Review Findings) to CEO bridge digest. Implemented stale-file suppression to prevent rendering outdated auditor data.
+- codex_auditor_calibration_v1 / PM-24C-005: Defined 5-condition promotion gate for shadow-to-enforce transition. Criteria: 24B close, 30+ items, 2+ consecutive weeks, <5% FP rate, all v2.0.0 packets.
+- codex_auditor_calibration_v1 / PM-24C-006: Implemented auditor calibration system with 7 rules (AUD-R000 through AUD-R009), FP ledger schema, and promotion dossier. Fixed 9 critical gaps in calibration script (status schema, BOM encoding, consecutive weeks logic, items counting, timestamp validation, ledger validation, output paths). First shadow cycle complete with 3 C/H findings (100% annotated as TP). Dossier currently blocks on C2 (1/30 items) and C3 (0/2 weeks) as expected on Day 1 of shadow window.
 
 ## IX. Auditor Review Findings
 **Mode:** shadow | **Verdict:** PASS | **Total findings:** 9
@@ -123,3 +132,24 @@ _Note: Verdict is PASS in shadow mode because blocking is mode-driven, not sever
 
 ## XI. Recommended PM Actions
 *Please review active escalations, traceability score, confidence/citation completeness, and score gates before dispatching new plans.*
+
+## XII. Lineup and Memory Governance
+
+### Expert Request Governance
+
+- Requested domain: riskops
+- Roster fit: IN_ROSTER
+- Milestone ID: unspecified_milestone
+- Board re-entry required: False
+
+### Board Governance
+
+- Lineup decision needed: False
+- Approved roster snapshot: milestone_id=unspecified_milestone; mandatory_domains=principal, riskops, qa; optional_domains=math_stats, portfolio_risk, market_microstructure, data_eng, infra_perf
+- Reintroduce board when: UNKNOWN_DOMAIN, EXPERT_CONFLICT, ONE_WAY_OR_HIGH_RISK, MILESTONE_GATE
+
+### Memory Governance
+
+- Expert memory status: CONSISTENT
+- Board memory status: CONSISTENT
+- Milestone expert roster status: path=docs/context/milestone_expert_roster_latest.json; present=True; status=ROSTER_READY; milestone_id=unspecified_milestone; mandatory_domains=principal, riskops, qa; optional_domains=math_stats, portfolio_risk, market_microstructure, data_eng, infra_perf; all_domains=principal, riskops, qa, math_stats, portfolio_risk, market_microstructure, data_eng, infra_perf; board_reentry_triggers=unknown_domain, expert_conflict, one_way_or_high_risk, milestone_gate; unknown_domain_policy=ESCALATE_TO_BOARD

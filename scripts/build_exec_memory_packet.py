@@ -9,6 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+# Add parent directory to path for imports when run as script
+if __name__ == "__main__":
+    _script_dir = Path(__file__).resolve().parent
+    _project_root = _script_dir.parent
+    if str(_project_root) not in sys.path:
+        sys.path.insert(0, str(_project_root))
+
+from scripts.utils.json_utils import safe_load_json_object
+
 
 AUTOMATION_BOUNDARY_REGISTRY_PATH = "docs/automation_boundary_registry.md"
 MILESTONE_EXPERT_ROSTER_PATH = "docs/context/milestone_expert_roster_latest.json"
@@ -63,7 +72,7 @@ def _coerce_domain_list(value: object) -> list[str]:
 
 def _load_milestone_expert_roster(context_dir: Path) -> dict[str, Any]:
     roster_path = context_dir / "milestone_expert_roster_latest.json"
-    payload = _load_json_safe(roster_path)
+    payload, error = safe_load_json_object(roster_path)
 
     default_reentry_triggers = [
         "UNKNOWN_EXPERT_DOMAIN",
@@ -71,7 +80,7 @@ def _load_milestone_expert_roster(context_dir: Path) -> dict[str, Any]:
         "EXPERT_DISAGREEMENT",
         "MILESTONE_GATE_REVIEW",
     ]
-    if not isinstance(payload, dict):
+    if payload is None:
         return {
             "path": MILESTONE_EXPERT_ROSTER_PATH,
             "present": False,
@@ -196,16 +205,6 @@ def _estimate_tokens(text: str) -> int:
     if not text:
         return 0
     return max(1, len(text) // 4)
-
-
-def _load_json_safe(path: Path) -> dict | None:
-    """Load JSON file, return None if missing or invalid."""
-    if not path.exists():
-        return None
-    try:
-        return json.loads(path.read_text(encoding="utf-8-sig"))
-    except Exception:
-        return None
 
 
 def _load_text_safe(path: Path) -> str:
@@ -1713,13 +1712,13 @@ def main() -> int:
     }
 
     try:
-        loop_summary = _load_json_safe(loop_summary_path)
+        loop_summary, error = safe_load_json_object(loop_summary_path)
         _append_input_status(input_status, path=loop_summary_path, loaded=loop_summary is not None)
 
-        dossier = _load_json_safe(dossier_path)
+        dossier, error = safe_load_json_object(dossier_path)
         _append_input_status(input_status, path=dossier_path, loaded=dossier is not None)
 
-        calibration = _load_json_safe(calibration_path)
+        calibration, error = safe_load_json_object(calibration_path)
         _append_input_status(input_status, path=calibration_path, loaded=calibration is not None)
 
         go_signal_text = _load_text_safe(go_signal_path)

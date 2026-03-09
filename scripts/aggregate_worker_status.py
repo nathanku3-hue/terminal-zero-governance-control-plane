@@ -10,13 +10,18 @@ from datetime import timezone
 from pathlib import Path
 from typing import Any
 
+# Add parent directory to path for imports
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR.parent) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR.parent))
+
+from scripts.utils.time_utils import utc_now
+from scripts.utils.time_utils import utc_iso
+
 # Default settings from the plan
 DEFAULT_TTL_SECONDS = 300
 DEFAULT_ESCALATION_MINUTES = 90
 DEFAULT_MAX_DEPTH = 4
-
-def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
 
 def _parse_iso(iso_str: str) -> datetime | None:
     try:
@@ -157,7 +162,7 @@ def main() -> int:
     out_path = Path(args.output).resolve()
     esc_out = Path(args.escalation_output).resolve() if args.escalation_output else None
 
-    now = _now_utc()
+    now = utc_now()
 
     worker_files = _find_worker_files(scan_root, DEFAULT_MAX_DEPTH)
 
@@ -166,7 +171,7 @@ def main() -> int:
     has_stale = False
 
     aggregate_payload = {
-        "generated_utc": now.isoformat().replace("+00:00", "Z"),
+        "generated_utc": utc_iso(now),
         "workers": [],
         "summary": {
             "total_workers": 0,
@@ -190,7 +195,7 @@ def main() -> int:
             aggregate_payload["parse_failures"].append({
                 "file": str(wf),
                 "error": str(e),
-                "timestamp_utc": now.isoformat().replace("+00:00", "Z")
+                "timestamp_utc": utc_iso(now)
             })
             continue
             
@@ -222,7 +227,7 @@ def main() -> int:
                 "stale_since_utc": heartbeat.get("last_write_utc"),
                 "stale_duration_minutes": ((now - last_write).total_seconds() / 60) if last_write else 0,
                 "clock_skew_suspect": skew_suspect,
-                "escalated_utc": now.isoformat().replace("+00:00", "Z"),
+                "escalated_utc": utc_iso(now),
                 "recommended_action": "CHECK_WORKER_ALIVE",
                 "action_taken": None,
                 "resolved": False
