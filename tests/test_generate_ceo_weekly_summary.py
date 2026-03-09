@@ -17,6 +17,11 @@ TRUTH_SCRIPT_PATH = (
     / "scripts"
     / "validate_ceo_weekly_summary_truth.py"
 )
+GO_SIGNAL_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "scripts"
+    / "generate_ceo_go_signal.py"
+)
 
 
 def _load_module():
@@ -26,6 +31,18 @@ def _load_module():
     )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load module spec for {WEEKLY_SCRIPT_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_go_signal_module():
+    spec = importlib.util.spec_from_file_location(
+        "generate_ceo_go_signal_under_test",
+        GO_SIGNAL_SCRIPT_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load module spec for {GO_SIGNAL_SCRIPT_PATH}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -171,6 +188,19 @@ def test_weekly_summary_truth_checker_passes_on_generated_markdown(tmp_path: Pat
         check=False,
     )
     assert truth_result.returncode == 0, truth_result.stdout + truth_result.stderr
+
+
+def test_go_signal_public_contract_exposes_shared_helpers() -> None:
+    module = _load_go_signal_module()
+
+    assert module.to_int("48 items") == 48
+    assert module.extract_infra_failures({"infra_failures": 2}) == 2
+    assert module.criterion_met({"c2_min_items": {"met": True}}, "c2_min_items") is True
+    assert module.detect_phase({"phase": "Phase 24C"}, {}, {}, "") == "Phase 24C"
+    assert module.determine_recommended_action(
+        {"promotion_criteria": _criteria()},
+        {"infra_failures": 0},
+    ) == "GO"
 
 
 def test_weekly_summary_write_failure_returns_infra_error(

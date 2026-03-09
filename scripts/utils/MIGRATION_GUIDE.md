@@ -347,6 +347,44 @@ For each script:
 - **UTF-8 BOM Support**: Handles `utf-8-sig` encoding automatically
 - **Validation**: Ensures JSON root is an object, not array or primitive
 
+## Known Remaining Duplicates
+
+After Phase 4 pilot migration, the following local utility duplicates remain in the codebase:
+
+### Atomic I/O Duplicates
+
+1. **scripts/build_exec_memory_packet.py:181** - `_atomic_write_text()`
+   - Status: Fallback implementation retained for direct script execution
+   - Migration: Can be removed once all scripts use package imports
+
+2. **scripts/aggregate_worker_status.py:34** - `_atomic_write_json()`
+   - Status: Fallback implementation retained for direct script execution
+   - Migration: Can be removed once all scripts use package imports
+
+3. **scripts/supervise_loop.py:19** - Fallback implementation
+   - Status: Fallback implementation retained for direct script execution
+   - Migration: Can be removed once all scripts use package imports
+
+### Estimated Migration Effort
+
+**Full Migration (All Scripts):**
+- Time utilities: 9 scripts × 15 min = 2.25 hours
+- Atomic I/O utilities: 16 scripts × 20 min = 5.3 hours
+- JSON utilities: 2 scripts × 15 min = 0.5 hours
+- **Total: ~8 hours**
+
+**Benefits of Full Migration:**
+- Eliminate ~30 duplicate function implementations
+- Single source of truth for all utilities
+- Consistent error handling across all scripts
+- Easier maintenance and bug fixes
+- Better test coverage
+
+**Recommendation:**
+- Phase 5: Migrate remaining time utilities (highest ROI, simplest)
+- Phase 6: Migrate remaining atomic I/O utilities
+- Phase 7: Remove fallback implementations once all scripts migrated
+
 ## Future Utilities
 
 Additional utility modules may be added for:

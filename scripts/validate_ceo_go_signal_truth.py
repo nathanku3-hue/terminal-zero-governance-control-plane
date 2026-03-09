@@ -53,10 +53,7 @@ def _read_markdown(path: Path) -> tuple[str | None, str | None]:
 
 
 def _promotion_criteria(payload: dict[str, Any]) -> dict[str, Any]:
-    criteria = payload.get("promotion_criteria")
-    if isinstance(criteria, dict):
-        return criteria
-    return {}
+    return go_signal.promotion_criteria(payload)
 
 
 def _extract_dossier_criteria_section(markdown: str) -> list[str] | None:
@@ -112,32 +109,7 @@ def _parse_go_signal_markdown(markdown: str) -> tuple[str | None, dict[str, str]
 
 
 def _expected_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> str:
-    criteria = _promotion_criteria(dossier)
-    calibration_criteria = _promotion_criteria(calibration)
-
-    dossier_infra_failures = go_signal._extract_infra_failures(dossier)
-    calibration_infra_failures = go_signal._extract_infra_failures(calibration)
-    dossier_c0_met = go_signal._criterion_met(criteria, "c0_infra_health")
-    calibration_c0_met = go_signal._criterion_met(calibration_criteria, "c0_infra_health")
-
-    infra_signal = False
-    if dossier_infra_failures is not None and dossier_infra_failures > 0:
-        infra_signal = True
-    if calibration_infra_failures is not None and calibration_infra_failures > 0:
-        infra_signal = True
-    if dossier_c0_met is False or calibration_c0_met is False:
-        infra_signal = True
-
-    automated_all_met = all(
-        go_signal._criterion_met(criteria, key) is True
-        for key in go_signal.AUTOMATED_CRITERIA_KEYS
-    )
-
-    if infra_signal:
-        return "REFRAME"
-    if automated_all_met:
-        return "GO"
-    return "HOLD"
+    return go_signal.determine_recommended_action(dossier=dossier, calibration=calibration)
 
 
 def _expected_criterion_statuses(dossier: dict[str, Any]) -> dict[str, str]:
@@ -146,8 +118,8 @@ def _expected_criterion_statuses(dossier: dict[str, Any]) -> dict[str, str]:
     for short_code, key in go_signal.CRITERIA_ORDER:
         if key not in criteria:
             continue
-        met_value = go_signal._criterion_met(criteria, key)
-        expected[short_code] = go_signal._criterion_status_display(key, met_value)
+        met_value = go_signal.criterion_met(criteria, key)
+        expected[short_code] = go_signal.criterion_status_display(key, met_value)
     return expected
 
 

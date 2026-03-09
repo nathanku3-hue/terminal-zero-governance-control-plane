@@ -55,36 +55,7 @@ def _to_float(value: Any) -> float | None:
 
 
 def _resolved_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> str:
-    criteria_obj = dossier.get("promotion_criteria")
-    criteria: dict[str, Any] = criteria_obj if isinstance(criteria_obj, dict) else {}
-    calibration_criteria_obj = calibration.get("promotion_criteria")
-    calibration_criteria: dict[str, Any] = (
-        calibration_criteria_obj if isinstance(calibration_criteria_obj, dict) else {}
-    )
-
-    dossier_infra_failures = go_signal._extract_infra_failures(dossier)
-    calibration_infra_failures = go_signal._extract_infra_failures(calibration)
-    dossier_c0_met = go_signal._criterion_met(criteria, "c0_infra_health")
-    calibration_c0_met = go_signal._criterion_met(calibration_criteria, "c0_infra_health")
-
-    infra_signal = False
-    if dossier_infra_failures is not None and dossier_infra_failures > 0:
-        infra_signal = True
-    if calibration_infra_failures is not None and calibration_infra_failures > 0:
-        infra_signal = True
-    if dossier_c0_met is False or calibration_c0_met is False:
-        infra_signal = True
-
-    automated_all_met = all(
-        go_signal._criterion_met(criteria, key) is True
-        for key in go_signal.AUTOMATED_CRITERIA_KEYS
-    )
-
-    if infra_signal:
-        return "REFRAME"
-    if automated_all_met:
-        return "GO"
-    return "HOLD"
+    return go_signal.determine_recommended_action(dossier=dossier, calibration=calibration)
 
 
 def _criterion_value(
@@ -99,11 +70,11 @@ def _criterion_value(
     fp_analysis: dict[str, Any] = fp_obj if isinstance(fp_obj, dict) else {}
 
     if short_code == "C0":
-        infra_failures = go_signal._extract_infra_failures(calibration)
+        infra_failures = go_signal.extract_infra_failures(calibration)
         if infra_failures is not None:
             return f"{infra_failures} failures"
     if short_code == "C2":
-        items_reviewed = go_signal._to_int(totals.get("items_reviewed"))
+        items_reviewed = go_signal.to_int(totals.get("items_reviewed"))
         if items_reviewed is not None:
             return f"{items_reviewed} items"
     if short_code == "C4":
@@ -111,7 +82,7 @@ def _criterion_value(
     if short_code == "C4b":
         return _fmt_percent(fp_analysis.get("annotation_coverage_ch"))
 
-    return go_signal._criterion_value(criteria, key)
+    return go_signal.criterion_value(criteria, key)
 
 
 def _build_markdown(
@@ -136,8 +107,8 @@ def _build_markdown(
     ]
 
     for short_code, key in go_signal.CRITERIA_ORDER:
-        met_value = go_signal._criterion_met(criteria, key)
-        status = go_signal._criterion_status_display(key, met_value)
+        met_value = go_signal.criterion_met(criteria, key)
+        status = go_signal.criterion_status_display(key, met_value)
         value = _criterion_value(short_code, key, criteria, calibration).replace("|", "\\|")
         lines.append(f"| {short_code} | {status} | {value} |")
 
@@ -188,17 +159,16 @@ def main() -> int:
     calibration_path = Path(args.calibration_json)
     output_path = Path(args.output)
 
-    dossier, dossier_warnings = go_signal._load_json_fail_open(dossier_path)
-    calibration, calibration_warnings = go_signal._load_json_fail_open(calibration_path)
+    dossier, dossier_warnings = go_signal.load_json_fail_open(dossier_path)
+    calibration, calibration_warnings = go_signal.load_json_fail_open(calibration_path)
 
     for warning in dossier_warnings + calibration_warnings:
         print(f"WARNING: {warning}", file=sys.stderr)
 
-    criteria_obj = dossier.get("promotion_criteria")
-    criteria: dict[str, Any] = criteria_obj if isinstance(criteria_obj, dict) else {}
+    criteria = go_signal.promotion_criteria(dossier)
 
     action = _resolved_action(dossier=dossier, calibration=calibration)
-    phase = go_signal._detect_phase(
+    phase = go_signal.detect_phase(
         dossier=dossier,
         calibration=calibration,
         context={},

@@ -1,5 +1,8 @@
-Decision Log: Terminal Zero
-Author: Atomic Mesh | Last Updated: 2026-03-08 (Thesis Pull Protocol Added)
+Decision Log: Terminal Zero Governance Control Plane
+Author: Atomic Mesh | Last Updated: 2026-03-09 (Identity framing clarified)
+
+This log is the long-lived decision record for the current governance control plane.
+Legacy quant-era decisions are retained below for historical traceability; current operator behavior is governed by the active control-plane contracts and runbooks.
 
 Part 1: Master Decision Log
 

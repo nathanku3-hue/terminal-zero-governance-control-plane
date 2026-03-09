@@ -31,6 +31,20 @@ AUTOMATED_CRITERIA_KEYS = (
     "c5_all_v2",
 )
 
+__all__ = [
+    "AUTOMATED_CRITERIA_KEYS",
+    "CRITERIA_ORDER",
+    "criterion_met",
+    "criterion_status_display",
+    "criterion_value",
+    "detect_phase",
+    "extract_infra_failures",
+    "load_json_fail_open",
+    "promotion_criteria",
+    "determine_recommended_action",
+    "to_int",
+]
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -51,7 +65,7 @@ def _atomic_write_text(path: Path, content: str) -> None:
         raise
 
 
-def _load_json_fail_open(path: Path) -> tuple[dict[str, Any], list[str]]:
+def load_json_fail_open(path: Path) -> tuple[dict[str, Any], list[str]]:
     warnings: list[str] = []
     if not path.exists():
         warnings.append(f"Missing input file: {path}")
@@ -85,7 +99,11 @@ def _to_int(value: Any) -> int | None:
     return None
 
 
-def _extract_infra_failures(report: dict[str, Any]) -> int | None:
+def to_int(value: Any) -> int | None:
+    return _to_int(value)
+
+
+def extract_infra_failures(report: dict[str, Any]) -> int | None:
     direct = _to_int(report.get("infra_failures"))
     if direct is not None:
         return direct
@@ -100,14 +118,14 @@ def _extract_infra_failures(report: dict[str, Any]) -> int | None:
     return None
 
 
-def _criterion_met(criteria: dict[str, Any], key: str) -> Any:
+def criterion_met(criteria: dict[str, Any], key: str) -> Any:
     item = criteria.get(key)
     if isinstance(item, dict):
         return item.get("met")
     return None
 
 
-def _criterion_value(criteria: dict[str, Any], key: str) -> str:
+def criterion_value(criteria: dict[str, Any], key: str) -> str:
     item = criteria.get(key)
     if isinstance(item, dict):
         value = item.get("value")
@@ -117,7 +135,7 @@ def _criterion_value(criteria: dict[str, Any], key: str) -> str:
     return "N/A"
 
 
-def _criterion_status_display(key: str, met_value: Any) -> str:
+def criterion_status_display(key: str, met_value: Any) -> str:
     if key == "c1_24b_close":
         return "MANUAL_CHECK"
     if met_value is True:
@@ -129,7 +147,7 @@ def _criterion_status_display(key: str, met_value: Any) -> str:
     return "N/A"
 
 
-def _detect_phase(
+def detect_phase(
     dossier: dict[str, Any],
     calibration: dict[str, Any],
     context: dict[str, Any],
@@ -153,6 +171,50 @@ def _detect_phase(
     if isinstance(active_phase, str) and active_phase.strip():
         return f"Phase {active_phase.strip()}"
     return "UNKNOWN"
+
+
+def promotion_criteria(payload: dict[str, Any]) -> dict[str, Any]:
+    criteria = payload.get("promotion_criteria")
+    if isinstance(criteria, dict):
+        return criteria
+    return {}
+
+
+def determine_recommended_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> str:
+    criteria = promotion_criteria(dossier)
+    calibration_criteria = promotion_criteria(calibration)
+
+    dossier_infra_failures = extract_infra_failures(dossier)
+    calibration_infra_failures = extract_infra_failures(calibration)
+    dossier_c0_met = criterion_met(criteria, "c0_infra_health")
+    calibration_c0_met = criterion_met(calibration_criteria, "c0_infra_health")
+
+    infra_signal = False
+    if dossier_infra_failures is not None and dossier_infra_failures > 0:
+        infra_signal = True
+    if calibration_infra_failures is not None and calibration_infra_failures > 0:
+        infra_signal = True
+    if dossier_c0_met is False or calibration_c0_met is False:
+        infra_signal = True
+
+    automated_all_met = all(
+        criterion_met(criteria, key) is True for key in AUTOMATED_CRITERIA_KEYS
+    )
+
+    if infra_signal:
+        return "REFRAME"
+    if automated_all_met:
+        return "GO"
+    return "HOLD"
+
+
+# Backward-compatible aliases for downstream scripts not yet migrated.
+_load_json_fail_open = load_json_fail_open
+_extract_infra_failures = extract_infra_failures
+_criterion_met = criterion_met
+_criterion_value = criterion_value
+_criterion_status_display = criterion_status_display
+_detect_phase = detect_phase
 
 
 def _build_markdown(
@@ -182,9 +244,9 @@ def _build_markdown(
     for short_code, key in CRITERIA_ORDER:
         if key not in criteria:
             continue
-        met_value = _criterion_met(criteria, key)
-        status = _criterion_status_display(key, met_value)
-        value = _criterion_value(criteria, key).replace("|", "\\|")
+        met_value = criterion_met(criteria, key)
+        status = criterion_status_display(key, met_value)
+        value = criterion_value(criteria, key).replace("|", "\\|")
         lines.append(f"| {short_code} | {status} | {value} |")
 
     if len(lines) > 0 and lines[-1] == "|---|---|---|":
@@ -264,24 +326,18 @@ def main() -> int:
     context_path = Path(args.context_json)
     output_path = Path(args.output)
 
-    calibration, calibration_warnings = _load_json_fail_open(calibration_path)
-    dossier, dossier_warnings = _load_json_fail_open(dossier_path)
-    context, _ = _load_json_fail_open(context_path)
+    calibration, calibration_warnings = load_json_fail_open(calibration_path)
+    dossier, dossier_warnings = load_json_fail_open(dossier_path)
+    context, _ = load_json_fail_open(context_path)
     warnings = calibration_warnings + dossier_warnings
 
-    dossier_criteria_obj = dossier.get("promotion_criteria")
-    criteria: dict[str, Any] = (
-        dossier_criteria_obj if isinstance(dossier_criteria_obj, dict) else {}
-    )
-    calibration_criteria_obj = calibration.get("promotion_criteria")
-    calibration_criteria: dict[str, Any] = (
-        calibration_criteria_obj if isinstance(calibration_criteria_obj, dict) else {}
-    )
+    criteria = promotion_criteria(dossier)
+    calibration_criteria = promotion_criteria(calibration)
 
-    dossier_infra_failures = _extract_infra_failures(dossier)
-    calibration_infra_failures = _extract_infra_failures(calibration)
-    dossier_c0_met = _criterion_met(criteria, "c0_infra_health")
-    calibration_c0_met = _criterion_met(calibration_criteria, "c0_infra_health")
+    dossier_infra_failures = extract_infra_failures(dossier)
+    calibration_infra_failures = extract_infra_failures(calibration)
+    dossier_c0_met = criterion_met(criteria, "c0_infra_health")
+    calibration_c0_met = criterion_met(calibration_criteria, "c0_infra_health")
 
     infra_signal = False
     if dossier_infra_failures is not None and dossier_infra_failures > 0:
@@ -291,16 +347,7 @@ def main() -> int:
     if dossier_c0_met is False or calibration_c0_met is False:
         infra_signal = True
 
-    automated_all_met = all(
-        _criterion_met(criteria, key) is True for key in AUTOMATED_CRITERIA_KEYS
-    )
-
-    if infra_signal:
-        action = "REFRAME"
-    elif automated_all_met:
-        action = "GO"
-    else:
-        action = "HOLD"
+    action = determine_recommended_action(dossier=dossier, calibration=calibration)
 
     blocking_reasons: list[str] = []
     blocking_reasons.extend(warnings)
@@ -322,10 +369,10 @@ def main() -> int:
     for short_code, key in CRITERIA_ORDER:
         if key not in AUTOMATED_CRITERIA_KEYS:
             continue
-        met_value = _criterion_met(criteria, key)
+        met_value = criterion_met(criteria, key)
         if met_value is not True:
             if key in criteria:
-                value = _criterion_value(criteria, key)
+                value = criterion_value(criteria, key)
                 unmet_automated.append(f"{short_code} not met ({value}).")
             else:
                 unmet_automated.append(f"{short_code} missing in dossier criteria.")
@@ -333,7 +380,7 @@ def main() -> int:
     if action in ("HOLD", "REFRAME"):
         blocking_reasons.extend(unmet_automated)
 
-    phase = _detect_phase(
+    phase = detect_phase(
         dossier=dossier,
         calibration=calibration,
         context=context,

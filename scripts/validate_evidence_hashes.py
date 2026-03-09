@@ -48,26 +48,14 @@ def main() -> int:
     directives = trace_data.get("directives", [])
     
     has_hash_mismatch = False
-    has_self_signoff = False
     
     for d in directives:
         d_id = d.get("directive_id", "Unknown")
         
-        # Check actual signoffs (hashes and self signoff rule)
-        # Note: Implementer is usually known at task creation. 
-        # In a generic traceability document, we check that no duplicate signoffs occur
-        # and all provided hashes match real files on disk.
-        
+        # Check actual signoff evidence hashes.
         actual_signoffs = d.get("actual_signoff_experts", [])
         for block in actual_signoffs:
-            sb = block.get("signoff_by")
             ev_hash = block.get("evidence_hash")
-            
-            # Very strict simplified self_signoff check if standard implementer rule is violated 
-            # In purely directive YAML, we just warn if implementer = reviewer. 
-            # But the primary source of this check is T3 (aggregator). 
-            # Here we mainly focus on hashes.
-            
             if ev_hash and not verify_hash(ev_dir, ev_hash):
                 print(f"[ERROR] Hash mismatch for {d_id} signature: {ev_hash}")
                 has_hash_mismatch = True
@@ -87,8 +75,6 @@ def main() -> int:
         
     if has_hash_mismatch:
         return 1
-    if has_self_signoff:
-        return 2
 
     return 0
     

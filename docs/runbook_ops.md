@@ -1,6 +1,7 @@
 # Terminal Zero Operations Runbook
 
 ## 1. Startup
+- **Environment note**: `.venv\Scripts\python ...` examples assume a repo-local virtual environment. If `.venv` is unavailable, use `python ...` from a compatible Python 3.12+ interpreter and record that interpreter in validation evidence.
 - **Codex Startup Helper (required before planning loop)**:
   - `.venv\Scripts\python scripts/startup_codex_helper.py --repo-root .`
   - Lean single-source init execution card quickstart (`HUMAN_REQUIRED`):
@@ -24,6 +25,12 @@
 - **Loop supervision (single-cycle health check)**: `python scripts/supervise_loop.py --repo-root . --max-cycles 1`
 - **Loop supervision (continuous monitor)**: `python scripts/supervise_loop.py --repo-root . --max-cycles 999 --check-interval-seconds 300`
 - **Current procedures**: See `OPERATOR_LOOP_GUIDE.md` for the full startup -> loop -> closure -> takeover workflow.
+
+## 1b. Current-Head Handoff Notes
+- **Test-count rule**: use `303 passed` only for the historical Stream 2 merge-gate snapshot. Earlier current-head handoffs may cite `308 passed`; after the current hardening pass, use a fresh repo-wide `pytest` count for `HEAD` (currently `310 passed`).
+- **Phase-end integrity**: the fail-closed validator pass is already landed (`validate_orphan_changes.py`, `validate_dispatch_acks.py`); do not track it as an open TODO.
+- **Phase-end coverage**: real PowerShell orchestration coverage now exists, including a non-`--skip-phase-end` path; production-path coverage is still partly stubbed in tests and should be described that way in handoffs.
+- **Environment note**: prefer `.venv\Scripts\python` when available, but if `.venv` is absent the active compatible interpreter is acceptable as long as the handoff records which interpreter was used.
 
 ## 1a. Big-Change Manifest First (Pragmatic SOP)
 - **When required**: cross-module, architecture-impacting, or high-risk/one-way changes.

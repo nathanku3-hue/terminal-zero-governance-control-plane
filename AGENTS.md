@@ -4,10 +4,11 @@
 > ROOT PATH: `E:\Code\SOP\quant_current_scope`
 
 ## 1. Tech Stack (Hard Constraints)
-- Runtime: Python 3.12+ with strict `.venv` usage.
+- Runtime: Python 3.12+; prefer the repo-local `.venv`, but a compatible system Python is acceptable when `.venv` is unavailable. Record the interpreter used in validation evidence.
 - Core: script-first orchestration, JSON/Markdown artifact contracts, and subprocess-driven validators.
 - Primary operator entrypoints: `scripts/startup_codex_helper.py`, `scripts/run_loop_cycle.py`, `scripts/supervise_loop.py`, `scripts/print_takeover_entrypoint.py`.
 - Testing: `pytest` for script, contract, and orchestration coverage.
+- Current-head note: historical handoffs may cite `303 passed` (Stream 2 merge-gate snapshot) or `308 passed` (post-blocker / pre-hardening baseline). After the current hardening pass, use a fresh repo-wide `pytest` count for `HEAD` (currently `310 passed`).
 - Forbidden without explicit approval: SQLite, Flask, Django, or complex ORMs.
 
 ## 2. Directory Map

@@ -93,6 +93,39 @@ def test_run_fast_checks_returns_pass_when_all_pass(monkeypatch, tmp_path: Path)
     assert payload["overall_status"] == "PASS"
 
 
+def test_run_fast_checks_fails_when_run_loop_cycle_output_is_ambiguous(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    outcomes = {
+        "validate_loop_closure": subprocess.CompletedProcess(
+            ["python", "scripts/validate_loop_closure.py"],
+            0,
+            stdout="READY_TO_ESCALATE\n",
+            stderr="",
+        ),
+        "run_loop_cycle": subprocess.CompletedProcess(
+            ["python", "scripts/run_loop_cycle.py"],
+            0,
+            stdout="completed without explicit verdict\n",
+            stderr="",
+        ),
+    }
+    monkeypatch.setattr(
+        run_fast_checks.subprocess,
+        "run",
+        _fake_subprocess_run_factory(outcomes),
+    )
+
+    args = run_fast_checks.parse_args(["--repo-root", str(tmp_path)])
+    exit_code, payload = run_fast_checks.run_fast_checks(args)
+
+    assert exit_code == 1
+    assert payload["overall_status"] == "FAIL"
+    status_by_name = {item["name"]: item["status"] for item in payload["checks"]}
+    assert status_by_name["run_loop_cycle"] == "FAIL"
+
+
 def test_run_fast_checks_returns_fail_on_hard_error(monkeypatch, tmp_path: Path) -> None:
     outcomes = {
         "validate_loop_closure": subprocess.CompletedProcess(
@@ -150,4 +183,3 @@ def test_main_writes_json_output(monkeypatch, tmp_path: Path) -> None:
     payload = json.loads(json_out.read_text(encoding="utf-8"))
     assert payload["overall_status"] == "PASS"
     assert len(payload["checks"]) == 2
-

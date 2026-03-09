@@ -42,22 +42,28 @@ def _normalize_text(value: str) -> str:
     return value.strip().upper()
 
 
+def _final_status_token(stdout: str, stderr: str) -> str | None:
+    for stream in (stdout, stderr):
+        lines = [_normalize_text(line) for line in stream.splitlines() if _normalize_text(line)]
+        if lines:
+            return lines[-1]
+    return None
+
+
 def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> str:
-    combined = f"{stdout}\n{stderr}".upper()
+    token = _final_status_token(stdout=stdout, stderr=stderr)
     if name == "validate_loop_closure":
-        if exit_code == 0 and "READY_TO_ESCALATE" in combined:
+        if exit_code == 0 and token == "READY_TO_ESCALATE":
             return "PASS"
-        if exit_code == 1 and "NOT_READY" in combined:
+        if exit_code == 1 and token == "NOT_READY":
             return "HOLD"
         return "FAIL"
 
     if name == "run_loop_cycle":
-        if exit_code == 0:
-            if "HOLD" in combined:
-                return "HOLD"
-            if "PASS" in combined:
-                return "PASS"
+        if exit_code == 0 and token == "PASS":
             return "PASS"
+        if exit_code == 0 and token == "HOLD":
+            return "HOLD"
         return "FAIL"
 
     return "FAIL"
