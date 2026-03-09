@@ -194,6 +194,94 @@ def _emit_phase_b_warnings(fields: dict[str, str]) -> None:
             print("[WARNING] WORKFLOW_LANE=HIGH_RISK requires SOCRATIC_CHALLENGE_REQUIRED=YES")
 
 
+def _validate_phase_c_requirements(fields: dict[str, str]) -> list[str]:
+    """Phase C: Fail-closed validation for QA/Socratic/WORKFLOW_LANE requirements.
+
+    Returns list of error messages. Caller should return exit 1 if any errors exist.
+    """
+    errors: list[str] = []
+
+    # Parse relevant fields
+    decision_class = fields.get("DECISION_CLASS", "").strip().upper()
+    risk_tier = fields.get("RISK_TIER", "").strip().upper()
+    workflow_lane = fields.get("WORKFLOW_LANE", "").strip().upper()
+    intuition_gate = fields.get("INTUITION_GATE", "").strip().upper()
+
+    qa_required = fields.get("QA_PRE_ESCALATION_REQUIRED", "").strip().upper()
+    qa_verdict = fields.get("QA_VERDICT", "").strip().upper()
+    qa_exception = fields.get("QA_EXCEPTION_APPROVED", "").strip().upper()
+    qa_exception_rationale = fields.get("QA_EXCEPTION_RATIONALE", "").strip()
+
+    socratic_required = fields.get("SOCRATIC_CHALLENGE_REQUIRED", "").strip().upper()
+    socratic_resolved = fields.get("SOCRATIC_CHALLENGE_RESOLVED", "").strip().upper()
+    socratic_exception = fields.get("SOCRATIC_EXCEPTION_APPROVED", "").strip().upper()
+    socratic_exception_rationale = fields.get("SOCRATIC_EXCEPTION_RATIONALE", "").strip()
+
+    # Determine if QA/Socratic are required based on triggers OR explicit marking
+    qa_socratic_required = (
+        risk_tier == "HIGH" or
+        decision_class == "ONE_WAY" or
+        workflow_lane == "HIGH_RISK"
+    )
+
+    # Validate QA requirements (either derived or explicitly marked)
+    if qa_socratic_required or qa_required == "YES":
+        # Check if exception path is valid
+        qa_exception_valid = (
+            qa_exception == "YES" and
+            _is_meaningful_value(qa_exception_rationale)
+        )
+
+        if not qa_exception_valid:
+            # No valid exception, enforce requirements
+            if qa_required != "YES":
+                trigger = _format_trigger(risk_tier, decision_class, workflow_lane)
+                errors.append(f"{trigger} requires QA_PRE_ESCALATION_REQUIRED=YES")
+            elif qa_verdict != "PASS":
+                errors.append("QA_PRE_ESCALATION_REQUIRED=YES but QA_VERDICT is not PASS")
+
+    # Validate Socratic requirements (either derived or explicitly marked)
+    if qa_socratic_required or socratic_required == "YES":
+        # Check if exception path is valid
+        socratic_exception_valid = (
+            socratic_exception == "YES" and
+            _is_meaningful_value(socratic_exception_rationale)
+        )
+
+        if not socratic_exception_valid:
+            # No valid exception, enforce requirements
+            if socratic_required != "YES":
+                trigger = _format_trigger(risk_tier, decision_class, workflow_lane)
+                errors.append(f"{trigger} requires SOCRATIC_CHALLENGE_REQUIRED=YES")
+            elif socratic_resolved != "YES":
+                errors.append("SOCRATIC_CHALLENGE_REQUIRED=YES but SOCRATIC_CHALLENGE_RESOLVED is not YES")
+
+    # Validate WORKFLOW_LANE=MILESTONE_REVIEW requirements
+    if workflow_lane == "MILESTONE_REVIEW":
+        if intuition_gate != "HUMAN_REQUIRED":
+            errors.append("WORKFLOW_LANE=MILESTONE_REVIEW requires INTUITION_GATE=HUMAN_REQUIRED")
+
+    return errors
+
+
+def _format_trigger(risk_tier: str, decision_class: str, workflow_lane: str) -> str:
+    """Format trigger description for error messages."""
+    triggers = []
+    if risk_tier == "HIGH":
+        triggers.append("RISK_TIER=HIGH")
+    if decision_class == "ONE_WAY":
+        triggers.append("DECISION_CLASS=ONE_WAY")
+    if workflow_lane == "HIGH_RISK":
+        triggers.append("WORKFLOW_LANE=HIGH_RISK")
+
+    if len(triggers) == 1:
+        return triggers[0]
+    elif len(triggers) == 2:
+        return f"{triggers[0]} and {triggers[1]}"
+    else:
+        return ", ".join(triggers[:-1]) + f", and {triggers[-1]}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -269,8 +357,12 @@ def main() -> int:
         print(f"[ERROR] Unknown DONE_WHEN_CHECKS ids: {', '.join(unknown_ids)}")
         return 1
 
-    # Phase B: QA/Socratic/WORKFLOW_LANE validation (warning mode only)
-    _emit_phase_b_warnings(fields)
+    # Phase C: QA/Socratic/WORKFLOW_LANE validation (fail-closed)
+    phase_c_errors = _validate_phase_c_requirements(fields)
+    if phase_c_errors:
+        for error in phase_c_errors:
+            print(f"[ERROR] {error}")
+        return 1
 
     print("[OK] DONE_WHEN_CHECKS validation passed.")
     return 0
