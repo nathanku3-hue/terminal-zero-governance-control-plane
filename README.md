@@ -110,6 +110,8 @@ For authoritative internal operator procedures, start with:
 ### Public / External Docs
 
 - `README.md` — minimal public quickstart and project framing.
+- `CHANGELOG.md` — release-facing change history for public packaging waves.
+- `RELEASING.md` — manual release process, cut criteria, and validation checklist.
 - `CONTRIBUTING.md` — contribution workflow and validation expectations.
 - `SUPPORT.md` — support scope and help channels.
 - `CODE_OF_CONDUCT.md` — community participation standards.
