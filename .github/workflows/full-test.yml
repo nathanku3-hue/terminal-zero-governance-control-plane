@@ -23,7 +23,7 @@ jobs:
       - name: Install development dependencies
         run: |
           ./.venv/bin/python -m pip install --upgrade pip
-          ./.venv/bin/python -m pip install -r requirements-dev.txt
+          ./.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
 
       - name: Run full test suite
         run: ./.venv/bin/python -m pytest -q

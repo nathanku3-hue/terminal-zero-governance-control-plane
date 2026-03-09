@@ -16,6 +16,9 @@ It is not packaged as a consumer application or hosted service.
 - Python `3.12+` is the intended runtime.
 - Operator examples primarily assume Windows PowerShell and a repo-local `.venv`.
 - A compatible system `python` is acceptable when `.venv` is unavailable.
+- Canonical dependency metadata lives in `pyproject.toml`.
+- Use `constraints.txt` and `constraints-dev.txt` for pinned, validated installs.
+- `requirements.txt` and `requirements-dev.txt` are compatibility shims for tools that still expect requirements files.
 - CI fast checks run on GitHub Actions with Ubuntu and Python `3.12`.
 
 ## Canonical Entrypoints
@@ -44,11 +47,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2) Install dependencies
+### 2) Install dependencies (P2 canonical model)
 
 ```powershell
 python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+# Runtime install from canonical metadata + runtime constraints
+python -m pip install -c constraints.txt .
+# Contributor/test extras from canonical metadata + dev constraints
+python -m pip install -c constraints-dev.txt ".[dev]"
 ```
 
 ### 3) Smoke-check the main entrypoints

@@ -1,2 +1,4 @@
--r requirements.txt
-pytest>=8,<10
+# Compatibility shim for tools that still expect requirements files.
+# Canonical metadata lives in pyproject.toml.
+-c constraints-dev.txt
+.[dev]

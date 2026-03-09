@@ -30,7 +30,7 @@ jobs:
       - name: Install runtime dependencies
         run: |
           ./.venv/bin/python -m pip install --upgrade pip
-          ./.venv/bin/python -m pip install -r requirements.txt
+          ./.venv/bin/python -m pip install -c constraints.txt .
 
       - name: Run fast checks
         run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root .
@@ -54,7 +54,7 @@ jobs:
       - name: Install runtime dependencies
         run: |
           ./.venv/bin/python -m pip install --upgrade pip
-          ./.venv/bin/python -m pip install -r requirements.txt
+          ./.venv/bin/python -m pip install -c constraints.txt .
 
       - name: Run strict fast checks
         run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root . --fail-on-hold

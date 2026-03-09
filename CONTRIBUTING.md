@@ -12,11 +12,16 @@ This repository is a script-driven governance control plane, not a hosted applic
 
 ## Development Setup
 
+Canonical dependency metadata for this script-first repo lives in `pyproject.toml`.
+Use `constraints.txt` and `constraints-dev.txt` for pinned, validated installs.
+`requirements.txt` and `requirements-dev.txt` remain compatibility shims for tools that still expect requirements files.
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+python -m pip install -c constraints.txt .
+python -m pip install -c constraints-dev.txt ".[dev]"
 ```
 
 ## Contribution Scope

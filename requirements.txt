@@ -1,1 +1,4 @@
-PyYAML>=6,<7
+# Compatibility shim for tools that still expect requirements files.
+# Canonical metadata lives in pyproject.toml.
+-c constraints.txt
+.
