@@ -61,7 +61,7 @@ Risk tier checks:
 - PIT discipline: never leak future data; fundamentals align by `release_date`.
 - Restartability: long ETL/update jobs should be resumable/checkpointed.
 - Explainability: scoring outputs must expose human-readable reasoning in UI.
-- Environment hygiene: keep `requirements.txt` in sync with imports.
+- Environment hygiene: `pyproject.toml` is the canonical dependency declaration and must stay in sync with imports; use `constraints.txt` / `constraints-dev.txt` for pinned, validated installs, and keep `requirements*.txt` as compatibility shims only (do not treat them as canonical).
 
 ## 7. Change Discipline
 - No destructive operations without explicit user confirmation.

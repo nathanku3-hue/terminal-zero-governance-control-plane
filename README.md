@@ -2,6 +2,12 @@
 
 `quant_current_scope` is a script-driven AI engineering governance control plane. It is built to run a bounded startup -> execution -> closure -> takeover loop, generate auditable artifacts, and keep escalation decisions tied to explicit evidence instead of informal prompt state.
 
+## Start Here
+
+- External/public orientation: start with this README, then `CONTRIBUTING.md`, `SUPPORT.md`, and `SECURITY.md`.
+- Local operator flow: use `OPERATOR_LOOP_GUIDE.md`.
+- Internal governance/contract depth: use `docs/loop_operating_contract.md` and `docs/runbook_ops.md`.
+
 ## Who This Repository Is For
 
 This repository is primarily for:
@@ -16,6 +22,9 @@ It is not packaged as a consumer application or hosted service.
 - Python `3.12+` is the intended runtime.
 - Operator examples primarily assume Windows PowerShell and a repo-local `.venv`.
 - A compatible system `python` is acceptable when `.venv` is unavailable.
+- Canonical dependency metadata lives in `pyproject.toml`.
+- Use `constraints.txt` and `constraints-dev.txt` for pinned, validated installs.
+- `requirements.txt` and `requirements-dev.txt` are compatibility shims for tools that still expect requirements files.
 - CI fast checks run on GitHub Actions with Ubuntu and Python `3.12`.
 
 ## Canonical Entrypoints
@@ -27,6 +36,8 @@ It is not packaged as a consumer application or hosted service.
 - `scripts/print_takeover_entrypoint.py` — print takeover guidance from current artifacts.
 
 ## Quickstart
+
+This README is the minimal public quickstart, while `OPERATOR_LOOP_GUIDE.md` is the fuller operator run sequence for local execution.
 
 ### 1) Create and activate a virtual environment
 
@@ -44,11 +55,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2) Install dependencies
+### 2) Install dependencies (P2 canonical model)
 
 ```powershell
 python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+# Runtime install from canonical metadata + runtime constraints
+python -m pip install -c constraints.txt .
+# Contributor/test extras from canonical metadata + dev constraints
+python -m pip install -c constraints-dev.txt ".[dev]"
 ```
 
 ### 3) Smoke-check the main entrypoints
@@ -86,17 +100,31 @@ python -m pytest tests -v --tb=short
 
 Some root-level `*_LATEST.md` files are runtime convenience mirrors for operators. They are not the public API surface of the repository and should not be treated as canonical documentation for external readers.
 
-For authoritative source material, start with:
+For authoritative internal operator procedures, start with:
 - `docs/runbook_ops.md`
 - `docs/loop_operating_contract.md`
 - `OPERATOR_LOOP_GUIDE.md`
 
-## Additional Operator Docs
+## Documentation Routing
 
-- `OPERATOR_LOOP_GUIDE.md` — concise operator command sequence and expected outputs.
+### Public / External Docs
+
+- `README.md` — minimal public quickstart and project framing.
+- `CHANGELOG.md` — release-facing change history for public packaging waves.
+- `RELEASING.md` — manual release process, cut criteria, and validation checklist.
+- `CONTRIBUTING.md` — contribution workflow and validation expectations.
+- `SUPPORT.md` — support scope and help channels.
+- `CODE_OF_CONDUCT.md` — community participation standards.
+- `GOVERNANCE.md` — maintainer decision model and repository governance.
+- `SECURITY.md` — public vulnerability disclosure policy.
+
+### Internal Operator Docs
+
+- `OPERATOR_LOOP_GUIDE.md` — fuller local operator command sequence and expected outputs.
 - `docs/runbook_ops.md` — detailed operating runbook.
-- `docs/loop_operating_contract.md` — current governance contract and authority model.
+- `docs/loop_operating_contract.md` — governance contract and authority model.
 - `docs/security.md` — internal security operations policy.
+- `.github/pull_request_template.md` — PR evidence checklist used by maintainers/contributors.
 
 ## CI Surface
 

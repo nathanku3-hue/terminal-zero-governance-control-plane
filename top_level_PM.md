@@ -3,6 +3,8 @@
 Date: 2026-03-01
 Owner: PM / Architecture Office
 Status: ACTIVE
+Audience: internal PM / architecture reference
+Public-entrypoint status: internal strategy/planning document; public readers should start at `README.md`
 
 ## Why This File Exists
 - Consolidate top-level thinking models used for PM, architecture, and execution governance.

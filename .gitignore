@@ -24,6 +24,11 @@ BOARD_DECISION_BRIEF_LATEST.md
 MILESTONE_OPTIMALITY_REVIEW_LATEST.md
 TAKEOVER_LATEST.md
 
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
 # OS
 .DS_Store
 Thumbs.db

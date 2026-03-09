@@ -4,6 +4,7 @@ Authoritative source: `docs/context/thesis_pull_latest.md`
 Mirror role: convenience-only repo-root mirror  
 Format: one-screen operator convenience mirror  
 Authority: advisory-only; no gate or authority change  
+Public-entrypoint status: internal/convenience mirror only; public readers should start at `README.md`
 Conflict rule: if wording differs, `docs/context/thesis_pull_latest.md` wins
 
 ## PM Snapshot

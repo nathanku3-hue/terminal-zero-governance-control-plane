@@ -1,5 +1,7 @@
 # Operator Loop Guide
 
+`README.md` is the minimal public quickstart; this guide is the fuller operator run sequence for local execution.
+
 Run these commands from the repository root. The sequence below assumes PowerShell and a repo-local `.venv`.
 
 ## Recommended command sequence
