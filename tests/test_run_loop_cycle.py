@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
+from textwrap import dedent
+
+import pytest
 
 from scripts import run_loop_cycle
+
+
+POWERSHELL_EXE = Path("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
 
 
 def _write_text(path: Path, text: str = "") -> None:
@@ -30,6 +37,322 @@ def _prepare_scripts_dir(path: Path, include_weekly_truth: bool = True) -> None:
     _write_text(path / "validate_loop_closure.py", "print('ok')\n")
     if include_weekly_truth:
         _write_text(path / "validate_ceo_weekly_summary_truth.py", "print('ok')\n")
+
+
+def _repo_script_path(script_name: str) -> Path:
+    return Path(__file__).resolve().parent.parent / "scripts" / script_name
+
+
+def _copy_script(script_name: str, target_dir: Path) -> None:
+    source = _repo_script_path(script_name)
+    target = target_dir / script_name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target)
+
+
+def _prepare_real_phase_end_scripts_dir(path: Path) -> None:
+    _prepare_scripts_dir(path, include_weekly_truth=False)
+
+    for script_name in [
+        "phase_end_handover.ps1",
+        "validate_traceability.py",
+        "validate_evidence_hashes.py",
+        "validate_worker_reply_packet.py",
+        "validate_orphan_changes.py",
+        "validate_dispatch_acks.py",
+        "build_ceo_bridge_digest.py",
+        "validate_digest_freshness.py",
+    ]:
+        _copy_script(script_name, path)
+
+    _write_text(
+        path / "build_context_packet.py",
+        "from __future__ import annotations\n"
+        "\n"
+        "import json\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "\n"
+        "\n"
+        "def _arg(name: str, default: str = \"\") -> str:\n"
+        "    if name in sys.argv:\n"
+        "        idx = sys.argv.index(name)\n"
+        "        if idx + 1 < len(sys.argv):\n"
+        "            return sys.argv[idx + 1]\n"
+        "    return default\n"
+        "\n"
+        "\n"
+        "def main() -> int:\n"
+        "    repo_root = Path(_arg(\"--repo-root\", \".\")).resolve()\n"
+        "    context_dir = repo_root / \"docs\" / \"context\"\n"
+        "    context_dir.mkdir(parents=True, exist_ok=True)\n"
+        "    (context_dir / \"current_context.json\").write_text(\n"
+        "        json.dumps(\n"
+        "            {\n"
+        "                \"schema_version\": \"1.0.0\",\n"
+        "                \"generated_at_utc\": \"2026-03-09T00:00:00Z\",\n"
+        "                \"what_was_done\": [\"Prepared phase-end test fixture\"],\n"
+        "            },\n"
+        "            indent=2,\n"
+        "        ),\n"
+        "        encoding=\"utf-8\",\n"
+        "    )\n"
+        "    (context_dir / \"current_context.md\").write_text(\n"
+        "        \"# Current Context\\n\\n- Prepared phase-end test fixture.\\n\",\n"
+        "        encoding=\"utf-8\",\n"
+        "    )\n"
+        "    gemini_path = repo_root / \"docs\" / \"handover\" / \"gemini\" / \"phase24_gemini_handover.md\"\n"
+        "    gemini_path.parent.mkdir(parents=True, exist_ok=True)\n"
+        "    gemini_path.write_text(\"# Gemini Handoff\\n\", encoding=\"utf-8\")\n"
+        "    print(\"ok\")\n"
+        "    return 0\n"
+        "\n"
+        "\n"
+        "if __name__ == \"__main__\":\n"
+        "    sys.exit(main())\n",
+    )
+    _write_text(
+        path / "aggregate_worker_status.py",
+        dedent(
+            """
+            from __future__ import annotations
+
+            import json
+            import sys
+            from pathlib import Path
+
+
+            def _arg(name: str, default: str = "") -> str:
+                if name in sys.argv:
+                    idx = sys.argv.index(name)
+                    if idx + 1 < len(sys.argv):
+                        return sys.argv[idx + 1]
+                return default
+
+
+            def main() -> int:
+                output_path = Path(_arg("--output")).resolve()
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                payload = {
+                    "generated_utc": "2026-03-09T00:00:00Z",
+                    "workers": [],
+                    "summary": {
+                        "total_workers": 0,
+                        "executing": 0,
+                        "idle": 0,
+                        "stale": 0,
+                        "escalated": 0,
+                        "overall_health": "OK",
+                    },
+                    "parse_failures": [],
+                }
+                output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+                escalation_output = _arg("--escalation-output")
+                if escalation_output:
+                    esc_path = Path(escalation_output).resolve()
+                    esc_path.parent.mkdir(parents=True, exist_ok=True)
+                    esc_path.write_text(json.dumps({"events": []}, indent=2), encoding="utf-8")
+                print("ok")
+                return 0
+
+
+            if __name__ == "__main__":
+                sys.exit(main())
+            """
+        ).strip()
+        + "\n",
+    )
+    _write_text(
+        path / "generate_ceo_go_signal.py",
+        "from __future__ import annotations\n"
+        "\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "\n"
+        "\n"
+        "def _arg(name: str, default: str = \"\") -> str:\n"
+        "    if name in sys.argv:\n"
+        "        idx = sys.argv.index(name)\n"
+        "        if idx + 1 < len(sys.argv):\n"
+        "            return sys.argv[idx + 1]\n"
+        "    return default\n"
+        "\n"
+        "\n"
+        "def main() -> int:\n"
+        "    output_path = Path(_arg(\"--output\", \"docs/context/ceo_go_signal.md\")).resolve()\n"
+        "    output_path.parent.mkdir(parents=True, exist_ok=True)\n"
+        "    output_path.write_text(\"# CEO GO Signal\\n\\nStatus: GO\\n\", encoding=\"utf-8\")\n"
+        "    print(\"ok\")\n"
+        "    return 0\n"
+        "\n"
+        "\n"
+        "if __name__ == \"__main__\":\n"
+        "    sys.exit(main())\n",
+    )
+
+
+def _git(repo_root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _prepare_real_phase_end_repo(repo_root: Path) -> None:
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_real_phase_end_scripts_dir(scripts_dir)
+
+    _write_text(context_dir / "phase_end_logs" / ".keep", "")
+    _write_text(context_dir / "evidence_hashes" / ".keep", "")
+    _write_text(
+        repo_root / "docs" / "phase_brief" / "phase24c-brief.md",
+        dedent(
+            """
+            # Phase 24C Brief
+
+            ## What Was Done
+            - Prepared a production-like phase-end lane.
+
+            ## What Is Locked
+            - Real phase_end_handover contract remains in place.
+
+            ## What Is Next
+            - Verify the non-skip lane with real gates.
+
+            ## First Command
+            python scripts/run_loop_cycle.py --repo-root .
+
+            ## Next Todos
+            - Validate real phase-end gate wiring.
+            """
+        ).strip()
+        + "\n",
+    )
+    _write_text(
+        repo_root / "docs" / "handover" / "phase24_handover.md",
+        dedent(
+            """
+            # Phase 24 Handover
+
+            ## What Was Done
+            - Prepared handoff notes for the phase-end test lane.
+
+            ## What Is Locked
+            - Phase-end gate contract is under test.
+
+            ## What Is Next
+            - Run the deterministic non-skip lane.
+
+            ## First Command
+            python scripts/run_loop_cycle.py --repo-root .
+            """
+        ).strip()
+        + "\n",
+    )
+    _write_text(repo_root / "docs" / "decision log.md", "# Decision Log\n")
+    _write_text(repo_root / "docs" / "lessonss.md", "# Lessons\n")
+    _write_text(repo_root / "top_level_PM.md", "# Top Level PM\n")
+    _write_text(
+        repo_root / "docs" / "pm_to_code_traceability.yaml",
+        dedent(
+            """
+            schema_version: "1.0.0"
+            directives:
+              - directive_id: DIR-001
+                status: MAPPED
+                traceability:
+                  code_diffs:
+                    - file: covered_change.py
+                    - file: docs/covered_change.py
+                  validators:
+                    - id: TEST-001
+                      status: PASS
+            """
+        ).strip()
+        + "\n",
+    )
+    _write_text(repo_root / "docs" / "covered_change.py", "print('baseline')\n")
+    _write_text(repo_root / "docs" / "reference_note.md", "# Reference Note\n")
+    _write_text(
+        context_dir / "worker_reply_packet.json",
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "worker_id": "worker-1",
+                "phase": "execution",
+                "generated_at_utc": "2026-03-09T00:00:00Z",
+                "items": [
+                    {
+                        "task_id": "TASK-001",
+                        "decision": "Proceed",
+                        "dod_result": "PASS",
+                        "evidence_ids": ["EV-001"],
+                        "open_risks": [],
+                        "citations": [
+                            {
+                                "type": "code",
+                                "path": "docs/covered_change.py",
+                                "locator": "line 1",
+                                "claim": "The latest covered change is present.",
+                            }
+                        ],
+                        "confidence": {
+                            "score": 0.95,
+                            "band": "HIGH",
+                            "rationale": "Deterministic fixture.",
+                        },
+                    }
+                ],
+            },
+            indent=2,
+        ),
+    )
+    _write_text(
+        context_dir / "dispatch_manifest.json",
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "command_plan_hash_sha256": "hash-123",
+                "ack_deadline_utc": "2099-01-01T00:00:00Z",
+                "tasks": [{"correlation_id": "corr-001"}],
+            },
+            indent=2,
+        ),
+    )
+    _write_text(
+        context_dir / "dispatch" / "dispatch_ack.json",
+        json.dumps(
+            {
+                "correlation_id": "corr-001",
+                "command_plan_hash_sha256": "hash-123",
+                "current_state": "COMPLETED",
+                "lifecycle": [
+                    {"state": "STARTED", "utc": "2026-03-09T00:00:00Z"},
+                    {
+                        "state": "COMPLETED",
+                        "utc": "2026-03-09T00:01:00Z",
+                        "bound_artifacts": ["docs/covered_change.py"],
+                        "bound_tests": ["tests/test_run_loop_cycle.py::test_run_loop_cycle_with_real_phase_end_handover_contract"],
+                    },
+                ],
+            },
+            indent=2,
+        ),
+    )
+
+    _git(repo_root, "init")
+    _git(repo_root, "config", "user.email", "test@example.com")
+    _git(repo_root, "config", "user.name", "Test User")
+    _git(repo_root, "add", ".")
+    _git(repo_root, "commit", "-m", "Baseline fixture")
+
+    _write_text(repo_root / "docs" / "covered_change.py", "print('baseline')\nprint('latest change')\n")
+    _git(repo_root, "add", "docs/covered_change.py")
+    _git(repo_root, "commit", "-m", "Covered change")
 
 
 def _repo_root_convenience_paths(repo_root: Path) -> dict[str, Path]:
@@ -798,3 +1121,95 @@ exit 0
 
     summary_files = list(logs_dir.glob("phase_end_handover_summary_*.md"))
     assert len(summary_files) > 0, "phase_end_handover summary file not created"
+
+
+@pytest.mark.skipif(not POWERSHELL_EXE.exists(), reason="PowerShell not available")
+def test_run_loop_cycle_with_real_phase_end_handover_contract(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Exercise the real phase_end_handover.ps1 contract through run_loop_cycle."""
+    repo_root = tmp_path
+    context = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_real_phase_end_repo(repo_root)
+
+    calls: list[list[str]] = []
+    original_run = subprocess.run
+    fake_run = _fake_run_factory(calls, closure_exit_code=0)
+
+    def _selective_fake_run(
+        command: list[str],
+        cwd: str | None = None,
+        capture_output: bool = True,
+        text: bool = True,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        if any("powershell" in str(token).lower() for token in command):
+            return original_run(
+                command,
+                cwd=cwd,
+                capture_output=capture_output,
+                text=text,
+                check=check,
+            )
+        return fake_run(command, cwd, capture_output, text, check)
+
+    monkeypatch.setattr(run_loop_cycle.subprocess, "run", _selective_fake_run)
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--phase-end-audit-mode",
+            "none",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    assert payload["final_result"] == "PASS"
+
+    phase_end_step = next(
+        step for step in payload["steps"] if step["name"] == "phase_end_handover"
+    )
+    assert phase_end_step["status"] == "PASS"
+    assert any("powershell" in str(token).lower() for token in phase_end_step["command"])
+
+    logs_dir = context / "phase_end_logs"
+    status_files = sorted(logs_dir.glob("phase_end_handover_status_*.json"))
+    summary_files = sorted(logs_dir.glob("phase_end_handover_summary_*.md"))
+    assert len(status_files) == 1, "Expected one phase_end_handover status artifact"
+    assert len(summary_files) == 1, "Expected one phase_end_handover summary artifact"
+
+    status_data = json.loads(status_files[0].read_text(encoding="utf-8-sig"))
+    assert status_data["result"] == "PASS"
+    assert status_data["failed_gate"] == ""
+
+    gate_results = {gate["gate"]: gate for gate in status_data["gates"]}
+    required_pass_gates = [
+        "G06_worker_reply_gate",
+        "G07_orphan_change_gate",
+        "G08_dispatch_lifecycle_gate",
+        "G09_build_ceo_digest",
+        "G10_digest_freshness_gate",
+    ]
+    for gate_name in required_pass_gates:
+        assert gate_name in gate_results, f"Missing gate result for {gate_name}"
+        assert gate_results[gate_name]["status"] == "PASS", gate_results[gate_name]
+
+    gate_order = [gate["gate"] for gate in status_data["gates"]]
+    assert gate_order.index("G09_build_ceo_digest") < gate_order.index(
+        "G10_digest_freshness_gate"
+    )
+
+    digest_path = context / "ceo_bridge_digest.md"
+    assert digest_path.exists(), "CEO bridge digest was not produced by the real phase-end lane"
+    digest_text = digest_path.read_text(encoding="utf-8")
+    assert "Generated:" in digest_text
+    assert "TASK-001" in digest_text
+
+    summary_text = summary_files[0].read_text(encoding="utf-8")
+    assert "Result: PASS" in summary_text
+    assert "G06_worker_reply_gate" in summary_text

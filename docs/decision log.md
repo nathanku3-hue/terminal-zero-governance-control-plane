@@ -4,6 +4,8 @@ Author: Atomic Mesh | Last Updated: 2026-03-09 (Identity framing clarified)
 This log is the long-lived decision record for the current governance control plane.
 Legacy quant-era decisions are retained below for historical traceability; current operator behavior is governed by the active control-plane contracts and runbooks.
 
+Reader note: the first table entries below begin with legacy quant-era history; use the active governance docs as the authoritative source for present-day operator behavior.
+
 Part 1: Master Decision Log
 
 | ID   | Component  | The Friction Point          | The Decision (Hardcoded)       | Rationale                                                |

@@ -27,7 +27,7 @@
 - **Current procedures**: See `OPERATOR_LOOP_GUIDE.md` for the full startup -> loop -> closure -> takeover workflow.
 
 ## 1b. Current-Head Handoff Notes
-- **Test-count rule**: use `303 passed` only for the historical Stream 2 merge-gate snapshot. Earlier current-head handoffs may cite `308 passed`; after the current hardening pass, use a fresh repo-wide `pytest` count for `HEAD` (currently `310 passed`).
+- **Test-count rule**: historical handoffs may cite `303 passed` (Stream 2 merge-gate snapshot) or `308 passed` (post-blocker / pre-hardening baseline). For current `HEAD`, always quote a freshly rerun repo-wide `pytest` count and record the run date plus interpreter used, rather than reusing a prior total.
 - **Phase-end integrity**: the fail-closed validator pass is already landed (`validate_orphan_changes.py`, `validate_dispatch_acks.py`); do not track it as an open TODO.
 - **Phase-end coverage**: real PowerShell orchestration coverage now exists, including a non-`--skip-phase-end` path; production-path coverage is still partly stubbed in tests and should be described that way in handoffs.
 - **Environment note**: prefer `.venv\Scripts\python` when available, but if `.venv` is absent the active compatible interpreter is acceptable as long as the handoff records which interpreter was used.

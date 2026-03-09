@@ -200,6 +200,19 @@ def test_generate_ceo_go_signal_phase_falls_back_to_current_context(tmp_path: Pa
     assert "- Phase: Phase 24" in content
 
 
+def test_generate_ceo_go_signal_reexports_shared_contract_surface() -> None:
+    module = _load_generator_module()
+
+    assert module.to_int("48 items") == 48
+    assert module.extract_infra_failures({"infra_failures": 2}) == 2
+    assert module.criterion_met({"c2_min_items": {"met": True}}, "c2_min_items") is True
+    assert module.detect_phase({"phase": "Phase 24C"}, {}, {}, "") == "Phase 24C"
+    assert module.determine_recommended_action(
+        {"promotion_criteria": _criteria()},
+        {"infra_failures": 0},
+    ) == "GO"
+
+
 def test_generate_ceo_go_signal_write_failure_returns_infra_error(
     tmp_path: Path,
     monkeypatch,

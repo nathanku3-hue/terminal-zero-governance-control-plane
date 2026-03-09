@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from scripts import generate_ceo_go_signal as go_signal
+    from scripts import ceo_go_signal_contract as go_signal_contract
 except Exception:
-    import generate_ceo_go_signal as go_signal  # type: ignore[no-redef]
+    import ceo_go_signal_contract as go_signal_contract  # type: ignore[no-redef]
 
 
 def _utc_now_iso() -> str:
@@ -55,7 +55,7 @@ def _to_float(value: Any) -> float | None:
 
 
 def _resolved_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> str:
-    return go_signal.determine_recommended_action(dossier=dossier, calibration=calibration)
+    return go_signal_contract.determine_recommended_action(dossier=dossier, calibration=calibration)
 
 
 def _criterion_value(
@@ -70,11 +70,11 @@ def _criterion_value(
     fp_analysis: dict[str, Any] = fp_obj if isinstance(fp_obj, dict) else {}
 
     if short_code == "C0":
-        infra_failures = go_signal.extract_infra_failures(calibration)
+        infra_failures = go_signal_contract.extract_infra_failures(calibration)
         if infra_failures is not None:
             return f"{infra_failures} failures"
     if short_code == "C2":
-        items_reviewed = go_signal.to_int(totals.get("items_reviewed"))
+        items_reviewed = go_signal_contract.to_int(totals.get("items_reviewed"))
         if items_reviewed is not None:
             return f"{items_reviewed} items"
     if short_code == "C4":
@@ -82,7 +82,7 @@ def _criterion_value(
     if short_code == "C4b":
         return _fmt_percent(fp_analysis.get("annotation_coverage_ch"))
 
-    return go_signal.criterion_value(criteria, key)
+    return go_signal_contract.criterion_value(criteria, key)
 
 
 def _build_markdown(
@@ -106,9 +106,9 @@ def _build_markdown(
         "|---|---|---|",
     ]
 
-    for short_code, key in go_signal.CRITERIA_ORDER:
-        met_value = go_signal.criterion_met(criteria, key)
-        status = go_signal.criterion_status_display(key, met_value)
+    for short_code, key in go_signal_contract.CRITERIA_ORDER:
+        met_value = go_signal_contract.criterion_met(criteria, key)
+        status = go_signal_contract.criterion_status_display(key, met_value)
         value = _criterion_value(short_code, key, criteria, calibration).replace("|", "\\|")
         lines.append(f"| {short_code} | {status} | {value} |")
 
@@ -159,16 +159,16 @@ def main() -> int:
     calibration_path = Path(args.calibration_json)
     output_path = Path(args.output)
 
-    dossier, dossier_warnings = go_signal.load_json_fail_open(dossier_path)
-    calibration, calibration_warnings = go_signal.load_json_fail_open(calibration_path)
+    dossier, dossier_warnings = go_signal_contract.load_json_fail_open(dossier_path)
+    calibration, calibration_warnings = go_signal_contract.load_json_fail_open(calibration_path)
 
     for warning in dossier_warnings + calibration_warnings:
         print(f"WARNING: {warning}", file=sys.stderr)
 
-    criteria = go_signal.promotion_criteria(dossier)
+    criteria = go_signal_contract.promotion_criteria(dossier)
 
     action = _resolved_action(dossier=dossier, calibration=calibration)
-    phase = go_signal.detect_phase(
+    phase = go_signal_contract.detect_phase(
         dossier=dossier,
         calibration=calibration,
         context={},

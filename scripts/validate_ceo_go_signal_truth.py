@@ -8,12 +8,14 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from scripts import generate_ceo_go_signal as go_signal
+    from scripts import ceo_go_signal_contract as go_signal_contract
 except Exception:
-    import generate_ceo_go_signal as go_signal  # type: ignore[no-redef]
+    import ceo_go_signal_contract as go_signal_contract  # type: ignore[no-redef]
 
 
-KNOWN_CRITERIA_CODES = tuple(short_code for short_code, _ in go_signal.CRITERIA_ORDER)
+KNOWN_CRITERIA_CODES = tuple(
+    short_code for short_code, _ in go_signal_contract.CRITERIA_ORDER
+)
 CRITERION_CODE_PATTERN = "|".join(re.escape(code) for code in KNOWN_CRITERIA_CODES)
 RECOMMENDED_ACTION_PATTERN = re.compile(
     r"^\s*-\s*Recommended Action:\s*(?P<action>[A-Za-z_]+)\s*$",
@@ -53,7 +55,7 @@ def _read_markdown(path: Path) -> tuple[str | None, str | None]:
 
 
 def _promotion_criteria(payload: dict[str, Any]) -> dict[str, Any]:
-    return go_signal.promotion_criteria(payload)
+    return go_signal_contract.promotion_criteria(payload)
 
 
 def _extract_dossier_criteria_section(markdown: str) -> list[str] | None:
@@ -109,17 +111,17 @@ def _parse_go_signal_markdown(markdown: str) -> tuple[str | None, dict[str, str]
 
 
 def _expected_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> str:
-    return go_signal.determine_recommended_action(dossier=dossier, calibration=calibration)
+    return go_signal_contract.determine_recommended_action(dossier=dossier, calibration=calibration)
 
 
 def _expected_criterion_statuses(dossier: dict[str, Any]) -> dict[str, str]:
     criteria = _promotion_criteria(dossier)
     expected: dict[str, str] = {}
-    for short_code, key in go_signal.CRITERIA_ORDER:
+    for short_code, key in go_signal_contract.CRITERIA_ORDER:
         if key not in criteria:
             continue
-        met_value = go_signal.criterion_met(criteria, key)
-        expected[short_code] = go_signal.criterion_status_display(key, met_value)
+        met_value = go_signal_contract.criterion_met(criteria, key)
+        expected[short_code] = go_signal_contract.criterion_status_display(key, met_value)
     return expected
 
 

@@ -8,12 +8,24 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from scripts import generate_ceo_go_signal as go_signal
+    from scripts.ceo_go_signal_contract import (
+        AUTOMATED_CRITERIA_KEYS,
+        CRITERIA_ORDER,
+        criterion_met,
+        criterion_status_display,
+        extract_infra_failures,
+    )
 except Exception:
-    import generate_ceo_go_signal as go_signal  # type: ignore[no-redef]
+    from ceo_go_signal_contract import (  # type: ignore[no-redef]
+        AUTOMATED_CRITERIA_KEYS,
+        CRITERIA_ORDER,
+        criterion_met,
+        criterion_status_display,
+        extract_infra_failures,
+    )
 
 
-KNOWN_CRITERIA_CODES = tuple(short_code for short_code, _ in go_signal.CRITERIA_ORDER)
+KNOWN_CRITERIA_CODES = tuple(short_code for short_code, _ in CRITERIA_ORDER)
 CRITERION_CODE_PATTERN = "|".join(re.escape(code) for code in KNOWN_CRITERIA_CODES)
 CRITERION_CODE_REGEX = re.compile(
     rf"\b(?P<code>{CRITERION_CODE_PATTERN})\b", re.IGNORECASE
@@ -38,7 +50,7 @@ INTEGER_PATTERN = re.compile(r"-?\d+")
 PERCENT_PATTERN = re.compile(r"(-?\d+(?:\.\d+)?)\s*%")
 VERSION_PATTERN = re.compile(r"\b\d+\.\d+\.\d+\b")
 
-CRITERION_KEY_BY_CODE = dict(go_signal.CRITERIA_ORDER)
+CRITERION_KEY_BY_CODE = dict(CRITERIA_ORDER)
 CRITERION_CODE_BY_UPPER = {code.upper(): code for code in KNOWN_CRITERIA_CODES}
 
 
@@ -220,7 +232,7 @@ def _validate_dossier_structure(dossier: dict[str, Any]) -> list[str]:
         return errors
 
     missing = [
-        key for _, key in go_signal.CRITERIA_ORDER if key not in criteria
+        key for _, key in CRITERIA_ORDER if key not in criteria
     ]
     if missing:
         joined = ", ".join(missing)
@@ -341,10 +353,10 @@ def _expected_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> st
     criteria = _promotion_criteria(dossier)
     calibration_criteria = _promotion_criteria(calibration)
 
-    dossier_infra_failures = go_signal._extract_infra_failures(dossier)
-    calibration_infra_failures = go_signal._extract_infra_failures(calibration)
-    dossier_c0_met = go_signal._criterion_met(criteria, "c0_infra_health")
-    calibration_c0_met = go_signal._criterion_met(calibration_criteria, "c0_infra_health")
+    dossier_infra_failures = extract_infra_failures(dossier)
+    calibration_infra_failures = extract_infra_failures(calibration)
+    dossier_c0_met = criterion_met(criteria, "c0_infra_health")
+    calibration_c0_met = criterion_met(calibration_criteria, "c0_infra_health")
 
     infra_signal = False
     if dossier_infra_failures is not None and dossier_infra_failures > 0:
@@ -355,8 +367,8 @@ def _expected_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> st
         infra_signal = True
 
     automated_all_met = all(
-        go_signal._criterion_met(criteria, key) is True
-        for key in go_signal.AUTOMATED_CRITERIA_KEYS
+        criterion_met(criteria, key) is True
+        for key in AUTOMATED_CRITERIA_KEYS
     )
 
     if infra_signal:
@@ -369,9 +381,9 @@ def _expected_action(dossier: dict[str, Any], calibration: dict[str, Any]) -> st
 def _expected_criterion_statuses(dossier: dict[str, Any]) -> dict[str, str]:
     criteria = _promotion_criteria(dossier)
     expected: dict[str, str] = {}
-    for short_code, key in go_signal.CRITERIA_ORDER:
-        met_value = go_signal._criterion_met(criteria, key)
-        display = go_signal._criterion_status_display(key, met_value)
+    for short_code, key in CRITERIA_ORDER:
+        met_value = criterion_met(criteria, key)
+        display = criterion_status_display(key, met_value)
         normalized = _normalize_status_token(str(display))
         expected[short_code] = normalized or str(display).strip().upper()
     return expected
@@ -393,7 +405,7 @@ def _value_truth_errors(
         fp_analysis = {}
 
     expected_values: dict[str, str] = {}
-    for short_code, key in go_signal.CRITERIA_ORDER:
+    for short_code, key in CRITERIA_ORDER:
         raw = criteria.get(key)
         value = raw.get("value") if isinstance(raw, dict) else "N/A"
         expected_values[short_code] = str(value) if value is not None else "N/A"
@@ -401,7 +413,7 @@ def _value_truth_errors(
     c0_actual = actual_values.get("C0")
     if c0_actual is not None:
         actual_failures = _extract_first_int(c0_actual)
-        expected_failures = go_signal._extract_infra_failures(calibration)
+        expected_failures = extract_infra_failures(calibration)
         if expected_failures is None:
             expected_failures = _extract_first_int(expected_values["C0"])
         if (

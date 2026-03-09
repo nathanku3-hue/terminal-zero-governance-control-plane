@@ -20,7 +20,7 @@ TRUTH_SCRIPT_PATH = (
 GO_SIGNAL_SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "scripts"
-    / "generate_ceo_go_signal.py"
+    / "ceo_go_signal_contract.py"
 )
 
 
@@ -38,7 +38,7 @@ def _load_module():
 
 def _load_go_signal_module():
     spec = importlib.util.spec_from_file_location(
-        "generate_ceo_go_signal_under_test",
+        "ceo_go_signal_contract_under_test",
         GO_SIGNAL_SCRIPT_PATH,
     )
     if spec is None or spec.loader is None:
