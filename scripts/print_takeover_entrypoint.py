@@ -2,7 +2,11 @@
 
 import argparse
 import json
+import os
+import re
 import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +64,22 @@ MACHINE_VIEW_MARKERS: dict[str, tuple[str, ...]] = {
         "MEMORY_REASON_CODES",
     ),
 }
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Atomically write text content to a file using temp file + rename."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=".tmp_", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
+        raise
+
 
 SECTION_MARKER_FALLBACKS: dict[str, dict[str, dict[str, str]]] = {
     "advisory_expert_request": {
@@ -248,6 +268,677 @@ def _extract_machine_view_markers(markdown: str, label: str) -> dict[str, str]:
     return markers
 
 
+def _load_json_object(path: Path) -> dict[str, Any]:
+    """Load JSON object from file, raise if not a dict."""
+    if not path.exists():
+        raise FileNotFoundError(f"Missing file: {path}")
+    raw = path.read_text(encoding="utf-8-sig")
+    payload = json.loads(raw)
+    if not isinstance(payload, dict):
+        raise ValueError(f"JSON root must be an object: {path}")
+    return payload
+
+
+def _load_optional_json(path: Path) -> dict[str, Any] | None:
+    """Safely load JSON, return None if missing or invalid."""
+    try:
+        return _load_json_object(path)
+    except (FileNotFoundError, OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
+def _parse_markdown_key_values(raw: str) -> dict[str, str]:
+    """Parse markdown key-value pairs (e.g., '- KEY: value')."""
+    fields: dict[str, str] = {}
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("-"):
+            continue
+        item = stripped[1:].strip()
+        key, separator, value = item.partition(":")
+        if not separator:
+            continue
+        normalized_key = key.strip().upper()
+        normalized_value = value.strip()
+        if normalized_key and normalized_value:
+            fields[normalized_key] = normalized_value
+    return fields
+
+
+def _derive_startup_node(repo_root: Path) -> dict[str, Any]:
+    """Derive startup node from startup_intake_latest.json."""
+    intake_path = repo_root / "docs" / "context" / "startup_intake_latest.json"
+    intake = _load_optional_json(intake_path)
+
+    status_color = "gray"
+    status_label = "NOT_STARTED"
+    blockers: list[str] = []
+    startup_status = "UNKNOWN"
+
+    if intake is not None:
+        startup_gate = intake.get("startup_gate", {})
+        gate_status = startup_gate.get("status", "").strip().upper()
+        startup_status = gate_status
+
+        if gate_status == "READY_TO_EXECUTE":
+            status_color = "green"
+            status_label = "READY"
+        elif gate_status == "NEEDS_ATTENTION":
+            status_color = "yellow"
+            status_label = "BLOCKED"
+            blockers.append("Startup gate needs attention")
+
+    return {
+        "node_id": "Startup",
+        "title": "Startup Intake",
+        "status_color": status_color,
+        "progress_state": status_label,
+        "owner_role": "PM",
+        "blockers": blockers,
+        "source_of_truth": str(intake_path.relative_to(repo_root)),
+        "updated_at_utc": intake.get("generated_at_utc") if intake else None,
+        "advisory_roles": ["Worker", "Auditor"],
+        "complexity_band": "LOW",
+        "rigor_mode": "STANDARD",
+        "capability_band": "agent_plus_review",
+        "supporting_artifacts": ["docs/context/init_execution_card_latest.md"],
+        "key_signals": [f"startup_gate.status={startup_status}"],
+        "next_action": "Proceed to execution" if startup_status == "READY_TO_EXECUTE" else "Fix startup blockers",
+    }
+
+
+def _derive_execution_node(repo_root: Path) -> dict[str, Any]:
+    """Derive execution node from loop_cycle_summary_latest.json."""
+    cycle_path = repo_root / "docs" / "context" / "loop_cycle_summary_latest.json"
+    cycle = _load_optional_json(cycle_path)
+
+    status_color = "gray"
+    status_label = "NOT_STARTED"
+    blockers: list[str] = []
+    final_result = "UNKNOWN"
+
+    if cycle is not None:
+        final_result = cycle.get("final_result", "").strip().upper()
+
+        if final_result == "PASS":
+            status_color = "green"
+            status_label = "READY"
+        elif final_result == "HOLD":
+            status_color = "yellow"
+            status_label = "BLOCKED"
+            blockers.append("Execution on hold")
+        elif final_result in ("FAIL", "ERROR"):
+            status_color = "red"
+            status_label = "BLOCKED"
+            blockers.append(f"Execution {final_result.lower()}")
+
+    return {
+        "node_id": "Execution",
+        "title": "Loop Execution",
+        "status_color": status_color,
+        "progress_state": status_label,
+        "owner_role": "Worker",
+        "blockers": blockers,
+        "source_of_truth": str(cycle_path.relative_to(repo_root)),
+        "updated_at_utc": cycle.get("generated_at_utc") if cycle else None,
+        "advisory_roles": ["PM", "QA"],
+        "complexity_band": "HIGH",
+        "rigor_mode": "STANDARD",
+        "capability_band": "agent_ok",
+        "supporting_artifacts": ["docs/context/round_contract_latest.md"],
+        "key_signals": [f"final_result={final_result}"],
+        "next_action": "Proceed to validation" if final_result == "PASS" else "Review execution issues",
+    }
+
+
+def _derive_validation_closure_node(repo_root: Path) -> dict[str, Any]:
+    """Derive validation/closure node from loop_closure_status_latest.json."""
+    closure_path = repo_root / "docs" / "context" / "loop_closure_status_latest.json"
+    closure = _load_optional_json(closure_path)
+
+    status_color = "gray"
+    status_label = "NOT_STARTED"
+    blockers: list[str] = []
+    result = "UNKNOWN"
+
+    if closure is not None:
+        result = closure.get("result", "").strip().upper()
+
+        if result == "READY_TO_ESCALATE":
+            status_color = "green"
+            status_label = "READY"
+        elif result == "NOT_READY":
+            status_color = "yellow"
+            status_label = "BLOCKED"
+            # Extract blockers from failed checks
+            checks = closure.get("checks", [])
+            for check in checks:
+                if isinstance(check, dict) and check.get("status") == "FAIL":
+                    check_name = check.get("name", "unknown")
+                    blockers.append(f"Check failed: {check_name}")
+        elif result in ("INPUT_OR_INFRA_ERROR", "ERROR"):
+            status_color = "red"
+            status_label = "BLOCKED"
+            blockers.append("Input or infrastructure error")
+
+    return {
+        "node_id": "ValidationClosure",
+        "title": "Validation & Closure",
+        "status_color": status_color,
+        "progress_state": status_label,
+        "owner_role": "Auditor",
+        "blockers": blockers,
+        "source_of_truth": str(closure_path.relative_to(repo_root)),
+        "updated_at_utc": closure.get("generated_at_utc") if closure else None,
+        "advisory_roles": ["PM", "CEO"],
+        "complexity_band": "MEDIUM",
+        "rigor_mode": "HIGH_RIGOR",
+        "capability_band": "agent_plus_review",
+        "supporting_artifacts": ["docs/context/loop_cycle_summary_latest.json"],
+        "key_signals": [f"closure_result={result}"],
+        "next_action": "Escalate to PM/CEO" if result == "READY_TO_ESCALATE" else "Fix validation issues",
+    }
+
+
+def _derive_round_contract_node(repo_root: Path) -> dict[str, Any]:
+    """Derive RoundContract node status from round contract artifact."""
+    contract_path = repo_root / "docs" / "context" / "round_contract_latest.md"
+
+    if not contract_path.exists():
+        return {
+            "node_id": "RoundContract",
+            "title": "Round Contract",
+            "status_color": "gray",
+            "progress_state": "NOT_STARTED",
+            "owner_role": "Worker",
+            "advisory_roles": ["Auditor", "PM"],
+            "complexity_band": "MEDIUM",
+            "rigor_mode": "STANDARD",
+            "capability_band": "agent_ok",
+            "blockers": ["Round contract not found"],
+            "source_of_truth": "docs/context/round_contract_latest.md",
+            "supporting_artifacts": [],
+            "key_signals": [],
+            "next_action": "Create round contract",
+            "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        }
+
+    # Parse contract fields
+    try:
+        content = contract_path.read_text(encoding="utf-8-sig")
+        fields = _parse_markdown_key_values(content)
+
+        # Check required fields
+        required_fields = [
+            "DECISION_CLASS", "RISK_TIER", "TDD_MODE",
+            "DONE_WHEN_CHECKS", "EXECUTION_LANE", "INTUITION_GATE"
+        ]
+        missing_fields = [f for f in required_fields if not fields.get(f)]
+
+        # Check fail-closed triggers
+        fail_closed_blockers = []
+
+        # Parse relevant fields for validation
+        decision_class = fields.get("DECISION_CLASS", "").strip().upper()
+        risk_tier = fields.get("RISK_TIER", "").strip().upper()
+        workflow_lane = fields.get("WORKFLOW_LANE", "").strip().upper()
+        intuition_gate = fields.get("INTUITION_GATE", "").strip().upper()
+
+        qa_required = fields.get("QA_PRE_ESCALATION_REQUIRED", "").strip().upper()
+        qa_verdict = fields.get("QA_VERDICT", "").strip().upper()
+        qa_exception = fields.get("QA_EXCEPTION_APPROVED", "").strip().upper()
+        qa_exception_rationale = fields.get("QA_EXCEPTION_RATIONALE", "").strip()
+
+        socratic_required = fields.get("SOCRATIC_CHALLENGE_REQUIRED", "").strip().upper()
+        socratic_resolved = fields.get("SOCRATIC_CHALLENGE_RESOLVED", "").strip().upper()
+        socratic_exception = fields.get("SOCRATIC_EXCEPTION_APPROVED", "").strip().upper()
+        socratic_exception_rationale = fields.get("SOCRATIC_EXCEPTION_RATIONALE", "").strip()
+
+        # Determine if QA/Socratic are required based on triggers
+        qa_socratic_required = (
+            risk_tier == "HIGH" or
+            decision_class == "ONE_WAY" or
+            workflow_lane == "HIGH_RISK"
+        )
+
+        # Validate QA requirements
+        if qa_socratic_required or qa_required == "YES":
+            qa_exception_valid = (
+                qa_exception == "YES" and
+                qa_exception_rationale and
+                qa_exception_rationale not in ("N/A", "TBD", "TODO")
+            )
+            if not qa_exception_valid:
+                if qa_required != "YES":
+                    fail_closed_blockers.append("QA_PRE_ESCALATION_REQUIRED=YES required by risk triggers")
+                elif qa_verdict != "PASS":
+                    fail_closed_blockers.append("QA_PRE_ESCALATION_REQUIRED=YES but QA_VERDICT not PASS")
+
+        # Validate Socratic requirements
+        if qa_socratic_required or socratic_required == "YES":
+            socratic_exception_valid = (
+                socratic_exception == "YES" and
+                socratic_exception_rationale and
+                socratic_exception_rationale not in ("N/A", "TBD", "TODO")
+            )
+            if not socratic_exception_valid:
+                if socratic_required != "YES":
+                    fail_closed_blockers.append("SOCRATIC_CHALLENGE_REQUIRED=YES required by risk triggers")
+                elif socratic_resolved != "YES":
+                    fail_closed_blockers.append("SOCRATIC_CHALLENGE_REQUIRED=YES but not resolved")
+
+        # Validate WORKFLOW_LANE=MILESTONE_REVIEW requirements
+        if workflow_lane == "MILESTONE_REVIEW":
+            if intuition_gate != "HUMAN_REQUIRED":
+                fail_closed_blockers.append("WORKFLOW_LANE=MILESTONE_REVIEW requires INTUITION_GATE=HUMAN_REQUIRED")
+
+        # Combine all blockers
+        all_blockers = []
+        if missing_fields:
+            all_blockers.extend([f"Missing required field: {f}" for f in missing_fields])
+        all_blockers.extend(fail_closed_blockers)
+
+        # Determine status
+        if all_blockers:
+            status_color = "red"
+            status_label = "BLOCKED"
+            blockers = all_blockers
+        else:
+            status_color = "green"
+            status_label = "READY"
+            blockers = []
+
+        mtime = contract_path.stat().st_mtime
+        updated_utc = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        key_signals = [f"{k}={v}" for k, v in fields.items() if k in required_fields]
+
+        return {
+            "node_id": "RoundContract",
+            "title": "Round Contract",
+            "status_color": status_color,
+            "progress_state": status_label,
+            "owner_role": "Worker",
+            "advisory_roles": ["Auditor", "PM"],
+            "complexity_band": "MEDIUM",
+            "rigor_mode": "STANDARD",
+            "capability_band": "agent_ok",
+            "blockers": blockers,
+            "source_of_truth": "docs/context/round_contract_latest.md",
+            "supporting_artifacts": ["docs/round_contract_template.md"],
+            "key_signals": key_signals,
+            "next_action": "Fix missing fields" if blockers else "Proceed with execution",
+            "updated_at_utc": updated_utc
+        }
+    except Exception as exc:
+        return {
+            "node_id": "RoundContract",
+            "title": "Round Contract",
+            "status_color": "red",
+            "progress_state": "ERROR",
+            "owner_role": "Worker",
+            "advisory_roles": ["Auditor", "PM"],
+            "complexity_band": "MEDIUM",
+            "rigor_mode": "STANDARD",
+            "capability_band": "agent_ok",
+            "blockers": [f"Failed to parse contract: {exc}"],
+            "source_of_truth": "docs/context/round_contract_latest.md",
+            "supporting_artifacts": [],
+            "key_signals": [],
+            "next_action": "Fix contract parsing error",
+            "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        }
+
+
+def _derive_memory_artifacts_node(repo_root: Path) -> dict[str, Any]:
+    """Derive MemoryArtifacts node status from memory and advisory artifacts."""
+    context_dir = repo_root / "docs" / "context"
+
+    # Check all memory artifacts
+    artifacts_to_check = [
+        "exec_memory_packet_latest.json",
+        "next_round_handoff_latest.json",
+        "expert_request_latest.json",
+        "pm_ceo_research_brief_latest.json",
+        "board_decision_brief_latest.json"
+    ]
+
+    present = []
+    missing = []
+    stale = []
+
+    for artifact_name in artifacts_to_check:
+        artifact_path = context_dir / artifact_name
+        if artifact_path.exists():
+            present.append(artifact_name)
+            # Check freshness (48 hours)
+            mtime = artifact_path.stat().st_mtime
+            age_hours = (datetime.now(timezone.utc).timestamp() - mtime) / 3600
+            if age_hours > 48:
+                stale.append(artifact_name)
+        else:
+            missing.append(artifact_name)
+
+    # Determine status
+    if not present:
+        status_color = "gray"
+        status_label = "NOT_STARTED"
+        blockers = ["No memory artifacts found"]
+    elif missing or stale:
+        status_color = "yellow"
+        status_label = "BLOCKED"
+        blockers = []
+        if missing:
+            blockers.append(f"Missing: {', '.join(missing)}")
+        if stale:
+            blockers.append(f"Stale (>48h): {', '.join(stale)}")
+    else:
+        status_color = "green"
+        status_label = "READY"
+        blockers = []
+
+    source_of_truth = f"docs/context/{present[0]}" if present else "docs/context/exec_memory_packet_latest.json"
+    supporting = [f"docs/context/{name}" for name in present[1:]] if len(present) > 1 else []
+
+    return {
+        "node_id": "MemoryArtifacts",
+        "title": "Memory & Advisory Artifacts",
+        "status_color": status_color,
+        "progress_state": status_label,
+        "owner_role": "Worker",
+        "advisory_roles": ["PM", "CEO"],
+        "complexity_band": "LOW",
+        "rigor_mode": "STANDARD",
+        "capability_band": "agent_ok",
+        "blockers": blockers,
+        "source_of_truth": source_of_truth,
+        "supporting_artifacts": supporting,
+        "key_signals": [f"Present: {len(present)}/{len(artifacts_to_check)}"],
+        "next_action": "Refresh stale artifacts" if stale else "Continue",
+        "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    }
+
+
+def _derive_measurement_node(repo_root: Path) -> dict[str, Any]:
+    """Derive Measurement node status from phase_c_measurement artifacts."""
+    measurement_dir = repo_root / "phase_c_measurement"
+
+    if not measurement_dir.exists():
+        return {
+            "node_id": "Measurement",
+            "title": "Phase C Measurement",
+            "status_color": "gray",
+            "progress_state": "NOT_STARTED",
+            "owner_role": "PM",
+            "advisory_roles": ["CEO", "Worker"],
+            "complexity_band": "LOW",
+            "rigor_mode": "STANDARD",
+            "capability_band": "agent_ok",
+            "blockers": ["Measurement directory not found"],
+            "source_of_truth": "phase_c_measurement/live_rounds.csv",
+            "supporting_artifacts": [],
+            "key_signals": [],
+            "next_action": "Initialize measurement collection",
+            "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        }
+
+    # Parse live_rounds.csv
+    csv_path = measurement_dir / "live_rounds.csv"
+    round_count = 0
+    if csv_path.exists():
+        try:
+            content = csv_path.read_text(encoding="utf-8-sig")
+            lines = [line.strip() for line in content.splitlines() if line.strip()]
+            # Subtract 1 for header row
+            round_count = max(0, len(lines) - 1)
+        except Exception:
+            pass
+
+    # Parse target threshold from README
+    readme_path = measurement_dir / "README.md"
+    target_threshold = 10  # Default based on README
+    if readme_path.exists():
+        try:
+            readme_content = readme_path.read_text(encoding="utf-8-sig")
+            # Look for "X/Y" pattern or "Y+ rounds" pattern
+            # Try fraction pattern first (e.g., "0/10 rounds")
+            fraction_match = re.search(r"(\d+)/(\d+)\s+rounds?", readme_content, re.IGNORECASE)
+            if fraction_match:
+                target_threshold = int(fraction_match.group(2))
+            else:
+                # Try "N+ rounds" pattern (e.g., "10+ rounds")
+                plus_match = re.search(r"(\d+)\+\s+rounds?", readme_content, re.IGNORECASE)
+                if plus_match:
+                    target_threshold = int(plus_match.group(1))
+        except Exception:
+            pass
+
+    # Compute progress
+    progress_pct = (round_count / target_threshold * 100) if target_threshold > 0 else 0
+
+    # Determine status
+    if round_count == 0:
+        status_color = "blue"
+        status_label = "ACTIVE"
+        blockers = []
+    elif progress_pct >= 100:
+        status_color = "green"
+        status_label = "COMPLETE"
+        blockers = []
+    elif progress_pct >= 80:
+        status_color = "yellow"
+        status_label = "ACTIVE"
+        blockers = []
+    else:
+        status_color = "blue"
+        status_label = "ACTIVE"
+        blockers = []
+
+    return {
+        "node_id": "Measurement",
+        "title": "Phase C Measurement",
+        "status_color": status_color,
+        "progress_state": status_label,
+        "owner_role": "PM",
+        "advisory_roles": ["CEO", "Worker"],
+        "complexity_band": "LOW",
+        "rigor_mode": "STANDARD",
+        "capability_band": "agent_ok",
+        "blockers": blockers,
+        "source_of_truth": "phase_c_measurement/live_rounds.csv",
+        "supporting_artifacts": ["phase_c_measurement/README.md"],
+        "key_signals": [f"Progress: {round_count}/{target_threshold} ({progress_pct:.1f}%)"],
+        "next_action": "Continue collection" if progress_pct < 100 else "Review results",
+        "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    }
+
+
+def _derive_static_docs_nodes(repo_root: Path) -> list[dict[str, Any]]:
+    """Derive static documentation nodes."""
+    nodes = []
+
+    # PublicEntry node
+    readme_path = repo_root / "README.md"
+    contributing_path = repo_root / "CONTRIBUTING.md"
+    public_entry_status = "green" if readme_path.exists() else "yellow"
+    public_entry_label = "READY" if readme_path.exists() else "BLOCKED"
+    public_entry_blockers = [] if readme_path.exists() else ["README.md missing"]
+
+    nodes.append({
+        "node_id": "PublicEntry",
+        "title": "Public Entry Points",
+        "status_color": public_entry_status,
+        "progress_state": public_entry_label,
+        "owner_role": "PM",
+        "blockers": public_entry_blockers,
+        "source_of_truth": "README.md",
+        "updated_at_utc": None,
+        "advisory_roles": ["CEO"],
+        "complexity_band": "LOW",
+        "rigor_mode": "STANDARD",
+        "capability_band": "agent_plus_review",
+        "supporting_artifacts": ["CONTRIBUTING.md"],
+        "key_signals": [f"readme_exists={readme_path.exists()}"],
+        "next_action": "Maintain documentation" if readme_path.exists() else "Create README",
+    })
+
+    # DocsSpine node
+    nodes.append({
+        "node_id": "DocsSpine",
+        "title": "Documentation Spine",
+        "status_color": "green",
+        "progress_state": "READY",
+        "owner_role": "PM",
+        "blockers": [],
+        "source_of_truth": "docs/loop_operating_contract.md",
+        "updated_at_utc": None,
+        "advisory_roles": ["CEO", "Worker"],
+        "complexity_band": "MEDIUM",
+        "rigor_mode": "HIGH_RIGOR",
+        "capability_band": "human_required",
+        "supporting_artifacts": ["docs/round_contract_template.md"],
+        "key_signals": ["docs_spine=PRESENT"],
+        "next_action": "Keep docs current",
+    })
+
+    # Authority node
+    nodes.append({
+        "node_id": "Authority",
+        "title": "Authority & Policy",
+        "status_color": "green",
+        "progress_state": "READY",
+        "owner_role": "PM",
+        "blockers": [],
+        "source_of_truth": "docs/decision_authority_matrix.md",
+        "updated_at_utc": None,
+        "advisory_roles": ["CEO", "Auditor"],
+        "complexity_band": "HIGH",
+        "rigor_mode": "HIGH_RIGOR",
+        "capability_band": "human_required",
+        "supporting_artifacts": ["docs/expert_invocation_policy.md"],
+        "key_signals": ["authority_docs=PRESENT"],
+        "next_action": "Review policy as needed",
+    })
+
+    return nodes
+
+
+def _compute_overall_summary(nodes: list[dict[str, Any]]) -> str:
+    """Compute human-readable overall summary from node statuses."""
+    blocked_nodes = [n for n in nodes if n["progress_state"] == "BLOCKED"]
+    if not blocked_nodes:
+        return "All nodes ready"
+    node_names = ", ".join(n["title"] for n in blocked_nodes)
+    return f"Blocked nodes: {node_names}"
+
+
+def _collect_artifact_inputs(repo_root: Path, nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collect artifact provenance from all nodes."""
+    artifacts = []
+    seen = set()
+    for node in nodes:
+        # Collect from source_of_truth
+        source = node.get("source_of_truth")
+        if source and source not in seen:
+            seen.add(source)
+            full_path = repo_root / source
+            try:
+                mtime = full_path.stat().st_mtime
+                updated_utc = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            except (OSError, ValueError):
+                updated_utc = "unknown"
+            artifacts.append({
+                "path": source,
+                "updated_at_utc": updated_utc
+            })
+        # Collect from supporting_artifacts
+        for path_str in node.get("supporting_artifacts", []):
+            if path_str in seen:
+                continue
+            seen.add(path_str)
+            full_path = repo_root / path_str
+            try:
+                mtime = full_path.stat().st_mtime
+                updated_utc = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            except (OSError, ValueError):
+                updated_utc = "unknown"
+            artifacts.append({
+                "path": path_str,
+                "updated_at_utc": updated_utc
+            })
+    return artifacts
+
+
+def _build_role_views(nodes: list[dict[str, Any]]) -> dict[str, Any]:
+    """Group nodes by owner_role."""
+    role_views: dict[str, list[str]] = {
+        "PM": [],
+        "CEO": [],
+        "Worker": [],
+        "Auditor": [],
+        "QA": [],
+    }
+
+    for node in nodes:
+        role = node.get("owner_role")
+        node_id = node.get("node_id")
+        if role in role_views and node_id:
+            role_views[role].append(node_id)
+
+    return role_views
+
+
+def _assemble_workflow_status_payload(repo_root: Path, now_utc: datetime) -> dict[str, Any]:
+    """Orchestrate all derivation and assemble complete workflow status payload."""
+    # Derive all nodes
+    nodes = [
+        _derive_startup_node(repo_root),
+        _derive_execution_node(repo_root),
+        _derive_validation_closure_node(repo_root),
+        _derive_round_contract_node(repo_root),
+        _derive_memory_artifacts_node(repo_root),
+        _derive_measurement_node(repo_root),
+    ]
+    nodes.extend(_derive_static_docs_nodes(repo_root))
+
+    # Build role views
+    role_views = _build_role_views(nodes)
+
+    # Compute overall status (worst status across critical nodes)
+    # Only consider Startup, Execution, and ValidationClosure for overall status
+    critical_node_ids = {"Startup", "Execution", "ValidationClosure"}
+    overall_status = "green"
+
+    for node in nodes:
+        if node["node_id"] in critical_node_ids:
+            color = node["status_color"]
+            if color == "red":
+                overall_status = "red"
+                break
+            elif color == "yellow" and overall_status != "red":
+                overall_status = "yellow"
+            elif color == "blue" and overall_status not in ("red", "yellow"):
+                overall_status = "blue"
+
+    # Assemble payload
+    return {
+        "schema_version": "1.0.0",
+        "generated_at_utc": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "repo_root": str(repo_root),
+        "source_of_truth_policy": "docs/loop_operating_contract.md#source-of-truth-hierarchy",
+        "overall_status": overall_status,
+        "overall_summary": _compute_overall_summary(nodes),
+        "artifact_inputs": _collect_artifact_inputs(repo_root, nodes),
+        "nodes": nodes,
+        "role_views": role_views,
+        "metadata": {
+            "generator": "print_takeover_entrypoint.py",
+            "advisory_only": True,
+            "description": "Workflow status overlay derived from existing artifacts",
+        },
+    }
+
+
 def _print_optional_advisory(repo_root: Path, label: str, relative_path: str) -> None:
     advisory_path = repo_root / Path(relative_path)
     try:
@@ -284,6 +975,12 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     parser.add_argument("--repo-root", type=Path, default=Path("."))
+    parser.add_argument(
+        "--workflow-status-json-out",
+        type=Path,
+        default=None,
+        help="Optional path to write workflow status overlay JSON (default: None, no overlay generated)"
+    )
     args = parser.parse_args(argv)
 
     repo_root = args.repo_root.resolve()
@@ -316,6 +1013,20 @@ def main(argv: list[str] | None = None) -> int:
     print("artifacts:")
     for artifact in ARTIFACT_PATHS:
         print(f"- {artifact}")
+
+    # Optional workflow status overlay generation
+    if args.workflow_status_json_out is not None:
+        try:
+            now_utc = datetime.now(timezone.utc)
+            payload_overlay = _assemble_workflow_status_payload(repo_root, now_utc)
+            output_path = args.workflow_status_json_out
+            if not output_path.is_absolute():
+                output_path = repo_root / output_path
+            output_json = json.dumps(payload_overlay, indent=2, ensure_ascii=False)
+            _atomic_write_text(output_path, output_json + "\n")
+        except Exception as exc:
+            print(f"WARNING: Failed to generate workflow status overlay: {exc}", file=sys.stderr)
+            # Do not change exit code - overlay generation failure is non-fatal
 
     return _result_to_exit_code(result)
 
