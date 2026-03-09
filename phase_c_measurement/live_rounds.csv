@@ -1,0 +1,2 @@
+round_id,generated_at_utc,risk_tier,decision_class,workflow_lane,qa_required,qa_verdict,qa_exception_used,socratic_required,socratic_resolved,socratic_exception_used,milestone_review_lane,validator_exit_code,failure_reasons,time_to_fix_minutes,notes
+baseline_2026-03-05,2026-03-05T17:35:00Z,MEDIUM,TWO_WAY,DEFAULT,NO,N/A,N/A,NO,N/A,N/A,NO,0,none,0,Pre-Phase-C round; no QA/Socratic required
