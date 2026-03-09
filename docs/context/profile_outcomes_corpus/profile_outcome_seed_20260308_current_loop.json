@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "captured_at_utc": "2026-03-08T09:02:29Z",
+  "advisory_only": true,
+  "control_plane_impact": "none",
+  "project_profile": "unknown",
+  "loop_closure_result": "NOT_READY",
+  "go_action": "HOLD",
+  "ready": false,
+  "shipped": false,
+  "postmortem_score": null,
+  "postmortem_note": "",
+  "notes": "Seed corpus record from current HOLD/NOT_READY loop state; no shipped evidence yet.",
+  "board_reentry_required": false,
+  "unknown_domain_triggered": false,
+  "artifact_context": {
+    "loop_closure_path": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_closure_status_latest.json",
+    "loop_closure_present": true,
+    "startup_intake_path": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\startup_intake_latest.json",
+    "startup_intake_present": true,
+    "round_contract_path": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md",
+    "round_contract_present": true,
+    "go_signal_path": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\ceo_go_signal.md",
+    "go_signal_present": true
+  }
+}

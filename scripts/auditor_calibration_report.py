@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import tempfile
 from collections import defaultdict
@@ -35,12 +36,22 @@ def _is_next_week(week1: str, week2: str) -> bool:
 def _atomic_write_text(path: Path, content: str) -> None:
     """Atomic write via temp file + rename."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = Path(tempfile.mktemp(dir=path.parent, prefix=".tmp_"))
+    tmp: Path | None = None
     try:
-        tmp.write_text(content, encoding="utf-8")
-        tmp.replace(path)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=".tmp_",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            handle.write(content)
+            tmp = Path(handle.name)
+        os.replace(tmp, path)
     except Exception:
-        tmp.unlink(missing_ok=True)
+        if tmp is not None:
+            tmp.unlink(missing_ok=True)
         raise
 
 def _load_json(path: Path) -> dict:

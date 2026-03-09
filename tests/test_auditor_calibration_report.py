@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts import auditor_calibration_report
+
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1]
     / "scripts"
@@ -911,3 +913,38 @@ def test_autocreate_output_parent_directories(tmp_path: Path) -> None:
     assert output_md.exists()
     assert output_json.parent.exists()
     assert output_md.parent.exists()
+
+
+def test_atomic_write_text_uses_named_tempfile_and_replace(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Atomic writer uses NamedTemporaryFile(delete=False) + os.replace."""
+    target = tmp_path / "nested" / "report.json"
+    named_tempfile_kwargs: dict = {}
+    replace_called = {"value": False}
+
+    original_named_tempfile = auditor_calibration_report.tempfile.NamedTemporaryFile
+    original_replace = auditor_calibration_report.os.replace
+
+    def _tracking_named_tempfile(*args, **kwargs):
+        del args
+        named_tempfile_kwargs.update(kwargs)
+        return original_named_tempfile(**kwargs)
+
+    def _tracking_replace(src, dst):
+        replace_called["value"] = True
+        return original_replace(src, dst)
+
+    monkeypatch.setattr(
+        auditor_calibration_report.tempfile,
+        "NamedTemporaryFile",
+        _tracking_named_tempfile,
+    )
+    monkeypatch.setattr(auditor_calibration_report.os, "replace", _tracking_replace)
+
+    auditor_calibration_report._atomic_write_text(target, '{"ok": true}')
+
+    assert named_tempfile_kwargs["delete"] is False
+    assert Path(named_tempfile_kwargs["dir"]) == target.parent
+    assert replace_called["value"] is True
+    assert target.read_text(encoding="utf-8") == '{"ok": true}'

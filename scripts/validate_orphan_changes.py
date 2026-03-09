@@ -19,8 +19,8 @@ def git_diff_files(since_commit: str, cwd: Path) -> list[str]:
         )
         return [f.strip() for f in res.stdout.split() if f.strip()]
     except Exception as e:
-        print(f"Error running git diff: {e}")
-        return []
+        print(f"Error running git diff: {e}", file=sys.stderr)
+        sys.exit(2)  # INFRA_ERROR
 
 def main() -> int:
     parser = argparse.ArgumentParser()

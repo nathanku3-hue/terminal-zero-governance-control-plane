@@ -1,0 +1,47 @@
+﻿{
+    "schema_version":  "1.0.0",
+    "repo_profile":  "default",
+    "failed_exit_code":  1,
+    "run_id":  "20260301_220518",
+    "logs_dir":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\phase_end_logs",
+    "ended_utc":  "2026-03-01T14:05:19Z",
+    "failed_gate":  "G00_preflight",
+    "resolved_config":  {
+                            "repo_profile":  "default",
+                            "repo_root":  "E:\\Code\\SOP\\quant_current_scope",
+                            "scan_root":  "E:\\Code\\SOP\\quant_current_scope",
+                            "traceability_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\pm_to_code_traceability.yaml",
+                            "dispatch_manifest_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\dispatch_manifest.json",
+                            "worker_reply_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\worker_reply_packet.json",
+                            "worker_aggregate_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\worker_status_aggregate.json",
+                            "escalation_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\escalation_events.json",
+                            "digest_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\ceo_bridge_digest.md",
+                            "orphan_include":  [
+                                                   "*.py",
+                                                   "*.ps1",
+                                                   "*.ts",
+                                                   "*.tsx",
+                                                   "*.js",
+                                                   "*.jsx",
+                                                   "*.yaml",
+                                                   "*.yml"
+                                               ],
+                            "skip_orphan_gate":  false,
+                            "skip_dispatch_gate":  false
+                        },
+    "repo_root":  "E:\\Code\\SOP\\quant_current_scope",
+    "started_utc":  "2026-03-01T14:05:18Z",
+    "result":  "BLOCK",
+    "gates":  [
+                  {
+                      "gate":  "G00_preflight",
+                      "status":  "BLOCK",
+                      "exit_code":  1,
+                      "command":  "path preflight",
+                      "log_path":  "-",
+                      "started_utc":  "2026-03-01T14:05:19Z",
+                      "ended_utc":  "2026-03-01T14:05:19Z",
+                      "message":  "traceability missing: E:\\Code\\SOP\\quant_current_scope\\docs\\pm_to_code_traceability.yaml; evidence hash dir missing: E:\\Code\\SOP\\quant_current_scope\\docs\\context\\evidence_hashes; worker reply packet missing: E:\\Code\\SOP\\quant_current_scope\\docs\\context\\worker_reply_packet.json; dispatch manifest missing: E:\\Code\\SOP\\quant_current_scope\\docs\\context\\dispatch_manifest.json"
+                  }
+              ]
+}

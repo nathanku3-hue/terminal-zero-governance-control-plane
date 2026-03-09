@@ -1,22 +1,21 @@
 ## What Was Done
-- Phase 20 closure docs/logs were consolidated and lock formulas were codified with artifact-backed evidence.
-- Option A cyclical-trough ranker was restored in code to match lock narrative.
-- Independent replay evidence (implementer + Reviewer B) was produced with matching outputs.
+- Implemented Phase 24C auditor calibration system (auditor + calibration reporting + FP ledger)
+- Completed first shadow cycle and annotation workflow
+- Fixed 9 critical gaps in calibration script (status schema, BOM encoding, consecutive weeks logic, items counting, timestamp validation, ledger validation, output paths)
+- Created 51 tests (23 auditor + 28 calibration) with zero regressions
 
 ## What Is Locked
-- Cluster ranker: `(CycleSetup * 2.0) + op_lev + rev_accel + inv_vel_traj - q_tot`.
-- Hard entry gate requires both `mom_ok` and `support_proximity`.
-- Hard exit/selection is rank-threshold + entry-gate bound.
+- Auditor criteria C0/C2/C3/C4/C4b/C5 logic is implemented and tested
+- Shadow mode + dossier reporting workflow is operational
+- Fail-closed validation architecture (exit 2 always blocks)
+- FP ledger schema with composite key (repo_id, run_id, finding_id)
 
 ## What Is Next
-- Phase 24 Pod A (Supercycle) feature ingestion is not started.
-- Phase 24 Pod B (Sentiment and Flow) feature ingestion is not started.
-- Pod-level capital rotation and PM dashboard are not started.
-- Build Supercycle Pod with forward features (NTM growth, EPS revisions, capex-to-sales, backlog mapping).
-- Build Sentiment and Flow Pod (VIX term structure, put/call, IV spikes, max pain, insider-flow signals).
-- Define pod-rotation capital allocator and publish PM monitor dashboard contract.
+- Continue shadow runs to reach C2/C3 evidence thresholds (30+ items, 2+ consecutive weeks)
+- Maintain 100% C/H annotation coverage after each run
+- Regenerate weekly calibration reports
+- Run dossier at window end (2026-03-17) and complete C1 manual signoff if eligible
+- Execute canary enforce cycles (3-5 runs) before full rollout
 
 ## First Command
-```text
-Draft `docs/phase_brief/phase24-brief.md` with Pod A/B acceptance checks and PIT-safe schema contracts.
-```
+`powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow`

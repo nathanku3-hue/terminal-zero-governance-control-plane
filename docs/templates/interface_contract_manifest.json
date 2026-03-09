@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "contracts": [
+    {
+      "id": "IC-001-worker-to-ceo",
+      "producer_path": "docs/context/worker_reply_packet.json",
+      "consumer_path": "docs/context/ceo_bridge_digest.md",
+      "required_keys": [
+        "schema_version",
+        "machine_optimized",
+        "pm_first_principles"
+      ],
+      "required_markers": [
+        "## Section II",
+        "## Section III"
+      ],
+      "status": "ACTIVE"
+    }
+  ]
+}

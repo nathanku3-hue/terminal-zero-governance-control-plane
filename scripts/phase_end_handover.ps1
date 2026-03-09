@@ -14,6 +14,10 @@ param(
     [int]$DispatchTimeoutMinutes = 10,
     [switch]$SkipOrphanGate,
     [switch]$SkipDispatchGate,
+    [string]$CrossRepoRoots = "",
+    [switch]$EnforceScoreThresholds,
+    [ValidateSet("none", "shadow", "enforce")]
+    [string]$AuditMode = "shadow",
     [switch]$DryRun
 )
 
@@ -466,9 +470,66 @@ if (-not $stopExecution) {
     if (-not $ok) { $stopExecution = $true }
 }
 
-# 6) Worker reply gate (confidence + citations)
+# 5b) Cross-repo readiness gate (triad + threshold pre-flight)
 if (-not $stopExecution) {
-    $ok = Add-And-Check (Invoke-PythonGate -GateName "G06_worker_reply_gate" -ScriptPath (Join-Path $scriptRoot "validate_worker_reply_packet.py") -PythonPath $pythonPath -RepoRootAbs $repoRootAbs -LogPath $logsDirAbs -Arguments @("--input", $workerReplyPath, "--repo-root", $repoRootAbs, "--require-existing-paths") -PreviewOnly:$DryRun)
+    if ($EnforceScoreThresholds -and [string]::IsNullOrWhiteSpace($CrossRepoRoots)) {
+        # Mandatory when -EnforceScoreThresholds is true: cannot bypass by omitting -CrossRepoRoots
+        $gateResults += (New-GateResult -Gate "G05b_cross_repo_readiness" -Status "BLOCK" -ExitCode 1 -Command "-" -LogPath "-" -StartedUtc (Get-UtcIso) -EndedUtc (Get-UtcIso) -Message "Cross-repo readiness is mandatory when -EnforceScoreThresholds is enabled. Provide -CrossRepoRoots.")
+        $overall = "BLOCK"
+        $failedGate = "G05b_cross_repo_readiness"
+        $failedExit = 1
+        $stopExecution = $true
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($CrossRepoRoots)) {
+        $repoList = $CrossRepoRoots -split ","
+        $allCrossRepoPassed = $true
+        $crossRepoMessages = @()
+        foreach ($crossRepo in $repoList) {
+            $crossRepoTrimmed = $crossRepo.Trim()
+            if ([string]::IsNullOrWhiteSpace($crossRepoTrimmed)) { continue }
+            $crossRepoAbs = Resolve-AbsolutePath -BasePath (Get-Location).Path -PathValue $crossRepoTrimmed
+            $crossRepoPacket = Join-Path $crossRepoAbs "docs/context/worker_reply_packet.json"
+            if (-not (Test-Path -LiteralPath $crossRepoPacket)) {
+                $crossRepoMessages += "Worker reply packet not found: $crossRepoPacket"
+                $allCrossRepoPassed = $false
+                continue
+            }
+            $crossRepoArgs = @("--input", $crossRepoPacket, "--schema-version-override", "2.0.0")
+            if ($EnforceScoreThresholds) {
+                $crossRepoArgs += "--enforce-score-thresholds"
+            }
+            $crossRepoResult = Invoke-PythonGate -GateName "G05b_cross_repo_readiness_$crossRepoTrimmed" -ScriptPath (Join-Path $scriptRoot "validate_worker_reply_packet.py") -PythonPath $pythonPath -RepoRootAbs $crossRepoAbs -LogPath $logsDirAbs -Arguments $crossRepoArgs -PreviewOnly:$DryRun
+            if ($crossRepoResult.Status -ne "PASS") {
+                $crossRepoMessages += "Cross-repo readiness failed for $crossRepoTrimmed. Update worker packets before enabling enforcement."
+                $allCrossRepoPassed = $false
+            }
+        }
+        if ($allCrossRepoPassed) {
+            $gateResults += (New-GateResult -Gate "G05b_cross_repo_readiness" -Status "PASS" -ExitCode 0 -Command "validate_worker_reply_packet.py (cross-repo)" -LogPath "-" -StartedUtc (Get-UtcIso) -EndedUtc (Get-UtcIso) -Message "All cross-repo packets passed readiness check.")
+        }
+        else {
+            $combinedMsg = $crossRepoMessages -join "; "
+            $gateResults += (New-GateResult -Gate "G05b_cross_repo_readiness" -Status "BLOCK" -ExitCode 1 -Command "validate_worker_reply_packet.py (cross-repo)" -LogPath "-" -StartedUtc (Get-UtcIso) -EndedUtc (Get-UtcIso) -Message $combinedMsg)
+            $overall = "BLOCK"
+            $failedGate = "G05b_cross_repo_readiness"
+            $failedExit = 1
+            $stopExecution = $true
+        }
+    }
+    else {
+        $gateResults += (New-GateResult -Gate "G05b_cross_repo_readiness" -Status "SKIPPED" -ExitCode 0 -Command "-" -LogPath "-" -StartedUtc (Get-UtcIso) -EndedUtc (Get-UtcIso) -Message "No -CrossRepoRoots provided and -EnforceScoreThresholds not set.")
+    }
+}
+
+# 6) Worker reply gate (confidence + citations + triad/threshold when enforced)
+# CUTOVER: Enable -EnforceScoreThresholds after all repos pass G05b readiness gate.
+# Phase 25+ will remove v1 path entirely from validate_worker_reply_packet.py.
+if (-not $stopExecution) {
+    $g06Args = @("--input", $workerReplyPath, "--repo-root", $repoRootAbs, "--require-existing-paths")
+    if ($EnforceScoreThresholds) {
+        $g06Args += "--enforce-score-thresholds"
+    }
+    $ok = Add-And-Check (Invoke-PythonGate -GateName "G06_worker_reply_gate" -ScriptPath (Join-Path $scriptRoot "validate_worker_reply_packet.py") -PythonPath $pythonPath -RepoRootAbs $repoRootAbs -LogPath $logsDirAbs -Arguments $g06Args -PreviewOnly:$DryRun)
     if (-not $ok) { $stopExecution = $true }
 }
 
@@ -520,23 +581,118 @@ if (-not $stopExecution) {
     if (-not $ok) { $stopExecution = $true }
 }
 
+# Capture primary failure before finalize path
+$primaryFailedGate = $failedGate
+$primaryFailedExit = $failedExit
+$primaryOverall = $overall
+$finalizeFailures = @()
+
+# 11) Auditor review gate
+$auditorOutputPath = ""
+if ($AuditMode -ne "none") {
+    # Run-scoped auditor output to prevent stale file ingestion
+    $auditorOutputPath = Join-Path $logsDirAbs ("auditor_findings_{0}.json" -f $script:RunId)
+    $canonicalAuditorPath = Resolve-AbsolutePath -BasePath $repoRootAbs -PathValue "docs/context/auditor_findings.json"
+
+    $g11Started = Get-UtcIso
+    $g11Result = Invoke-PythonGate -GateName "G11_auditor_review" -ScriptPath (Join-Path $scriptRoot "run_auditor_review.py") -PythonPath $pythonPath -RepoRootAbs $repoRootAbs -LogPath $logsDirAbs -Arguments @("--input", $workerReplyPath, "--repo-root", $repoRootAbs, "--output", $auditorOutputPath, "--mode", $AuditMode) -PreviewOnly:$DryRun
+
+    if ($g11Result.exit_code -eq 2) {
+        # Infra error: always block regardless of mode
+        $g11Result.status = "BLOCK"
+        $g11Result.message = "Auditor infra error (exit=2); check script logs"
+        $gateResults += $g11Result
+        if ([string]::IsNullOrWhiteSpace($primaryFailedGate)) {
+            $overall = "BLOCK"
+            $failedGate = "G11_auditor_review"
+            $failedExit = 2
+            $primaryFailedGate = $failedGate
+            $primaryFailedExit = $failedExit
+            $primaryOverall = $overall
+        }
+    }
+    elseif ($AuditMode -eq "shadow") {
+        # Shadow: policy findings non-blocking
+        $g11Result.status = "PASS"
+        $g11Result.message = "Shadow mode: findings logged (see $auditorOutputPath)"
+        $gateResults += $g11Result
+    }
+    elseif ($AuditMode -eq "enforce") {
+        $gateResults += $g11Result
+        if ($g11Result.status -eq "BLOCK") {
+            if ([string]::IsNullOrWhiteSpace($primaryFailedGate)) {
+                $overall = "BLOCK"
+                $failedGate = "G11_auditor_review"
+                $failedExit = $g11Result.exit_code
+                $primaryFailedGate = $failedGate
+                $primaryFailedExit = $failedExit
+                $primaryOverall = $overall
+            }
+        }
+    }
+
+    # Copy to canonical path on successful auditor completion (exit 0 or 1 = valid policy output)
+    if (-not $DryRun -and (Test-Path -LiteralPath $auditorOutputPath) -and $g11Result.exit_code -ne 2) {
+        Copy-Item -LiteralPath $auditorOutputPath -Destination $canonicalAuditorPath -Force
+    }
+}
+else {
+    $gateResults += (New-GateResult -Gate "G11_auditor_review" -Status "SKIPPED" -ExitCode 0 -Command "-" -LogPath "-" -StartedUtc (Get-UtcIso) -EndedUtc (Get-UtcIso) -Message "Skipped by -AuditMode none")
+}
+
+# --- Finalize path: G09b + G10b (always run when AuditMode != none) ---
+# These run regardless of G11 verdict so the final digest includes auditor findings.
+if ($AuditMode -ne "none") {
+    # Build digest sources — include run-scoped auditor output if it exists
+    $g09bSources = "{0},{1},{2},{3}" -f $workerAggregatePath, $traceabilityPath, $escalationPath, $workerReplyPath
+    if ((Test-Path -LiteralPath $auditorOutputPath)) {
+        $g09bSources += ",$auditorOutputPath"
+    }
+
+    $g09bResult = Invoke-PythonGate -GateName "G09b_rebuild_ceo_digest" -ScriptPath (Join-Path $scriptRoot "build_ceo_bridge_digest.py") -PythonPath $pythonPath -RepoRootAbs $repoRootAbs -LogPath $logsDirAbs -Arguments @("--sources", $g09bSources, "--output", $digestPath) -PreviewOnly:$DryRun
+    $gateResults += $g09bResult
+    if ($g09bResult.status -eq "BLOCK") {
+        $finalizeFailures += $g09bResult
+    }
+
+    $g10bResult = Invoke-PythonGate -GateName "G10b_digest_freshness_revalidation" -ScriptPath (Join-Path $scriptRoot "validate_digest_freshness.py") -PythonPath $pythonPath -RepoRootAbs $repoRootAbs -LogPath $logsDirAbs -Arguments @("--input", $digestPath, "--ttl-minutes", $DigestTtlMinutes) -PreviewOnly:$DryRun
+    $gateResults += $g10bResult
+    if ($g10bResult.status -eq "BLOCK") {
+        $finalizeFailures += $g10bResult
+    }
+}
+
+# --- Block-precedence resolution ---
+# Primary failure (G00–G11) takes precedence. Finalize failures are secondary.
+if (-not [string]::IsNullOrWhiteSpace($primaryFailedGate)) {
+    $overall = "BLOCK"
+    $failedGate = $primaryFailedGate
+    $failedExit = $primaryFailedExit
+}
+elseif ($finalizeFailures.Count -gt 0) {
+    $overall = "BLOCK"
+    $failedGate = $finalizeFailures[0].gate
+    $failedExit = $finalizeFailures[0].exit_code
+}
+
 $endedUtc = Get-UtcIso
 $statusPath = Join-Path $logsDirAbs ("phase_end_handover_status_{0}.json" -f $script:RunId)
 $summaryPath = Join-Path $logsDirAbs ("phase_end_handover_summary_{0}.md" -f $script:RunId)
 
 $runState = [ordered]@{
-    schema_version   = "1.0.0"
-    run_id           = $script:RunId
-    started_utc      = $startedUtc
-    ended_utc        = $endedUtc
-    repo_root        = $repoRootAbs
-    repo_profile     = $(if ([string]::IsNullOrWhiteSpace($RepoProfile)) { "default" } else { $RepoProfile })
-    result           = $overall
-    failed_gate      = $failedGate
-    failed_exit_code = $failedExit
-    logs_dir         = $logsDirAbs
-    resolved_config  = $resolvedConfig
-    gates            = $gateResults
+    schema_version       = "1.0.0"
+    run_id               = $script:RunId
+    started_utc          = $startedUtc
+    ended_utc            = $endedUtc
+    repo_root            = $repoRootAbs
+    repo_profile         = $(if ([string]::IsNullOrWhiteSpace($RepoProfile)) { "default" } else { $RepoProfile })
+    result               = $overall
+    failed_gate          = $failedGate
+    failed_exit_code     = $failedExit
+    finalize_failures    = @($finalizeFailures | ForEach-Object { $_.gate })
+    logs_dir             = $logsDirAbs
+    resolved_config      = $resolvedConfig
+    gates                = $gateResults
 }
 
 if ($DryRun) {
@@ -551,6 +707,44 @@ Write-RunArtifacts -StatusPath $statusPath -SummaryPath $summaryPath -RunState $
 Write-Host ("Run status: {0}" -f $overall)
 Write-Host ("Status JSON: {0}" -f $statusPath)
 Write-Host ("Summary MD: {0}" -f $summaryPath)
+
+# Non-blocking CEO GO signal refresh (fail-open).
+$ceoGoScriptPath = Join-Path $scriptRoot "generate_ceo_go_signal.py"
+$ceoGoCalibrationPath = Resolve-AbsolutePath -BasePath $repoRootAbs -PathValue "docs/context/auditor_calibration_report.json"
+$ceoGoDossierPath = Resolve-AbsolutePath -BasePath $repoRootAbs -PathValue "docs/context/auditor_promotion_dossier.json"
+$ceoGoOutputPath = Resolve-AbsolutePath -BasePath $repoRootAbs -PathValue "docs/context/ceo_go_signal.md"
+if (Test-Path -LiteralPath $ceoGoScriptPath) {
+    $goSignalExitCode = 0
+    $previousNativePref = $null
+    if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+        $previousNativePref = $PSNativeCommandUseErrorActionPreference
+        $PSNativeCommandUseErrorActionPreference = $false
+    }
+    $previousErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    Push-Location $repoRootAbs
+    try {
+        & $pythonPath $ceoGoScriptPath --calibration-json $ceoGoCalibrationPath --dossier-json $ceoGoDossierPath --output $ceoGoOutputPath
+        $goSignalExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+        if ($null -ne $previousNativePref) {
+            $PSNativeCommandUseErrorActionPreference = $previousNativePref
+        }
+        Pop-Location
+    }
+
+    if ($goSignalExitCode -eq 0) {
+        Write-Host ("CEO GO signal refreshed: {0}" -f $ceoGoOutputPath)
+    }
+    else {
+        Write-Warning ("CEO GO signal refresh failed (exit={0}). Phase-end verdict unchanged." -f $goSignalExitCode)
+    }
+}
+else {
+    Write-Warning ("CEO GO signal script not found: {0}" -f $ceoGoScriptPath)
+}
 
 if ($overall -eq "BLOCK") {
     Write-Host ("BLOCKED at gate: {0} (exit={1})" -f $failedGate, $failedExit)

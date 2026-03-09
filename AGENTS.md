@@ -1,28 +1,29 @@
 # AGENTS.md
 
-> SYSTEM CONTEXT: You are a contributor to Terminal Zero (T0), a local-first quantitative research console.
+> SYSTEM CONTEXT: You are a contributor to Terminal Zero (T0), a script-driven AI engineering governance control plane.
 > ROOT PATH: `E:\Code\SOP\quant_current_scope`
 
 ## 1. Tech Stack (Hard Constraints)
 - Runtime: Python 3.12+ with strict `.venv` usage.
-- Core: Streamlit (UI), DuckDB (SQL engine), Pandas/Polars (dataframes).
-- Data: Parquet (storage), yfinance (live data bridge).
-- Visualization: Plotly + Streamlit native components.
-- Testing: `pytest` (unit), `streamlit.testing` (integration when applicable).
+- Core: script-first orchestration, JSON/Markdown artifact contracts, and subprocess-driven validators.
+- Primary operator entrypoints: `scripts/startup_codex_helper.py`, `scripts/run_loop_cycle.py`, `scripts/supervise_loop.py`, `scripts/print_takeover_entrypoint.py`.
+- Testing: `pytest` for script, contract, and orchestration coverage.
 - Forbidden without explicit approval: SQLite, Flask, Django, or complex ORMs.
 
 ## 2. Directory Map
 Keep strict separation of concerns:
-- `app.py`: orchestrator and entry point. Keep thin.
-- `data/`: ETL pipelines, updaters, static datasets, map builders.
-- `strategies/`: strategy logic, scoring, optimization cartridges.
-- `views/`: Streamlit rendering and interaction logic.
-- `tests/`: test suites mirroring source structure.
-- `docs/`: phase briefs and specifications.
+- `scripts/`: orchestration, validation, supervision, reporting, and handoff entrypoints for the control plane.
+- `scripts/startup_codex_helper.py`, `scripts/run_loop_cycle.py`: initialize a round and execute the main worker/auditor/CEO loop.
+- `scripts/validate_loop_closure.py`, `scripts/supervise_loop.py`, `scripts/print_takeover_entrypoint.py`: close the loop, monitor loop health, and print takeover guidance.
+- `docs/context/`: authoritative `_latest` artifacts exchanged between startup, execution, closure, supervision, and takeover steps.
+- `docs/`: operating contracts, phase briefs, runbooks, decision records, and repo procedures.
+- `tests/`: test suites covering script behavior and control-plane contracts.
+- `data/`, `strategies/`, `views/`: legacy quant-era surfaces; do not treat them as primary operator entrypoints unless a current brief explicitly scopes them in.
 - `docs/lessonss.md`: self-learning loop log for mistakes and guardrails.
 - `docs/research/`: domain research PDFs and synthesized findings.
 - `.codex/skills/`: canonical repo-local Codex skills (including `saw` and `research-analysis`).
 - `skills/`: reserved for project deliverables; not the canonical agent-skill source.
+- `OPERATOR_LOOP_GUIDE.md`: canonical operator walkthrough for the current startup -> loop -> closure -> takeover flow.
 
 ## 3. Operating Principles (Core Commandments)
 1. Docs-as-Code: if behavior changes, update docs (prd and product spec) and decision log in the same milestone. for explicit formulas used, document the explicit formula and where .py used ,in notes.md, 
@@ -38,8 +39,8 @@ Keep strict separation of concerns:
 1. Brief: create or update `docs/<phase>-brief.md` with acceptance criteria and live loop state.
 2. Plan: propose concrete file-level implementation steps using the mandatory contract in Section 11.
 3. Orchestrate: assign subagents with clear ownership (`Implementer`, `Reviewer A/B/C`) and acceptance checks.
-4. Execute: implement vertical slices (Data -> Strategy -> View -> Ops).
-5. Verify: run `pytest` and runtime smoke checks (`launch.py` or `streamlit run app.py`).
+4. Execute: run the current control-plane flow (`startup_codex_helper.py` -> `run_loop_cycle.py` -> closure/supervision/takeover) with bounded worker ownership.
+5. Verify: run `pytest` and runtime smoke checks (for example `python scripts/startup_codex_helper.py --help`, `python scripts/run_loop_cycle.py --help`, and `python scripts/supervise_loop.py --max-cycles 1`).
 6. Review: execute the Section 5 milestone gate.
 7. Report: include observability rating, evidence footer (Section 9), and top-down snapshot (Section 11).
 8. SAW round: run Subagents-After-Work protocol from Section 12.

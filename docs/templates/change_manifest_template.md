@@ -1,0 +1,33 @@
+# Change Manifest Template
+
+Use this template for big changes before coding.
+
+## Header
+- ManifestID: `<YYYYMMDD-short-id>`
+- Author/Operator: `<name>`
+- DateUTC: `<ISO8601>`
+- TriggerType: `<cross_module|architecture|high_risk_one_way|other>`
+
+## Scope
+- Objective: `<what changes>`
+- In Scope Modules: `<explicit module/file boundaries>`
+- Out of Scope / Non-Goals: `<explicit exclusions>`
+
+## Logic Spine Mapping
+- SpineID: `<LS-xxx from docs/logic_spine_index.md>`
+- Canonical Docs Impacted: `<paths>`
+
+## Ownership and Role Split
+- Orchestrator (governance only): `<owner>`
+- Implementer(s): `<owner list>`
+- Reviewer(s): `<owner list>`
+
+## Risks and Checks
+- Main Risks: `<top 3>`
+- Acceptance Checks: `<tests/validation/docs checks>`
+- Rollback Note: `<one-line rollback approach>`
+
+## Review Decision
+- Manifest Review Verdict: `<APPROVE|REVISE|HOLD>`
+- Approved By: `<name/role>`
+- Approved At UTC: `<ISO8601>`

@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 20
 
-- GeneratedAtUTC: 2026-03-01T17:32:38Z
+- GeneratedAtUTC: 2026-03-03T07:18:13Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -146,12 +146,13 @@ Draft `docs/phase_brief/phase24-brief.md` with Pod A/B acceptance checks and PIT
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-01T17:32:38Z",
+  "generated_at_utc": "2026-03-03T07:18:13Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
     "docs/lessonss.md",
-    "docs/phase_brief/phase20-brief.md"
+    "docs/phase_brief/phase20-brief.md",
+    "docs/phase_brief/phase24c-brief.md"
   ],
   "active_phase": 20,
   "what_was_done": [
@@ -183,7 +184,7 @@ Draft `docs/phase_brief/phase24-brief.md` with Pod A/B acceptance checks and PIT
 ### docs/decision log.md
 ~~~markdown
 Decision Log: Terminal Zero
-Author: Atomic Mesh | Last Updated: 2026-02-22 (Core module refactor Stage 2)
+Author: Atomic Mesh | Last Updated: 2026-03-02 (Phase 24A First Principles Engineering Alignment)
 
 Part 1: Master Decision Log
 
@@ -2136,6 +2137,66 @@ Philosophy Local-First Loop + Gemini Handover Automation (2026-03-01): Worker-Fi
     - Worker repos lacking writable local loop targets may block strict migration and require per-repo bootstrap.
   - Rollback note:
     - Remove `top_level_PM.md`, `scripts/sync_philosophy_feedback.py`, revert `scripts/build_context_packet.py` handover extensions, and roll back associated docs/tests updates.
+
+### Phase 24A: First Principles Engineering Alignment (2026-03-02)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-105 | governance/schema | Worker output lacked engineering reasoning structure (confidence + citations only, no problem-solving alignment) | Introduce worker_reply_packet v2.0.0 with `machine_optimized` block (confidence_level, problem_solving_alignment_score, expertise_coverage) and `pm_first_principles` block (problem, constraints, logic, solution) | Enables CEO to evaluate task-quality alignment from persisted structured reasoning, not just structural completion evidence. |
+| D-106 | governance/validator | v2 schema change would break fail-closed G06 gate and bootstrap without migration | 3-tier validator split (shared + v1-only + v2-only) with version auto-detect from packet `schema_version` and optional `--schema-version-override` CLI flag | Preserves backward compatibility; v1 packets pass v1 rules, v2 packets pass v2 rules. Cutover scheduled for Phase 24B. |
+| D-107 | governance/digest | CEO digest lacked First Principles and Expertise Coverage sections; confidence read was hardcoded to v1 location | Add digest sections I (First Principles) and II (Strategic Expertise Coverage) at top; rewire confidence read with `_resolve_confidence()` v2-first + v1-fallback | Digest renders only persisted artifacts (invariant). v1 packets show graceful "Not available" for new sections. |
+| D-108 | governance/bootstrap | Bootstrap emitted v1 packets; needed v2 with valid expertise_coverage for self-passing G06 | Bootstrap emits v2 packets with one valid expertise row (domain=qa, verdict=SKIPPED) and placeholder pm_first_principles | New repos start on v2 from day one; placeholder content clearly marked for replacement. |
+| D-109 | governance/cutover | Dual-mode v1/v2 could linger indefinitely without enforcement trigger | Phase 24A: auto-detect. Phase 24B: add `--schema-version-override 2.0.0` to G06 after cutover readiness gate passes on all repos. Phase 25+: remove v1 code path. | Bounded migration window with deterministic triggers and pre-cutover validation. |
+| D-110 | governance/ceo-prompt | CEO prompt had no tone/style constraints; could drift into ceremonial praise | Added Communication Constraints section (no pleasantries/praise/metaphors, purely analytical, every statement falsifiable or actionable) and Strategic Expertise Matrix output contract item | Prompt-level constraint proportionate to risk; no validator added (accepted risk). |
+
+- Evidence:
+  - `python -m pytest tests/test_validate_worker_reply_packet.py tests/test_build_ceo_bridge_digest.py -v` (20 passed)
+  - `python scripts/validate_worker_reply_packet.py --input docs/context/worker_reply_packet.json --repo-root .` (exit 0)
+  - Modified files: `docs/context/schemas/worker_reply_packet.json.template`, `scripts/validate_worker_reply_packet.py`, `scripts/build_ceo_bridge_digest.py`, `scripts/bootstrap_repo_profile.ps1`, `scripts/phase_end_handover.ps1`, `docs/context/ceo_init_prompt_v1.md`, `docs/context/worker_reply_packet.json`, `docs/runbook_ops.md`, `docs/checklist_milestone_review.md`
+- Rollback note:
+  - Revert all modified files to pre-Phase 24A state. v1 packets and v1 digest sections will resume. No data loss risk (additive schema change).
+
+### Phase 24B-minimal: Low-Cost, High-ROI Enforcement Tightening (2026-03-02)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-111 | governance/validator | Score thresholds for confidence and relatability were advisory-only in digest; no machine enforcement | Add `--enforce-score-thresholds` flag to validator: confidence < 0.70 → HOLD, relatability < 0.75 → REFRAME. Feature-switched via `-EnforceScoreThresholds` in `phase_end_handover.ps1` (default off). | Hard enforcement gated by opt-in flag prevents bootstrap self-fail and cross-repo breakage. Digest score gates remain advisory visualization. |
+| D-112 | governance/validator | 6-expert always-on council was expensive; not all domains needed per decision | Default triad (principal, riskops, qa) + trigger-based escalation for system_eng, architect, devsecops. Triad structural + substantive checks gated by `--enforce-score-thresholds`. | Reduces overhead while maintaining coverage on buildability, risk, and quality. Escalation experts activated only when trigger conditions are met. |
+| D-113 | governance/phase-end | Triad enforcement could break cross-repo v2 packets missing triad rows | G05b cross-repo readiness gate in `phase_end_handover.ps1`. Mandatory when `-EnforceScoreThresholds` is true (BLOCK if `-CrossRepoRoots` missing). SKIPPED when flag is off. | Prevents activating threshold enforcement without proving all repos are compliant. |
+| D-114 | skills/research | Research skill had no explicit confidence downgrade rules or conflict escalation tiers | Added confidence downgrade rule (SupportStrength != Direct → low-certainty) and 3-tier conflict escalation (Tier 1: Open Risks/PASS, Tier 2: BLOCK/PM resolution, Tier 3: BLOCK + CEO escalation). | Closes gap where indirect evidence could carry high-confidence rating. Conflict tiers provide deterministic escalation path. |
+| D-115 | skills/saw | SAW closure allowed user override on Critical findings; conflicted with AGENTS.md inherited-out-of-scope path | Scoped Critical auto-BLOCK to in-scope findings only (no override). Inherited out-of-scope Critical/High retains user-acceptance path with owner + TargetDate. Aligned language in SAW SKILL.md and AGENTS.md Section 12.3. | Removes policy conflict while preserving pragmatic handling of inherited findings. |
+| D-116 | governance/digest | Digest had no per-round score gate visualization for CEO decision-making | Added Section X (Per-Round Score Gates) with GO/HOLD/REFRAME table. Renumbered PM Actions to Section XI. | CEO sees threshold status per task before dispatch. |
+
+- Evidence:
+  - `python -m pytest tests/test_validate_worker_reply_packet.py tests/test_build_ceo_bridge_digest.py -v` (35 passed)
+  - `python scripts/validate_worker_reply_packet.py --input docs/context/worker_reply_packet.json` (exit 0, structural-only)
+  - `python scripts/validate_worker_reply_packet.py --input docs/context/worker_reply_packet.json --enforce-score-thresholds` (exit 1: confidence 0.30 < 0.70, relatability 0.0 < 0.75, all triad SKIPPED — expected for bootstrap)
+  - Modified files: `docs/context/ceo_init_prompt_v1.md`, `scripts/validate_worker_reply_packet.py`, `scripts/build_ceo_bridge_digest.py`, `scripts/bootstrap_repo_profile.ps1`, `scripts/phase_end_handover.ps1`, `docs/context/worker_reply_packet.json`, `.codex/skills/research-analysis/SKILL.md`, `.codex/skills/saw/SKILL.md`, `AGENTS.md`
+- Rollback note:
+  - Revert all modified files to post-Phase 24A state. v2 validation without triad/threshold enforcement resumes. No data loss (additive enforcement only).
+
+### Phase 24C: Auditor Loop — Shadow → Enforce (2026-03-02)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-117 | governance/auditor | Worker reply packets had no independent review beyond structural validation (G06) | Add `scripts/run_auditor_review.py` (G11) with 10 governance checks (AUD-R000–R009), canonical severity model, and shadow/enforce modes. Default shadow (non-blocking for policy findings). | Independent auditor catches quality gaps (confidence, relatability, triad, citations, placeholders) that structural validation cannot. Orthogonal to SAW (process) vs auditor (output). |
+| D-118 | governance/auditor | Severity could differ between shadow and enforce, making FP calibration during shadow unreliable | Canonical severity: same severity in both modes. Only the `blocking` flag differs (shadow: always false; enforce: true for CRITICAL/HIGH). | Stable severity semantics ensure false-positive rate measurement during shadow period is directly comparable to enforce behavior. |
+| D-119 | governance/auditor | Infra errors (script crash, invalid JSON) could be masked by shadow mode's non-blocking policy | Exit code 2 = INFRA_ERROR, always blocks regardless of mode. Exit 1 = policy BLOCK (enforce only). Exit 0 = PASS. | Broken tooling should never hide behind shadow mode. Infra failures are tool failures, not policy findings. |
+| D-120 | governance/phase-end | G09b (digest rebuild) could be skipped after G11 BLOCK in enforce mode, leaving stale digest | G09b + G10b run in finalize path (always, when `-AuditMode` ≠ `none`), even after G11 BLOCK. Primary failed gate takes precedence over finalize failures. | Digest always reflects the auditor findings that caused the BLOCK. Root cause stays clear in summary. |
+| D-121 | governance/phase-end | Stale `auditor_findings.json` from a previous run could leak into current digest on auditor infra failure | Run-scoped output path: `phase_end_logs/auditor_findings_<runid>.json`. G09b only reads run-scoped path. Canonical path updated as copy only on exit 0 or 1. | Eliminates stale file ingestion when auditor crashes before writing output. |
+| D-122 | governance/auditor | v1 packets lack v2 fields but should not crash auditor or silently skip | AUD-R000: v1 packet emits single HIGH finding. v2-only checks skipped. Unknown schema_version → exit 2 (INFRA_ERROR). | Graceful degradation for v1; fail-closed for unknown versions. Enforce mode blocks v1 packets via AUD-R000 (HIGH + blocking=true). |
+| D-123 | governance/auditor | `dod_result=FAIL` initially considered CRITICAL by auditor, conflicting with validator contract that accepts FAIL as valid data | AUD-R008: dod_result=FAIL → MEDIUM (informative), not CRITICAL. Auditor does not redefine phase-end semantics. | Validator contract allows FAIL. Auditor reports it for visibility but does not escalate beyond MEDIUM. |
+| D-124 | governance/auditor | Bootstrap/template packets with sentinel open_risks ("none", "n/a", "placeholder") triggered spurious findings | AUD-R009: sentinel normalization filters out `{none, n/a, na, placeholder, tbd, todo, ""}` before flagging open_risks. | Prevents over-firing on bootstrap and template packets while still catching substantive unresolved risks. |
+| D-125 | governance/digest | CEO digest lacked auditor findings section; stale files could be rendered | Added Section IX (Auditor Review Findings) between VIII (Worker Confidence) and X (Score Gates). Source-based detection: only renders when auditor data is explicitly passed as source. | Stale-file suppression: digest builder never auto-discovers auditor files from disk. When `-AuditMode none`, Section IX shows "Auditor review not available." |
+| D-126 | governance/auditor | No promotion criteria for shadow → enforce transition | 5-condition gate: (a) 24B operational close, (b) ≥30 audited items across ≥2 consecutive weekly windows, (c) C/H FP rate <5%, (d) PM/owner signoff in decision log, (e) all packets schema_version=2.0.0. | Prevents premature enforce activation. Numeric criteria ensure statistical significance and cross-repo readiness. |
+
+- Evidence:
+  - `python scripts/run_auditor_review.py --input docs/context/worker_reply_packet.json --repo-root . --output docs/context/auditor_findings.json --mode shadow` (exit 0, 5 findings: C=1/H=2/M=2, all blocking=false)
+  - `python scripts/run_auditor_review.py --input docs/context/worker_reply_packet.json --repo-root . --output docs/context/auditor_findings.json --mode enforce` (exit 1, BLOCK: C=1/H=2 blocking=true)
+  - `python -m pytest tests/test_run_auditor_review.py tests/test_build_ceo_bridge_digest.py tests/test_validate_worker_reply_packet.py -v` (60 passed, 0 regression)
+  - Modified files: `scripts/run_auditor_review.py` (NEW), `docs/context/schemas/auditor_findings.json.template` (NEW), `tests/test_run_auditor_review.py` (NEW), `scripts/phase_end_handover.ps1`, `scripts/build_ceo_bridge_digest.py`, `docs/context/ceo_init_prompt_v1.md`, `AGENTS.md`, `docs/runbook_ops.md`, `docs/checklist_milestone_review.md`, `tests/test_build_ceo_bridge_digest.py`
+- Rollback note:
+  - Remove `scripts/run_auditor_review.py`, `docs/context/schemas/auditor_findings.json.template`, `tests/test_run_auditor_review.py`, `docs/context/auditor_findings.json`. Revert edits to `scripts/phase_end_handover.ps1` (remove G11/G09b/G10b/finalize path), `scripts/build_ceo_bridge_digest.py` (remove Section IX), `docs/context/ceo_init_prompt_v1.md`, `AGENTS.md` (remove Section 13b), `docs/runbook_ops.md`, `docs/checklist_milestone_review.md`, `tests/test_build_ceo_bridge_digest.py`. No data loss (additive change).
 ~~~
 
 ### docs/handover/phase20_handover.md
@@ -2244,7 +2305,7 @@ Prompt: Reply "approve next phase" to start execution.
 ~~~markdown
 # lessonss.md
 
-Last updated: 2026-02-23
+Last updated: 2026-03-02
 
 ## Purpose
 Track mistakes, root causes, and guardrails so repeated errors are prevented.
@@ -2311,6 +2372,12 @@ Track mistakes, root causes, and guardrails so repeated errors are prevented.
 | 2026-02-23 | SOP context bootstrap port | SOP workspace had no deterministic startup context artifacts or bootstrap skill | Bootstrap implementation existed only in Quant repo; SOP lacked mirrored scaffolding | Ported script/tests/skill/docs and generated validated context artifacts | For multi-repo programs, mirror context-bootstrap stack immediately after phase close and run build+validate+pytest in each target repo | `scripts/build_context_packet.py`, `tests/test_build_context_packet.py`, `.codex/skills/context-bootstrap/SKILL.md`, `docs/context/current_context.json`, `docs/context/current_context.md`, `python scripts/build_context_packet.py`, `python scripts/build_context_packet.py --validate`, `python -m pytest tests/test_build_context_packet.py -q` |
 | 2026-03-01 | Philosophy local-first migration + Gemini handover | Main-governance philosophy updates could land before worker repos consumed the update, causing cross-repo drift | No enforced worker-first synchronization gate or migration ledger | Added strict local-first sync script with per-worker status log and main migration block, plus auto-generated Gemini handover tied to context packet build/validate | For multi-repo governance changes, require worker local-loop sync PASS before main migration and include top-level PM + context files in deterministic handover artifacts | `top_level_PM.md`, `scripts/sync_philosophy_feedback.py`, `scripts/build_context_packet.py`, `tests/test_sync_philosophy_feedback.py`, `tests/test_build_context_packet.py`, `docs/context/philosophy_migration_log.json`, `docs/handover/gemini/phase*_gemini_handover.md` |
 | 2026-03-01 | philosophy-sync (2026-03-01-top-level-philosophy-6-8) | worker philosophy update not propagated to SOP main | missing local-first migration loop | synchronized worker loops then migrated summary to SOP main | enforce local-first then main migration as fail-closed gate | `docs/context/philosophy_migration_log.json`, `top_level_PM.md`, worker `docs/lessonss.md` |
+| 2026-03-02 | Phase 24A schema migration | Plan referenced "replace 7-factor optimality" but no 7-factor existed in codebase; plan also proposed field naming conflict (duplicate confidence sources) | Plan assumptions not verified against actual committed schema before design | Walked codebase to verify all 7 findings before planning; resolved via 3-tier validator split (shared/v1/v2) with single canonical confidence location per version | Before designing schema migrations, always read the actual committed schema and validator code to verify assumptions; never design against imagined current state | `docs/context/schemas/worker_reply_packet.json.template`, `scripts/validate_worker_reply_packet.py`, `tests/test_validate_worker_reply_packet.py` |
+| 2026-03-02 | Phase 24A bootstrap self-fail | Bootstrap v2 packet initially emitted `expertise_coverage: []` which would fail v2 validator's non-empty list requirement | Placeholder design did not simulate G06 validation path against its own output | Added one valid expertise row (qa/SKIPPED) to bootstrap and added explicit `test_bootstrap_v2_packet_passes_validation` test | For scaffold generators, always add a test that runs the validator on the generated scaffold before shipping | `scripts/bootstrap_repo_profile.ps1`, `tests/test_validate_worker_reply_packet.py` |
+| 2026-03-02 | Phase 24B triad enforcement cross-repo break risk | Always-on triad check in `_validate_item_v2()` would break any existing v2 packet in other repos lacking triad rows on normal G06 runs | Enforcement addition treated as structural requirement without considering deployment ordering | Gated triad check (structural + substantive) behind `--enforce-score-thresholds` flag; added G05b mandatory readiness gate when flag is enabled | Never add always-on structural enforcement to a shared validator without a deployment gate; use feature switches for cross-repo changes | `scripts/validate_worker_reply_packet.py`, `scripts/phase_end_handover.ps1`, `tests/test_validate_worker_reply_packet.py::test_v2_triad_present_without_flag_passes` |
+| 2026-03-02 | Phase 24B bootstrap threshold mode | Bootstrap packet (confidence=0.30, relatability=0.0, all-SKIPPED) would hard-fail under `--enforce-score-thresholds`; non-obvious that this is expected | Threshold enforcement capability added without documenting bootstrap-incompatible state | Added explicit runbook rule: threshold mode must not be enabled while `phase_bootstrap` packet is active; added `test_bootstrap_v2_packet_fails_threshold_enforcement` test to prove expected failure | For enforcement flags that require real worker data, document incompatibility with scaffold packets in runbook and test the expected failure path | `docs/runbook_ops.md`, `tests/test_validate_worker_reply_packet.py::test_bootstrap_v2_packet_fails_threshold_enforcement` |
+| 2026-03-02 | Phase 24C auditor citation path validation | Test `test_enforce_mode_passes_clean_packet` failed because citation paths (`scripts/a.py`, `tests/test_a.py`) in the packet didn't exist in the temp directory, causing AUD-R006 HIGH findings | Packet builder referenced paths that only exist in real repo, not in test `tmp_path` | Created stub files in the test directory matching citation paths before running auditor | When testing auditor checks that verify file existence, always create matching stub files in the test fixture; citation path validation is repo-root-relative | `tests/test_run_auditor_review.py::test_enforce_mode_passes_clean_packet` |
+| 2026-03-02 | Phase 24C severity model design | Initial plan had AUD-R000 as INFO in shadow / HIGH in enforce, creating contradictory canonical severity | Severity was mode-dependent, breaking the invariant needed for FP calibration across modes | Applied canonical severity model: severity is always the same in both modes; only `blocking` flag differs | Never make severity mode-dependent; use a separate `blocking` flag to control enforcement behavior while keeping severity stable for analytics | `scripts/run_auditor_review.py`, `tests/test_run_auditor_review.py::test_canonical_severity_identical_across_modes` |
 ~~~
 
 ### docs/phase_brief/phase20-brief.md
@@ -2424,6 +2491,183 @@ Open Risks:
 
 Rollback Note:
 - Revert to pre-close state by restoring previous `phase20` brief and handover docs from backup plus prior ranker function implementation in `strategies/ticker_pool.py`.
+~~~
+
+### docs/phase_brief/phase24c-brief.md
+~~~markdown
+# Phase 24C: Auditor Calibration & Shadow-to-Enforce Promotion
+
+## Scope
+
+Implement independent auditor review system with false-positive calibration and promotion dossier to validate shadow-to-enforce transition.
+
+**Core Components:**
+- Auditor rules engine (AUD-R000 through AUD-R009)
+- False-positive ledger and annotation workflow
+- Calibration reporting (weekly and dossier modes)
+- Shadow-to-enforce promotion criteria (C0-C5)
+
+## Objectives
+
+1. Implement 7 auditor rules for worker reply packet quality review
+2. Establish FP ledger schema and 100% annotation workflow for C/H findings
+3. Execute 2-week shadow calibration window (2026-03-03 to 2026-03-17)
+4. Validate promotion criteria through automated dossier reporting
+5. Transition to enforce mode after dossier approval and manual signoff
+
+## Acceptance Criteria
+
+### C0: Infrastructure Health
+- **Threshold:** 0 infra failures
+- **Definition:** Zero exit code 2 failures (script crashes, invalid JSON, missing files)
+- **Rationale:** Infra errors block regardless of mode; broken tooling must never hide behind shadow mode
+
+### C1: Phase 24B Operational Close (MANUAL)
+- **Threshold:** PM signoff required
+- **Requirements:**
+  - Bootstrap worker packet replaced with real execution evidence
+  - Cross-repo readiness validated (Quant, Film, SOP)
+  - One successful enforce-mode dry-run completed without false blocks
+- **Rationale:** Manual gate ensures operational readiness beyond automated metrics
+
+### C2: Minimum Items Reviewed
+- **Threshold:** ≥30 items total across shadow window
+- **Definition:** Sum of `items_reviewed` from all shadow run summaries
+- **Rationale:** Statistical significance for FP rate measurement
+
+### C3: Consecutive Weeks
+- **Threshold:** ≥2 consecutive ISO weeks with ≥10 items each
+- **Definition:** Longest consecutive run of qualifying weeks (not total qualifying weeks)
+- **Rationale:** Sustained operational cadence, not sporadic bursts
+
+### C4: False-Positive Rate
+- **Threshold:** <5%
+- **Definition:** (FP count / C+H total) among annotated findings
+- **Rationale:** Acceptable false-block rate for enforce mode
+
+### C4b: Annotation Coverage
+- **Threshold:** 100% (strict)
+- **Definition:** All C/H findings must have TP or FP verdict in ledger
+- **Rationale:** Cannot measure FP rate without complete annotation
+
+### C5: Schema Version
+- **Threshold:** All packets v2.0.0
+- **Definition:** All reviewed packets use `schema_version: "2.0.0"`
+- **Rationale:** v1 packets lack v2 fields required for auditor checks
+
+## Evidence Requirements
+
+**Operational Artifacts:**
+- `docs/context/auditor_fp_ledger.json` - FP annotations with 100% C/H coverage
+- `docs/context/auditor_calibration_report.md` - Weekly calibration report
+- `docs/context/auditor_promotion_dossier.md` - Dossier validation report
+
+**Test Evidence:**
+- 51 tests passing (23 auditor + 28 calibration)
+- Zero regressions in existing test suite
+
+**Traceability:**
+- PM-24C-001 through PM-24C-007 mapped in `pm_to_code_traceability.yaml`
+- Decision log entries D-117 through D-126
+
+## Deliverables
+
+1. **Auditor Rules Implementation** (7 rules)
+   - AUD-R000: v1 packet detection (HIGH severity)
+   - AUD-R001: Low confidence detection (CRITICAL if <0.70)
+   - AUD-R002: Problem-solving alignment (CRITICAL if <0.75)
+   - AUD-R003: Expertise coverage validation
+   - AUD-R004: Citation quality checks
+   - AUD-R008: DoD result reporting (MEDIUM for FAIL)
+   - AUD-R009: Open risks validation
+
+2. **Calibration Reporting Scripts**
+   - `scripts/auditor_calibration_report.py` (weekly/dossier modes)
+   - `scripts/run_auditor_review.py` (shadow/enforce modes)
+
+3. **FP Ledger Schema and Workflow**
+   - Composite key: (repo_id, run_id, finding_id)
+   - Verdicts: TP (true positive) or FP (false positive)
+   - Provenance: annotated_by, annotated_at_utc
+
+4. **2-Week Shadow Window Execution**
+   - Weekly shadow cycles on active repos
+   - 100% C/H annotation after each run
+   - Weekly report regeneration
+
+5. **Promotion Dossier Validation**
+   - Automated C0, C2-C5 validation
+   - Manual C1 signoff in decision log
+   - Exit 0 = ready for enforce, Exit 1 = criteria not met
+
+6. **Canary Enforce Cycles** (3-5 runs)
+   - Limited scope enforce runs before full rollout
+   - Validate no false blocks in production
+
+7. **Full Enforce Rollout**
+   - Enable enforce mode in phase-end handover
+   - Monitor FP rate <5% sustained
+
+## Dependencies
+
+**Phase 24B Operational Close:**
+- Real worker packet (not bootstrap placeholder)
+- Cross-repo validation complete
+- Enforce dry-run successful
+
+**Worker Reply Packet v2.0.0:**
+- Schema includes machine_optimized block
+- Schema includes pm_first_principles block
+- All packets migrated from v1
+
+**Phase-End Handover Gates:**
+- G00-G11 operational
+- G11 auditor gate integrated
+- G09b/G10b finalize path working
+
+## Risks and Mitigations
+
+**Risk:** Insufficient shadow data (C2/C3 not met)
+- **Mitigation:** 2-week window with weekly cadence ensures 30+ items across 2+ weeks
+
+**Risk:** High FP rate (C4 >5%)
+- **Mitigation:** Rule tuning during shadow window; can extend window if needed
+
+**Risk:** Infra failures (C0 violations)
+- **Mitigation:** Fail-closed validation (exit 2 always blocks); comprehensive test coverage
+
+**Risk:** Annotation burden (C4b 100% requirement)
+- **Mitigation:** Composite key ledger makes annotation workflow efficient; small C/H volume expected
+
+## Success Metrics
+
+**Automated Criteria:**
+- C0: 0 infra failures ✅
+- C2: ≥30 items ✅
+- C3: ≥2 consecutive weeks ✅
+- C4: <5% FP rate ✅
+- C4b: 100% annotation coverage ✅
+- C5: All v2.0.0 ✅
+
+**Manual Criteria:**
+- C1: PM signoff recorded in decision log ✅
+
+**Operational Metrics:**
+- Dossier exits 0 (all criteria met)
+- Canary enforce runs complete without false blocks
+- Full enforce rollout with <5% FP rate sustained over 4+ weeks
+
+## Rollback Plan
+
+If enforce mode causes operational issues:
+
+1. Revert `phase_end_handover.ps1` to `-AuditMode shadow`
+2. Investigate false-block root cause
+3. Tune rules or extend shadow window
+4. Re-run dossier validation
+5. Repeat canary enforce cycles
+
+**Rollback trigger:** >5% false-block rate in enforce mode over 2+ consecutive weeks
 ~~~
 
 ## Philosophy Migration Log

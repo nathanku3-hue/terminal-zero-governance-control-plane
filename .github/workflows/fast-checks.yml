@@ -1,0 +1,49 @@
+name: Fast Checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      strict_promotion_checks:
+        description: "Run strict fast checks (--fail-on-hold)"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  fast-checks:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.strict_promotion_checks != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Run fast checks
+        run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root .
+
+  fast-checks-strict-promotion:
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.strict_promotion_checks == true) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Run strict fast checks
+        run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root . --fail-on-hold

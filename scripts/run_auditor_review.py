@@ -170,7 +170,7 @@ def _audit_item_v2(
             rule_id="AUD-R002",
             item_index=item_index,
             task_id=task_id,
-            severity="HIGH",
+            severity="CRITICAL",
             category="relatability",
             description=f"problem_solving_alignment_score={psa} below 0.75 threshold",
         )
@@ -232,6 +232,19 @@ def _audit_item_v2(
             cite_path = _as_str(cite.get("path"))
             if cite_path:
                 abs_path = (repo_root / cite_path).resolve()
+
+                # Check repo boundary
+                if not abs_path.is_relative_to(repo_root.resolve()):
+                    fb.add(
+                        rule_id="AUD-R006",
+                        severity="HIGH",
+                        item_index=item_index,
+                        task_id=task_id,
+                        category="citation_path",
+                        description=f"Citation escapes repo boundary: {cite_path}",
+                    )
+                    continue
+
                 if not abs_path.exists():
                     fb.add(
                         rule_id="AUD-R006",

@@ -1,5 +1,499 @@
 schema_version: "1.0.0"
-phase: "phase_bootstrap"
-last_updated_utc: "2026-03-01T17:16:15Z"
+phase: "phase24c"
+last_updated_utc: "2026-03-07T00:00:00Z"
 
-directives: []
+directives:
+  - directive_id: "PM-24A-001"
+    source: "ceo_init_prompt_v1.md#worker-reply-contract"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/context/schemas/worker_reply_packet.json.template"
+        - file: "scripts/validate_worker_reply_packet.py"
+        - file: "docs/context/worker_reply_packet.json"
+        - file: "tests/test_validate_worker_reply_packet.py"
+      validators:
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_packet_passes_with_all_blocks"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_packet_fails_without_machine_optimized"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_packet_fails_without_pm_first_principles"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_packet_fails_with_bare_confidence"
+
+  - directive_id: "PM-24A-002"
+    source: "ceo_init_prompt_v1.md#strategic-expertise-matrix"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/validate_worker_reply_packet.py"
+        - file: "scripts/build_ceo_bridge_digest.py"
+      validators:
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_invalid_expertise_domain_rejected"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_invalid_expertise_verdict_rejected"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_empty_expertise_rationale_rejected"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_renders_expertise_coverage"
+
+  - directive_id: "PM-24A-003"
+    source: "ceo_init_prompt_v1.md#communication-constraints"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/context/ceo_init_prompt_v1.md"
+      validators:
+        - path: "docs/context/ceo_init_prompt_v1.md"
+
+  - directive_id: "PM-24A-004"
+    source: "docs/decision log.md#D-107"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/build_ceo_bridge_digest.py"
+      validators:
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_renders_first_principles_at_top"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_confidence_reads_v2_location"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_graceful_v1_fallback"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_section_ordering_v2"
+
+  - directive_id: "PM-24A-005"
+    source: "docs/decision log.md#D-106"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/validate_worker_reply_packet.py"
+        - file: "scripts/phase_end_handover.ps1"
+      validators:
+        - path: "tests/test_validate_worker_reply_packet.py::test_schema_version_override_forces_v2"
+        - path: "tests/test_validate_worker_reply_packet.py::test_unknown_schema_version_rejected"
+        - path: "tests/test_validate_worker_reply_packet.py::test_g06_real_execution_v2_packet"
+
+  - directive_id: "PM-24A-006"
+    source: "docs/decision log.md#D-108"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/bootstrap_repo_profile.ps1"
+      validators:
+        - path: "tests/test_validate_worker_reply_packet.py::test_bootstrap_v2_packet_passes_validation"
+
+  - directive_id: "PM-24B-001"
+    source: "docs/decision log.md#D-111"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/validate_worker_reply_packet.py"
+        - file: "scripts/build_ceo_bridge_digest.py"
+        - file: "docs/context/ceo_init_prompt_v1.md"
+      validators:
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_threshold_confidence_below_070_rejected"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_threshold_relatability_below_075_rejected"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_threshold_both_above_passes"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_threshold_off_low_scores_pass"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_score_gates_go"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_score_gates_hold"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_score_gates_reframe"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_score_gates_hold_and_reframe"
+
+  - directive_id: "PM-24B-002"
+    source: "docs/decision log.md#D-112"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/validate_worker_reply_packet.py"
+        - file: "scripts/bootstrap_repo_profile.ps1"
+        - file: "docs/context/worker_reply_packet.json"
+        - file: "docs/context/ceo_init_prompt_v1.md"
+      validators:
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_triad_missing_principal_rejected_under_threshold"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_triad_present_without_flag_passes"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_triad_all_skipped_rejected_under_threshold"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_triad_one_applied_passes_under_threshold"
+        - path: "tests/test_validate_worker_reply_packet.py::test_v2_triad_not_required_counts_as_substantive"
+        - path: "tests/test_validate_worker_reply_packet.py::test_bootstrap_v2_packet_passes_structural_validation"
+        - path: "tests/test_validate_worker_reply_packet.py::test_bootstrap_v2_packet_fails_threshold_enforcement"
+
+  - directive_id: "PM-24B-003"
+    source: "docs/decision log.md#D-113"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/phase_end_handover.ps1"
+      validators:
+        - path: "scripts/phase_end_handover.ps1"
+
+  - directive_id: "PM-24B-004"
+    source: "docs/decision log.md#D-114"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: ".codex/skills/research-analysis/SKILL.md"
+      validators:
+        - path: ".codex/skills/research-analysis/SKILL.md"
+
+  - directive_id: "PM-24B-005"
+    source: "docs/decision log.md#D-115"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: ".codex/skills/saw/SKILL.md"
+        - file: "AGENTS.md"
+      validators:
+        - path: ".codex/skills/saw/SKILL.md"
+        - path: "AGENTS.md"
+
+  - directive_id: "PM-24B-006"
+    source: "docs/decision log.md#D-116"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/build_ceo_bridge_digest.py"
+      validators:
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_section_ordering_v2"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_score_gates_go"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_score_gates_hold"
+
+  - directive_id: "PM-24C-001"
+    source: "docs/decision log.md#D-117"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_auditor_review.py"
+        - file: "docs/context/schemas/auditor_findings.json.template"
+        - file: "tests/test_run_auditor_review.py"
+      validators:
+        - path: "tests/test_run_auditor_review.py::test_shadow_mode_passes_with_canonical_severity"
+        - path: "tests/test_run_auditor_review.py::test_enforce_mode_blocks_on_critical"
+        - path: "tests/test_run_auditor_review.py::test_enforce_mode_passes_clean_packet"
+        - path: "tests/test_run_auditor_review.py::test_canonical_severity_identical_across_modes"
+        - path: "tests/test_run_auditor_review.py::test_all_findings_have_rule_id"
+        - path: "tests/test_run_auditor_review.py::test_output_write_contract_exit_0"
+        - path: "tests/test_run_auditor_review.py::test_output_write_contract_exit_1"
+
+  - directive_id: "PM-24C-002"
+    source: "docs/decision log.md#D-119"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_auditor_review.py"
+      validators:
+        - path: "tests/test_run_auditor_review.py::test_infra_error_missing_input"
+        - path: "tests/test_run_auditor_review.py::test_infra_error_invalid_json"
+        - path: "tests/test_run_auditor_review.py::test_infra_error_unknown_schema_version"
+
+  - directive_id: "PM-24C-003"
+    source: "docs/decision log.md#D-120"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/phase_end_handover.ps1"
+      validators:
+        - path: "scripts/phase_end_handover.ps1"
+
+  - directive_id: "PM-24C-004"
+    source: "docs/decision log.md#D-122"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_auditor_review.py"
+      validators:
+        - path: "tests/test_run_auditor_review.py::test_aud_r000_v1_packet_high_severity"
+
+  - directive_id: "PM-24C-005"
+    source: "docs/decision log.md#D-123"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_auditor_review.py"
+      validators:
+        - path: "tests/test_run_auditor_review.py::test_aud_r008_dod_fail_is_medium"
+
+  - directive_id: "PM-24C-006"
+    source: "docs/decision log.md#D-124"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_auditor_review.py"
+        - file: "scripts/auditor_calibration_report.py"
+        - file: "tests/test_auditor_calibration_report.py"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_run_auditor_review.py::test_aud_r009_open_risks_sentinel_normalized"
+        - path: "tests/test_run_auditor_review.py::test_aud_r009_substantive_risk_fires"
+
+  - directive_id: "PM-24C-007"
+    source: "docs/decision log.md#D-125"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/build_ceo_bridge_digest.py"
+        - file: "scripts/generate_ceo_weekly_summary.py"
+        - file: "tests/test_build_ceo_bridge_digest.py"
+        - file: "tests/test_generate_ceo_weekly_summary.py"
+      validators:
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_renders_auditor_section_with_findings"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_renders_auditor_not_available_without_source"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_stale_file_suppression"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_shadow_note_when_high_findings"
+        - path: "tests/test_build_ceo_bridge_digest.py::test_digest_section_ordering_v2"
+        - path: "tests/test_generate_ceo_weekly_summary.py::test_weekly_summary_action_hold_when_criteria_not_met"
+        - path: "tests/test_generate_ceo_weekly_summary.py::test_weekly_summary_truth_checker_passes_on_generated_markdown"
+
+  - directive_id: "PM-24C-008"
+    source: "docs/decision log.md#D-127"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/startup_codex_helper.py"
+        - file: "tests/test_startup_codex_helper.py"
+        - file: "docs/runbook_ops.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_writes_outputs_and_reports_full_readiness"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_fails_when_interrogation_fields_missing"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_marks_stale_artifact"
+
+  - directive_id: "PM-24C-009"
+    source: "docs/decision log.md#D-128"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/init_phase_brainstorm_framework.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "docs/init_phase_brainstorm_framework.md"
+
+  - directive_id: "PM-24C-010"
+    source: "docs/decision log.md#D-129"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/round_contract_template.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/expert_invocation_policy.md"
+        - file: "docs/disagreement_runbook.md"
+        - file: "scripts/startup_codex_helper.py"
+        - file: "tests/test_startup_codex_helper.py"
+      validators:
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_writes_outputs_and_reports_full_readiness"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_fails_when_interrogation_fields_missing"
+        - path: "docs/round_contract_template.md"
+        - path: "docs/loop_operating_contract.md"
+
+  - directive_id: "PM-24C-011"
+    source: "docs/decision log.md#D-130"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/templates/ceo_weekly_summary.md"
+        - file: "docs/templates/dynamic_roadmap_board.md"
+      validators:
+        - path: "docs/templates/ceo_weekly_summary.md"
+        - path: "docs/templates/dynamic_roadmap_board.md"
+
+  - directive_id: "PM-24C-012"
+    source: "docs/decision log.md#D-131"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/validate_ceo_go_signal_truth.py"
+        - file: "tests/test_validate_ceo_go_signal_truth.py"
+        - file: "docs/runbook_ops.md"
+      validators:
+        - path: "tests/test_validate_ceo_go_signal_truth.py::test_truth_check_passes_for_generator_markdown"
+        - path: "tests/test_validate_ceo_go_signal_truth.py::test_truth_check_fails_when_action_drifts"
+        - path: "tests/test_validate_ceo_go_signal_truth.py::test_truth_check_fails_when_criterion_status_drifts"
+
+  - directive_id: "PM-24C-013"
+    source: "docs/decision log.md#D-132"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/startup_codex_helper.py"
+        - file: "tests/test_startup_codex_helper.py"
+        - file: "docs/runbook_ops.md"
+        - file: "docs/loop_operating_contract.md"
+      validators:
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_writes_outputs_and_reports_full_readiness"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_local_cli_handoff_uses_skills_header"
+
+  - directive_id: "PM-24C-014"
+    source: "docs/decision log.md#D-133"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/round_contract_template.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/init_phase_brainstorm_framework.md"
+        - file: "docs/runbook_ops.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_writes_outputs_and_reports_full_readiness"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_fails_when_interrogation_fields_missing"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_fails_for_invalid_task_granularity_limit"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_fails_for_invalid_intuition_gate"
+        - path: "docs/round_contract_template.md"
+        - path: "docs/loop_operating_contract.md"
+        - path: "docs/init_phase_brainstorm_framework.md"
+        - path: "docs/runbook_ops.md"
+
+  - directive_id: "PM-24C-015"
+    source: "docs/decision log.md#D-134"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/runbook_ops.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_writes_outputs_and_reports_full_readiness"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_fails_when_interrogation_fields_missing"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_local_cli_handoff_uses_skills_header"
+
+  - directive_id: "PM-24C-016"
+    source: "docs/decision log.md#D-135"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_loop_cycle.py"
+        - file: "scripts/validate_loop_closure.py"
+        - file: "scripts/validate_ceo_weekly_summary_truth.py"
+        - file: "scripts/evaluate_context_compaction_trigger.py"
+        - file: "scripts/validate_exec_memory_truth.py"
+        - file: "scripts/startup_codex_helper.py"
+        - file: "tests/test_run_loop_cycle.py"
+        - file: "tests/test_validate_loop_closure.py"
+        - file: "tests/test_validate_ceo_weekly_summary_truth.py"
+        - file: "tests/test_evaluate_context_compaction_trigger.py"
+        - file: "tests/test_validate_exec_memory_truth.py"
+        - file: "tests/test_startup_codex_helper.py"
+        - file: "docs/runbook_ops.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_run_loop_cycle.py::test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag"
+        - path: "tests/test_run_loop_cycle.py::test_run_loop_cycle_returns_nonzero_when_closure_fails"
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_ready_to_escalate"
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_not_ready_when_startup_gate_blocked"
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_returns_infra_error_for_truth_checker_failure"
+        - path: "tests/test_validate_ceo_weekly_summary_truth.py::test_weekly_truth_check_passes_for_aligned_markdown"
+        - path: "tests/test_validate_ceo_weekly_summary_truth.py::test_weekly_truth_check_fails_for_status_drift"
+        - path: "tests/test_validate_ceo_weekly_summary_truth.py::test_weekly_truth_check_returns_exit_2_on_parse_error"
+        - path: "tests/test_evaluate_context_compaction_trigger.py::test_trigger_on_warn_threshold"
+        - path: "tests/test_evaluate_context_compaction_trigger.py::test_trigger_on_action_change"
+        - path: "tests/test_validate_exec_memory_truth.py::test_validation_passes_for_valid_packet"
+        - path: "tests/test_validate_exec_memory_truth.py::test_validation_returns_exit_2_for_malformed_packet"
+        - path: "tests/test_validate_exec_memory_truth.py::test_validation_fails_for_semantic_claim_text_mismatch"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_writes_outputs_and_reports_full_readiness"
+        - path: "tests/test_startup_codex_helper.py::test_startup_helper_human_required_with_ack_writes_seed_ack_fields"
+        - path: "docs/runbook_ops.md"
+        - path: "docs/loop_operating_contract.md"
+
+  - directive_id: "PM-24C-017"
+    source: "docs/decision log.md#D-136"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_loop_cycle.py"
+        - file: "scripts/validate_loop_closure.py"
+        - file: "scripts/print_takeover_entrypoint.py"
+        - file: "tests/test_run_loop_cycle.py"
+        - file: "tests/test_validate_loop_closure.py"
+        - file: "tests/test_print_takeover_entrypoint.py"
+        - file: "docs/runbook_ops.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_ready_to_escalate"
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_not_ready_when_go_signal_action_is_hold"
+        - path: "tests/test_run_loop_cycle.py::test_run_loop_cycle_returns_hold_for_expected_dossier_shortfall_and_not_ready_closure"
+        - path: "tests/test_run_loop_cycle.py::test_run_loop_cycle_disables_hold_when_allow_hold_is_false"
+        - path: "tests/test_print_takeover_entrypoint.py::test_entrypoint_ready_to_escalate_returns_zero"
+        - path: "docs/runbook_ops.md"
+        - path: "docs/loop_operating_contract.md"
+
+  - directive_id: "PM-24C-018"
+    source: "docs/decision log.md#D-137"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "docs/multi_worker_concurrency_todo.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "docs/multi_worker_concurrency_todo.md"
+        - path: "docs/decision log.md"
+
+  - directive_id: "PM-24C-019"
+    source: "docs/decision log.md#D-138"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/run_loop_cycle.py"
+        - file: "scripts/validate_loop_closure.py"
+        - file: "scripts/validate_round_contract_checks.py"
+        - file: "scripts/validate_counterexample_gate.py"
+        - file: "scripts/validate_dual_judge_gate.py"
+        - file: "scripts/validate_refactor_mock_policy.py"
+        - file: "scripts/validate_review_checklist.py"
+        - file: "scripts/validate_interface_contracts.py"
+        - file: "scripts/validate_parallel_fanin.py"
+        - file: "scripts/run_fast_checks.py"
+        - file: "scripts/supervise_loop.py"
+        - file: "tests/test_run_loop_cycle.py"
+        - file: "tests/test_validate_loop_closure.py"
+        - file: "tests/test_validate_round_contract_checks.py"
+        - file: "tests/test_validate_counterexample_gate.py"
+        - file: "tests/test_validate_dual_judge_gate.py"
+        - file: "tests/test_validate_refactor_mock_policy.py"
+        - file: "tests/test_validate_review_checklist.py"
+        - file: "tests/test_validate_interface_contracts.py"
+        - file: "tests/test_validate_parallel_fanin.py"
+        - file: "tests/test_run_fast_checks.py"
+        - file: "tests/test_supervise_loop.py"
+        - file: "docs/round_contract_template.md"
+        - file: "docs/loop_operating_contract.md"
+        - file: "docs/decision_authority_matrix.md"
+        - file: "docs/runbook_ops.md"
+        - file: "docs/security.md"
+        - file: "docs/admin.md"
+        - file: "docs/templates/pr_review_checklist.md"
+        - file: "docs/templates/interface_contract_manifest.json"
+        - file: ".github/workflows/fast-checks.yml"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_ready_to_escalate"
+        - path: "tests/test_validate_loop_closure.py::test_validate_loop_closure_not_ready_when_go_signal_action_is_hold"
+        - path: "tests/test_run_loop_cycle.py::test_run_loop_cycle_returns_hold_for_expected_dossier_shortfall_and_not_ready_closure"
+        - path: "tests/test_validate_round_contract_checks.py::test_round_contract_checks_passes_when_declared_checks_exist"
+        - path: "tests/test_validate_counterexample_gate.py::test_counterexample_gate_passes_when_required_mode_has_real_values"
+        - path: "tests/test_validate_dual_judge_gate.py::test_fails_high_risk_when_required_dual_fields_missing"
+        - path: "tests/test_validate_refactor_mock_policy.py::test_refactor_mock_policy_passes_for_strict_mode_with_budget_and_integration_coverage"
+        - path: "tests/test_validate_review_checklist.py::test_passes_with_complete_checklist"
+        - path: "tests/test_validate_interface_contracts.py::test_interface_contracts_pass_for_valid_json_keys_and_text_markers"
+        - path: "tests/test_validate_parallel_fanin.py::test_passes_for_valid_non_overlapping_manifest"
+        - path: "docs/round_contract_template.md"
+        - path: "docs/loop_operating_contract.md"
+        - path: "docs/decision_authority_matrix.md"
+        - path: "docs/runbook_ops.md"
+
+  - directive_id: "PM-24C-020"
+    source: "docs/decision log.md#D-142-D-143"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/aggregate_worker_status.py"
+        - file: "scripts/validate_dispatch_acks.py"
+        - file: "tests/test_aggregate_worker_status.py"
+        - file: "tests/test_validate_dispatch_acks.py"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_aggregate_worker_status.py::test_escalation_append_dedupes_same_unresolved_issue"
+        - path: "tests/test_aggregate_worker_status.py::test_escalation_append_allows_new_event_when_existing_is_resolved"
+        - path: "tests/test_validate_dispatch_acks.py::test_validate_dispatch_acks_fails_on_duplicate_correlation_id"
+        - path: "tests/test_validate_dispatch_acks.py::test_validate_dispatch_acks_hash_mismatch_exit_code_unchanged"

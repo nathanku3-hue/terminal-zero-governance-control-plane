@@ -38,6 +38,37 @@ def _atomic_write_json(path: Path, data: Any) -> None:
         os.unlink(tmp_path)
         raise
 
+def _escalation_dedupe_key(event: dict[str, Any]) -> tuple[str, str, str, str]:
+    return (
+        str(event.get("worker_id", "")),
+        str(event.get("task_id", "")),
+        str(event.get("stale_since_utc", "")),
+        str(event.get("recommended_action", "")),
+    )
+
+def _append_deduped_escalations(
+    existing_events: list[Any], new_events: list[dict[str, Any]]
+) -> list[Any]:
+    merged: list[Any] = list(existing_events)
+    active_keys: set[tuple[str, str, str, str]] = set()
+
+    for event in merged:
+        if not isinstance(event, dict):
+            continue
+        if event.get("resolved") is True:
+            continue
+        active_keys.add(_escalation_dedupe_key(event))
+
+    for event in new_events:
+        key = _escalation_dedupe_key(event)
+        if key in active_keys:
+            continue
+        merged.append(event)
+        if event.get("resolved") is not True:
+            active_keys.add(key)
+
+    return merged
+
 def _find_worker_files(scan_root: Path, max_depth: int) -> list[Path]:
     results = []
     
@@ -127,13 +158,13 @@ def main() -> int:
     esc_out = Path(args.escalation_output).resolve() if args.escalation_output else None
 
     now = _now_utc()
-    
+
     worker_files = _find_worker_files(scan_root, DEFAULT_MAX_DEPTH)
-    
+
     has_self_signoff = False
     has_escalated = False
     has_stale = False
-    
+
     aggregate_payload = {
         "generated_utc": now.isoformat().replace("+00:00", "Z"),
         "workers": [],
@@ -144,9 +175,10 @@ def main() -> int:
             "stale": 0,
             "escalated": 0,
             "overall_health": "OK"
-        }
+        },
+        "parse_failures": []
     }
-    
+
     escalations = []
     
     for wf in worker_files:
@@ -155,6 +187,11 @@ def main() -> int:
                 data = json.load(f)
         except Exception as e:
             print(f"Warning: Failed to load {wf}: {e}", file=sys.stderr)
+            aggregate_payload["parse_failures"].append({
+                "file": str(wf),
+                "error": str(e),
+                "timestamp_utc": now.isoformat().replace("+00:00", "Z")
+            })
             continue
             
         worker_id = data.get("worker_id", "Unknown")
@@ -240,12 +277,11 @@ def main() -> int:
                 overall_esc = []
         else:
             overall_esc = []
-            
-        # Append without duplication. This is a simple implementation.
-        existing_ids = {e.get("event_id") for e in overall_esc}
-        for new_e in escalations:
-            # We omit the timestamp from ID check for true dedup in a real system, but good enough.
-            overall_esc.append(new_e)
+
+        if not isinstance(overall_esc, list):
+            overall_esc = []
+
+        overall_esc = _append_deduped_escalations(overall_esc, escalations)
             
         _atomic_write_json(esc_out, {"events": overall_esc})
         

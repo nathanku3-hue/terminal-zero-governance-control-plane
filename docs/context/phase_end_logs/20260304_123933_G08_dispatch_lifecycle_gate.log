@@ -1,0 +1,7 @@
+﻿timestamp_utc=2026-03-04T04:39:36Z
+gate=G08_dispatch_lifecycle_gate
+command=C:\Python314\python.exe E:\code\SOP\quant_current_scope\scripts\validate_dispatch_acks.py --manifest E:\code\SOP\quant_current_scope\docs\context\dispatch_manifest.json --scan-root E:\code\SOP\quant_current_scope\docs --timeout-minutes 10
+----- stdout_stderr -----
+----- exit -----
+exit_code=0
+ended_utc=2026-03-04T04:39:37Z

@@ -12,8 +12,17 @@ __pycache__/
 tmp_test/
 e2e_test/
 
-# Generated gate logs
-docs/context/phase_end_logs/
+# Generated artifacts - ephemeral state files
+docs/context/*_latest.json
+docs/context/*_latest.md
+
+# Generated root convenience mirrors
+NEXT_ROUND_HANDOFF_LATEST.md
+EXPERT_REQUEST_LATEST.md
+PM_CEO_RESEARCH_BRIEF_LATEST.md
+BOARD_DECISION_BRIEF_LATEST.md
+MILESTONE_OPTIMALITY_REVIEW_LATEST.md
+OPERATOR_LOOP_GUIDE.md
 
 # OS
 .DS_Store

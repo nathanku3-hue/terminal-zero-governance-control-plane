@@ -143,8 +143,8 @@ def test_shadow_mode_passes_with_canonical_severity(tmp_path: Path) -> None:
     result, findings = _run_auditor(tmp_path, packet=packet, mode="shadow")
     assert result.returncode == 0
     assert findings["summary"]["gate_verdict"] == "PASS"
-    assert findings["summary"]["critical"] >= 1  # confidence < 0.70
-    assert findings["summary"]["high"] >= 1  # relatability < 0.75
+    assert findings["summary"]["critical"] >= 2  # confidence < 0.70 and relatability < 0.75
+    assert findings["summary"]["high"] >= 1  # default citation paths are missing
     for f in findings["findings"]:
         assert f["blocking"] is False
 
@@ -274,12 +274,12 @@ def test_aud_r001_confidence_below_070(tmp_path: Path) -> None:
 
 
 def test_aud_r002_relatability_below_075(tmp_path: Path) -> None:
-    """AUD-R002: relatability < 0.75 produces HIGH finding."""
+    """AUD-R002: relatability < 0.75 produces CRITICAL finding."""
     packet = _make_v2_packet(relatability=0.50)
     _, findings = _run_auditor(tmp_path, packet=packet, mode="shadow")
     r002 = [f for f in findings["findings"] if f["rule_id"] == "AUD-R002"]
     assert len(r002) == 1
-    assert r002[0]["severity"] == "HIGH"
+    assert r002[0]["severity"] == "CRITICAL"
     assert r002[0]["category"] == "relatability"
 
 
@@ -325,6 +325,57 @@ def test_aud_r006_citation_path_missing(tmp_path: Path) -> None:
     r006 = [f for f in findings["findings"] if f["rule_id"] == "AUD-R006"]
     assert len(r006) >= 1
     assert all(f["severity"] == "HIGH" for f in r006)
+
+
+def test_citation_path_traversal_blocked(tmp_path: Path) -> None:
+    """AUD-R006: citation path escaping repo boundary produces HIGH finding."""
+    packet = {
+        "schema_version": "2.0.0",
+        "worker_id": "@test-worker",
+        "phase": "phase24c",
+        "generated_at_utc": "2026-03-02T12:00:00Z",
+        "items": [
+            {
+                "task_id": "task1",
+                "decision": "test decision",
+                "dod_result": "PASS",
+                "evidence_ids": ["EV-TEST"],
+                "open_risks": [],
+                "citations": [{"type": "code", "path": "../../../etc/passwd", "locator": "L1", "claim": "claim"}],
+                "machine_optimized": {
+                    "confidence_level": {"score": 0.88, "band": "HIGH", "rationale": "test"},
+                    "problem_solving_alignment_score": 0.85,
+                    "expertise_coverage": [
+                        {"domain": "principal", "verdict": "APPLIED", "rationale": "test"},
+                        {"domain": "riskops", "verdict": "APPLIED", "rationale": "test"},
+                        {"domain": "qa", "verdict": "APPLIED", "rationale": "test"},
+                    ],
+                },
+                "pm_first_principles": {
+                    "problem": "test problem",
+                    "constraints": "test constraints",
+                    "logic": "test logic",
+                    "solution": "test solution",
+                },
+            }
+        ],
+    }
+    result, findings = _run_auditor(tmp_path, packet=packet, mode="shadow")
+    assert result.returncode == 0, f"Script failed with code {result.returncode}: {result.stderr}"
+
+    r006 = [f for f in findings["findings"] if f["rule_id"] == "AUD-R006"]
+    assert r006 == [
+        {
+            "finding_id": "AUD-002",
+            "rule_id": "AUD-R006",
+            "item_index": 0,
+            "task_id": "task1",
+            "severity": "HIGH",
+            "category": "citation_path",
+            "description": "Citation escapes repo boundary: ../../../etc/passwd",
+            "blocking": False,
+        }
+    ]
 
 
 def test_aud_r007_placeholder_text(tmp_path: Path) -> None:

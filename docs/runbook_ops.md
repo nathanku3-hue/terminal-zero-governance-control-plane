@@ -1,8 +1,113 @@
 # Terminal Zero Operations Runbook
 
 ## 1. Startup
-- **Standard Launch**: `.venv\Scripts\python launch.py`
-- **Debug Mode**: `.venv\Scripts\streamlit run app.py -- --debug`
+- **Codex Startup Helper (required before planning loop)**:
+  - `.venv\Scripts\python scripts/startup_codex_helper.py --repo-root .`
+  - Lean single-source init execution card quickstart (`HUMAN_REQUIRED`):
+    - `.venv\Scripts\python scripts/startup_codex_helper.py --repo-root . --no-interactive --original-intent "<intent>" --deliverable-this-scope "<deliverable>" --non-goals "<non_goals>" --done-when "<done_when>" --positioning-lock "<positioning_lock>" --task-granularity-limit 1 --decision-class TWO_WAY --execution-lane STANDARD --intuition-gate HUMAN_REQUIRED --intuition-gate-rationale "<rationale>" --intuition-gate-ack PM_ACK --intuition-gate-ack-at-utc "<ISO8601_UTC>" --output-card docs/context/init_execution_card_latest.md --handoff-target local_cli`
+  - Non-interactive Sonnet web quickstart:
+    - `.venv\Scripts\python scripts/startup_codex_helper.py --repo-root . --no-interactive --original-intent "<intent>" --deliverable-this-scope "<deliverable>" --non-goals "<non_goals>" --done-when "<done_when>" --positioning-lock "<positioning_lock>" --task-granularity-limit 1 --decision-class TWO_WAY --execution-lane STANDARD --intuition-gate MACHINE_DEFAULT --intuition-gate-rationale "<rationale>" --handoff-target sonnet_web`
+  - Non-interactive local CLI quickstart:
+    - `.venv\Scripts\python scripts/startup_codex_helper.py --repo-root . --no-interactive --original-intent "<intent>" --deliverable-this-scope "<deliverable>" --non-goals "<non_goals>" --done-when "<done_when>" --positioning-lock "<positioning_lock>" --task-granularity-limit 2 --decision-class TWO_WAY --execution-lane STANDARD --intuition-gate HUMAN_REQUIRED --intuition-gate-rationale "<rationale>" --handoff-target local_cli`
+  - Sonnet web handoff header (default): `--handoff-target sonnet_web` -> worker block starts with `WORKER_HEADER: (paste to sonnet web)`
+  - Local CLI handoff header: `--handoff-target local_cli` -> worker block starts with `WORKER_HEADER: (skills call upon worker)`
+  - Captures readiness-doc progress + required interrogation (`ORIGINAL_INTENT`, `DELIVERABLE_THIS_SCOPE`, `NON_GOALS`, `DONE_WHEN`, `POSITIONING_LOCK`, `TASK_GRANULARITY_LIMIT`, `DECISION_CLASS`, `EXECUTION_LANE`, `INTUITION_GATE`, `INTUITION_GATE_RATIONALE`).
+  - If `INTUITION_GATE=HUMAN_REQUIRED`, record PM/CEO acknowledgment before execution commands.
+  - Canonical one-glance operator view at startup: `docs/context/init_execution_card_latest.md`.
+  - Writes:
+    - `docs/context/init_execution_card_latest.md`
+    - `docs/context/round_contract_seed_latest.md`
+    - `docs/context/startup_intake_latest.json`
+    - `docs/context/startup_intake_latest.md`
+- **Current initialization**: `python scripts/startup_codex_helper.py --repo-root .`
+- **Current loop cycle**: `python scripts/run_loop_cycle.py --repo-root . --skip-phase-end`
+- **Loop supervision (single-cycle health check)**: `python scripts/supervise_loop.py --repo-root . --max-cycles 1`
+- **Loop supervision (continuous monitor)**: `python scripts/supervise_loop.py --repo-root . --max-cycles 999 --check-interval-seconds 300`
+- **Current procedures**: See `OPERATOR_LOOP_GUIDE.md` for the full startup -> loop -> closure -> takeover workflow.
+
+## 1a. Big-Change Manifest First (Pragmatic SOP)
+- **When required**: cross-module, architecture-impacting, or high-risk/one-way changes.
+- **Create manifest from template**:
+  - `Copy-Item docs/templates/change_manifest_template.md docs/context/change_manifest_latest.md`
+- **Review before coding**:
+  - map proposal to `docs/logic_spine_index.md` (`SpineID`)
+  - declare explicit module boundaries and non-goals
+  - keep orchestrator/principal in governance mode only (no code/review execution)
+- **Policy reference**: `docs/pragmatic_sop.md`
+
+## 1a2. High-Semantic-Risk Falsification Pack (Repo-Init Truth Protocol)
+- **When required**: domain meaning is ambiguous/high-impact and could be wrong even if implementation appears structurally correct.
+- **Create pack from template**:
+  - `Copy-Item docs/templates/domain_falsification_pack.md docs/context/domain_falsification_pack_latest.md`
+- **Use before coding in those cases**:
+  - test plausible counterexamples and document a `HOLD|REFRAME|PROCEED` verdict.
+- **Policy reference**: `docs/repo_init_truth_protocol.md`
+- **Authority note**: does not add any new decision authority.
+- **Closure note**: if the active round contract sets `DOMAIN_FALSIFICATION_REQUIRED=YES`, closure runs a structural `domain_falsification_gate` before escalation.
+
+## 1a3. Advisory Optimality Review Brief
+- **When required**: high-impact, one-way, cross-module, architecture-affecting, or semantic-heavy decisions.
+- **Create brief from template**:
+  - `Copy-Item docs/templates/optimality_review_brief.md docs/context/optimality_review_brief_latest.md`
+- **Keep it lean**:
+  - capture top-level semantic tradeoffs only (max 2-3)
+  - compare at most `2-3` real options in the same brief
+  - include `PRIMARY_OBJECTIVE`, `TOP_LEVEL_TRADEOFFS`, `OPTION_SET`, `RECOMMENDED_OPTION`, `RECOMMENDED_BALANCE`, `WHAT_WOULD_FLIP_DECISION`
+  - if comparison is not honest yet, explicitly write `I don't know yet` and name the missing evidence or expert lane
+- **Policy reference**: `docs/optimality_review_protocol.md`
+- **Roadmap reference**: `docs/minimal_optimality_roadmap.md`
+- **Authority note**: advisory only; no new control-plane authority.
+
+## 1a4. Advisory Milestone Optimality Review
+- **When required**: milestone close for a major architecture, workflow, or operating-model wave.
+- **Reuse the same template**:
+  - `Copy-Item docs/templates/optimality_review_brief.md docs/context/milestone_optimality_review_latest.md`
+- **Optional repo-root one-screen mirror**:
+  - Create or update `MILESTONE_OPTIMALITY_REVIEW_LATEST.md` as a convenience-only repo-root mirror sourced from `docs/context/milestone_optimality_review_latest.md`.
+  - Keep `MILESTONE_OPTIMALITY_REVIEW_LATEST.md` as a thin PM summary only; `docs/context/milestone_optimality_review_latest.md` remains the authoritative source.
+  - Mirror family convention: convenience-only, intentionally thin, and no gate or authority change.
+- **Fill the milestone-close addendum only once per milestone**:
+  - `MILESTONE_ID`, `SHAPE_DELTA`, `KEEP_THIS_SHAPE_TODAY`, `TOP_2_REGRETS_IF_WRONG`, `WHAT_TO_REMOVE_NEXT`, `EVIDENCE_PATHS`
+  - if the milestone is still too fresh to judge honestly, explicitly write `I don't know yet`
+- **Optional R4 elegance / entropy snapshot in the same brief**:
+  - `CONCEPT_SURFACE_DELTA`, `INTERFACE_SURFACE_DELTA`, `BOUNDARY_CROSSINGS_DELTA`, `FUTURE_EDIT_SURFACE`
+  - `BIGGEST_SIMPLIFIER`, `BIGGEST_ENTROPY_RISK`, `ENTROPY_VERDICT`
+  - use `I don't know yet` when integration is too fresh or the future edit surface is not yet observable honestly
+- **Keep it lean**:
+  - top-level only; no code-trivia replay
+  - proxy-based only; do not invent a scoring engine
+  - advisory only; no new gate and no new authority path
+
+## 1a5. Advisory Shipped Outcome Feedback
+- **When required**: after a shipped wave, rollback event, or meaningful post-merge learning update.
+- **Capture outcome into the existing corpus**:
+  - `.venv\Scripts\python scripts/capture_profile_outcome_record.py --repo-root . --project-profile "<project_profile>" --shipped "<true|false>" --rollback-status "<NO|PARTIAL|FULL>" --followup-changes-within-30d "<0+>" --semantic-issue-detected-after-merge "<NONE|PRESENT|I don't know yet>" --postmortem-note "<short_postmortem_note>"`
+- **Keep it lean**:
+  - capture once at known outcome, then optionally once again around 30 days
+  - explicitly write `I don't know yet` if semantic outcome is still unclear
+  - advisory only; no new gate and no new authority path
+- **Policy reference**: `docs/shipped_outcome_feedback_protocol.md`
+
+## 1a6. Advisory Thesis Pull
+- **When allowed**: only when SOP is active in another repo or fresh real operating evidence exists there.
+- **Required mix**:
+  - local data-driven evidence from that repo is primary
+  - combine it with `1-3` academic inputs only
+  - include one explicit realm-specific repo lens
+- **Research handling**:
+  - classify each academic input as `SUPPORTS`, `CANDIDATE`, `FRONTIER`, or `NOT_ACTIONABLE`
+  - use research to sharpen or challenge the local evidence, not replace it
+- **Outcome discipline**:
+  - thesis pulls may suggest `NO_CHANGE`, `WATCH`, or `HUMAN_REVIEW_HEURISTIC_UPDATE`
+  - no automatic policy mutation; any philosophy or heuristic update requires explicit human review and a separate docs change
+- **Artifacts**:
+  - template: `docs/templates/thesis_pull_template.md`
+  - authoritative working copy: `docs/context/thesis_pull_latest.md`
+  - convenience-only thin mirror: `THESIS_PULL_LATEST.md`
+- **Authority note**:
+  - `docs/context/thesis_pull_latest.md` remains authoritative
+  - `THESIS_PULL_LATEST.md` is intentionally thin and does not add a new gate or authority path
+- **Policy reference**: `docs/thesis_pull_protocol.md`
 
 ## 1b. Startup Quickstart (Context Bootstrap)
 - **Build Context Artifacts**: `.venv\Scripts\python scripts/build_context_packet.py`
@@ -21,9 +126,35 @@
 - **Fail-closed contract**:
   - if any worker local-loop update fails, migration status is `BLOCK` and main `docs/lessonss.md` is not updated.
 
+## 1d. Next-Round Handoff Quick Guide
+- **Purpose**: use the latest loop artifacts to generate and surface an advisory next-round kickoff packet before the next execution cycle.
+- **Primary artifacts**:
+  - `docs/context/next_round_handoff_latest.json`
+  - `docs/context/next_round_handoff_latest.md`
+- **Possible root convenience mirrors (when present)**:
+  - `NEXT_ROUND_HANDOFF_LATEST.md`
+  - `EXPERT_REQUEST_LATEST.md`
+  - `PM_CEO_RESEARCH_BRIEF_LATEST.md`
+  - `BOARD_DECISION_BRIEF_LATEST.md`
+  - These repo-root files are optional convenience copies for paste-ready operator flow only; `docs/context/*` remains authoritative.
+- **How to use it**:
+  - Run one loop refresh so the latest closure, memory, and handoff artifacts are regenerated.
+  - Print the takeover entrypoint so the advisory handoff is surfaced alongside the normal closure artifacts.
+  - Use the handoff to prefill next-round thinking only; then immediately run the startup helper and revalidate intent, scope, risk, and acknowledgments before execution.
+- **Authority rule**:
+  - `next_round_handoff_latest.*` is advisory only.
+  - `startup_codex_helper.py`, the startup card, and the source-of-truth hierarchy remain authoritative.
+  - If the generated handoff conflicts with same-day startup intake, startup intake wins.
+- **Single recommended command sequence**:
+  - `.venv\Scripts\python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true; .venv\Scripts\python scripts/print_takeover_entrypoint.py --repo-root .; .venv\Scripts\python scripts/startup_codex_helper.py --repo-root .`
+- **Expected operator outcome**:
+  - `run_loop_cycle.py` refreshes `exec_memory_packet_latest.*` and `next_round_handoff_latest.*`.
+  - `print_takeover_entrypoint.py` prints the advisory handoff when present and reminds operators about the repo-root mirror filenames.
+  - `startup_codex_helper.py` converts that advisory context into the authoritative next-round startup packet.
+
 ## 2. Data Management
-- **Update Prices (Daily / Watchlist)**: `python data/updater.py --scope "Custom" --tickers "AAPL,MSFT,SPY"`
-- **Hydrate Universe (Monthly)**: `python data/updater.py --scope "Top 3000"`
+- **Legacy price refresh note**: The data updater entrypoint no longer exists in this repo. Data-pipeline refresh commands are not currently part of the active control-plane workflow.
+- **Legacy universe hydration note**: Broad market-data hydration is not currently present in this repo surface.
 - **Update Fundamentals**: `python data/fundamentals_updater.py --scope "Top 500"`
 - **Build Feature Store (Incremental default)**: `python data/feature_store.py --start-year 2000 --universe-mode yearly_union --yearly-top-n 100`
 - **Build Feature Store (Forced full rebuild)**: `python data/feature_store.py --start-year 2000 --full-rebuild`
@@ -238,6 +369,66 @@ These scripts enforce the closed architecture. Add `--dry-run` to any command fo
   - Digest v2.0.0 sections: I. First Principles Engineering Summary, II. Strategic Expertise Coverage, III. System Health, IV. Expert Verdict Matrix, V. Traceability Summary, VI. Recent Completions, VII. Active Escalations, VIII. Worker Confidence and Citations, X. Per-Round Score Gates, XI. Recommended PM Actions.
   - Score Gates section renders GO/HOLD/REFRAME per task based on confidence and relatability thresholds.
   - v1 packets render gracefully ("Not available (v1 packet)" for sections I and II).
+- **9. CEO Go-Signal Truth-Check Gate**:
+  `.venv\Scripts\python scripts/validate_ceo_go_signal_truth.py --dossier-json docs/context/auditor_promotion_dossier.json --calibration-json docs/context/auditor_calibration_report.json --go-signal-md docs/context/ceo_go_signal.md`
+- **10. Build Exec Memory Packet (Phase A integration)**:
+  `.venv\Scripts\python scripts/build_exec_memory_packet.py --output-json docs/context/exec_memory_packet_latest.json --output-md docs/context/exec_memory_packet_latest.md --pm-budget-tokens 3000 --ceo-budget-tokens 1800`
+- **10a. Exec Memory Truth-Check Gate**:
+  `.venv\Scripts\python scripts/validate_exec_memory_truth.py --memory-json docs/context/exec_memory_packet_latest.json --repo-root .`
+- **10b. Refresh CEO Weekly Summary (auto-refresh source)**:
+  `.venv\Scripts\python scripts/generate_ceo_weekly_summary.py --dossier-json docs/context/auditor_promotion_dossier.json --calibration-json docs/context/auditor_calibration_report.json --go-signal-md docs/context/ceo_go_signal.md --output docs/context/ceo_weekly_summary_latest.md`
+- **10c. CEO Weekly Summary Truth-Check Gate**:
+  `.venv\Scripts\python scripts/validate_ceo_weekly_summary_truth.py --weekly-md docs/context/ceo_weekly_summary_latest.md --dossier-json docs/context/auditor_promotion_dossier.json --calibration-json docs/context/auditor_calibration_report.json`
+- **10d. TDD Contract Evidence (mandatory before closure gate)**:
+  - Open the active round contract and complete:
+    - `TDD_MODE`
+    - `RED_TEST_COMMAND`
+    - `RED_TEST_RESULT`
+    - `GREEN_TEST_COMMAND`
+    - `GREEN_TEST_RESULT`
+    - `REFACTOR_NOTE`
+    - `TDD_NOT_APPLICABLE_REASON` (required when `TDD_MODE=NOT_APPLICABLE`)
+  - Mode rule:
+    - code-changing round => `TDD_MODE=REQUIRED`
+    - non-code round => `TDD_MODE=NOT_APPLICABLE` + explicit reason
+  - Auditor must confirm TDD evidence before running closure.
+- **10e. Refactor/Mock Policy Gate (required)**:
+  `.venv\\Scripts\\python scripts/validate_refactor_mock_policy.py --round-contract-md docs/context/round_contract_latest.md`
+- **10f. Review Checklist Gate (optional, runs only when checklist artifact exists)**:
+  `.venv\\Scripts\\python scripts/validate_review_checklist.py --input docs/context/pr_review_checklist_latest.md`
+- **10g. Interface Contract Gate (optional, runs only when manifest artifact exists)**:
+  `.venv\\Scripts\\python scripts/validate_interface_contracts.py --manifest-json docs/context/interface_contract_manifest_latest.json`
+- **11. Single Closure Gate**:
+  `.venv\Scripts\python scripts/validate_loop_closure.py --repo-root .`
+  - `READY_TO_ESCALATE` requires `docs/context/ceo_go_signal.md` to contain `- Recommended Action: GO` (`go_signal_action_gate`).
+  - `READY_TO_ESCALATE` also requires closure check `tdd_contract_gate=PASS`.
+  - `READY_TO_ESCALATE` also requires `exec_memory_packet_latest.json` artifact present.
+  - If recommended action is `HOLD` or `REFRAME`, closure result is `NOT_READY` (exit code `1`) even when truth-check scripts pass.
+- **12. One-Command Cycle Runner**:
+  `.venv\Scripts\python scripts/run_loop_cycle.py --repo-root .`
+  - Revalidation-only pass (skip phase-end): `.venv\Scripts\python scripts/run_loop_cycle.py --repo-root . --skip-phase-end`
+  - Default hold reporting semantics: `--allow-hold true` remaps expected `refresh_dossier` criteria shortfall and closure `NOT_READY` from `FAIL` to `HOLD` in cycle summary (`final_result=HOLD`, exit code `0`).
+  - Disable hold mode with `--allow-hold false` to keep those steps as `FAIL` and preserve non-zero cycle exit behavior.
+  - Cycle now includes `refresh_ceo_weekly_summary` step after `generate_ceo_go_signal`.
+  - Cycle now includes `build_exec_memory_packet` step after `refresh_ceo_weekly_summary`.
+  - Cycle now includes `validate_exec_memory_truth` step after `validate_ceo_weekly_summary_truth` and before `validate_loop_closure`.
+  - Cycle now includes `validate_refactor_mock_policy` (required), plus conditional `validate_review_checklist` and `validate_interface_contracts` (SKIP when optional artifacts are absent).
+- **12a. Supervisor Loop (Closed-Loop Watch)**:
+  - One-cycle example: `.venv\\Scripts\\python scripts/supervise_loop.py --repo-root . --max-cycles 1 --check-interval-seconds 0`
+  - Watch-mode example: `.venv\\Scripts\\python scripts/supervise_loop.py --repo-root . --max-cycles 999999 --check-interval-seconds 60`
+  - Supervisor outputs:
+    - `docs/context/supervisor_status_latest.json`
+    - `docs/context/supervisor_alerts_latest.md`
+- **Generated latest-pointer artifacts**:
+  - `docs/context/loop_cycle_summary_latest.json`
+  - `docs/context/loop_cycle_summary_latest.md`
+  - `docs/context/loop_closure_status_latest.json`
+  - `docs/context/loop_closure_status_latest.md`
+  - `docs/context/lessons_worker_latest.md`
+  - `docs/context/lessons_auditor_latest.md`
+  - `docs/context/round_contract_seed_latest.md`
+  - `docs/context/exec_memory_packet_latest.json`
+  - `docs/context/exec_memory_packet_latest.md`
 
 ### Cutover Readiness Gate (Phase 24B prerequisite)
 Before enabling `-EnforceScoreThresholds` in `phase_end_handover.ps1`, validate all active repos:
@@ -348,6 +539,7 @@ python scripts/auditor_calibration_report.py \
 **Outputs:**
 - `docs/context/auditor_calibration_report.json` - Machine-readable report
 - `docs/context/auditor_calibration_report.md` - Human-readable summary
+- `docs/context/ceo_go_signal.md` - Auto-refreshed during `phase_end_handover.ps1` (fail-open; missing artifacts emit warnings without changing gate verdict)
 
 ### Promotion Dossier
 Verify all 5 promotion criteria before shadow-to-enforce transition:

@@ -61,10 +61,12 @@ When the round closes a phase, execute Section 6 in the same round before publis
    - if retry also times out, mark reviewer status `Unavailable`, escalate in `Open Risks`, and set `SAW Verdict: BLOCK` unless user accepts proceeding risk.
 
 ## 3. Reconciliation Rules
-1. Mark each finding with `Severity`, `Impact`, `Fix`, `Owner`, `Status`.
-2. Do not close SAW while any in-scope Critical/High finding is unresolved unless user explicitly accepts risk.
-3. Inherited out-of-scope Critical/High findings must be recorded in `Open Risks` with owner and target milestone.
-4. Publish `SAW Verdict: PASS` or `SAW Verdict: BLOCK`.
+1. Mark each finding with `Severity`, `Impact`, `Fix`, `Owner`, `TargetDate`, `Status`.
+2. Missing `Owner` or `Severity` on Critical/High findings → `SAW Verdict: BLOCK`.
+3. In-scope Critical findings: auto `SAW Verdict: BLOCK`, no user override. The finding must be resolved before the round can close.
+4. In-scope High findings: do not close SAW while unresolved unless user explicitly accepts risk.
+5. Inherited out-of-scope Critical/High findings: carry in `Open Risks` with `Owner` + `TargetDate` + target milestone. User acceptance is allowed before milestone close.
+6. Publish `SAW Verdict: PASS` or `SAW Verdict: BLOCK`.
 5. SAW report publication is terminal for the round and must not trigger nested SAW recursion.
 6. Emit closure counts:
    - `ChecksTotal`, `ChecksPassed`, `ChecksFailed` from the `CHK-*` set.

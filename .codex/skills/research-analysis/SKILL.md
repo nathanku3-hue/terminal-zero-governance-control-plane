@@ -60,13 +60,18 @@ Use this skill to produce evidence-backed planning support.
    - source locator (`SourceID` + page/section) for the claim
    - source text path (`source_text_path`) used for grounding
    - `SupportStrength`, `EvidenceSnippet`, and `snippet_type` (`quoted`/`paraphrased`)
+   - Confidence downgrade rule: if `SupportStrength != Direct`, the claim must be downgraded to low-certainty. A claim cannot remain in the high-confidence set without `SupportStrength=Direct`.
 2. Low-certainty items:
    - one-line uncertainty
    - one-line reason
 3. Boundary/needs-help items:
    - one-line item
    - one-line reason
-4. End with:
+4. Conflict escalation tiers (applied during cross-reference in Section 3):
+   - **Tier 1** (single conflict, resolvable): carry in `Open Risks`, verdict can remain PASS if resolution path is clear and documented
+   - **Tier 2** (multiple conflicts or domain-critical single conflict): force `Verdict: BLOCK`, require explicit PM resolution before proceeding
+   - **Tier 3** (contradictory primary sources on core claim): force `Verdict: BLOCK` + include `EscalationFlag: CEO` in closure packet for CEO digest visibility
+5. End with:
    - Closure packet (one line, machine-check format):
      - `ClosurePacket: RoundID=<...>; ScopeID=<...>; ChecksTotal=<int>; ChecksPassed=<int>; ChecksFailed=<int>; Verdict=<PASS|BLOCK>; OpenRisks=<...>; NextAction=<...>`
    - Closure count definitions:

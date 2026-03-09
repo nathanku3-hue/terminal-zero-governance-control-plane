@@ -47,7 +47,7 @@
 - [ ] **Gemini Bridge Freshness**: Is `ceo_bridge_digest.md` < 60 min old (`validate_digest_freshness.py` passed with `exit 0`)?
 - [ ] **Orphan Change Gate**: Did `validate_orphan_changes.py` pass (`exit 0`), proving all production code changes map to PM directives?
 - [ ] **Dispatch Lifecycle**: Did `validate_dispatch_acks.py` pass (`exit 0`), affirming all dispatched tasks reached COMPLETED state with bound artifacts/tests?
-- [ ] **Worker Reply Gate**: Did `validate_worker_reply_packet.py` pass (`exit 0`), with mandatory confidence and citations for each task item, and (for v2 packets) `machine_optimized` and `pm_first_principles` blocks?
+- [ ] **Worker Reply Gate**: Did `validate_worker_reply_packet.py` pass (`exit 0`), with mandatory confidence and citations for each task item, and (for v2 packets) `machine_optimized` and `pm_first_principles` blocks, plus valid additive `response_views` when emitted?
 - [ ] **Triad Coverage (when `-EnforceScoreThresholds` enabled)**: Does each v2 item include all 3 triad domains (principal, riskops, qa) in `expertise_coverage`, with at least one marked APPLIED or NOT_REQUIRED?
 - [ ] **Score Threshold Gate (when `-EnforceScoreThresholds` enabled)**: Does each v2 item have `confidence_level.score >= 0.70` and `problem_solving_alignment_score >= 0.75`?
 - [ ] **Cross-Repo Readiness (when `-EnforceScoreThresholds` enabled)**: Did G05b pass with `-CrossRepoRoots` covering all active repos?

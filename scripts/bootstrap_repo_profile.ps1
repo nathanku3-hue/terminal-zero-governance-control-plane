@@ -188,7 +188,7 @@ $traceabilityContent = @(
 Write-TextFile -PathValue $traceabilityPath -Content $traceabilityContent -Overwrite:$Force
 
 $workerReplyPayload = [ordered]@{
-    schema_version   = "1.0.0"
+    schema_version   = "2.0.0"
     worker_id        = "@bootstrap"
     phase            = "phase_bootstrap"
     generated_at_utc = $nowUtc
@@ -199,11 +199,6 @@ $workerReplyPayload = [ordered]@{
             dod_result   = "PARTIAL"
             evidence_ids = @("BOOTSTRAP")
             open_risks   = @("bootstrap placeholder must be replaced with real task evidence")
-            confidence   = [ordered]@{
-                score     = 0.30
-                band      = "LOW"
-                rationale = "placeholder scaffold, not execution evidence"
-            }
             citations    = @(
                 [ordered]@{
                     type    = "doc"
@@ -212,6 +207,37 @@ $workerReplyPayload = [ordered]@{
                     claim   = "bootstrap placeholder exists and should be replaced before handover"
                 }
             )
+            machine_optimized = [ordered]@{
+                confidence_level = [ordered]@{
+                    score     = 0.30
+                    band      = "LOW"
+                    rationale = "placeholder scaffold, not execution evidence"
+                }
+                problem_solving_alignment_score = 0.0
+                expertise_coverage = @(
+                    [ordered]@{
+                        domain    = "principal"
+                        verdict   = "SKIPPED"
+                        rationale = "bootstrap placeholder - replace before phase-end"
+                    },
+                    [ordered]@{
+                        domain    = "riskops"
+                        verdict   = "SKIPPED"
+                        rationale = "bootstrap placeholder - replace before phase-end"
+                    },
+                    [ordered]@{
+                        domain    = "qa"
+                        verdict   = "SKIPPED"
+                        rationale = "bootstrap placeholder - replace before phase-end"
+                    }
+                )
+            }
+            pm_first_principles = [ordered]@{
+                problem     = "bootstrap placeholder - replace before phase-end"
+                constraints = "bootstrap placeholder - replace before phase-end"
+                logic       = "bootstrap placeholder - replace before phase-end"
+                solution    = "bootstrap placeholder - replace before phase-end"
+            }
         }
     )
 }

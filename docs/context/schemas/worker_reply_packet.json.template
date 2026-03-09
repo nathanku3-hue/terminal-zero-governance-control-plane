@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "worker_id": "@LANE-N",
   "phase": "phaseNN",
   "generated_at_utc": "2026-01-01T00:00:00Z",
@@ -10,11 +10,6 @@
       "dod_result": "PASS|PARTIAL|FAIL",
       "evidence_ids": ["EV-001"],
       "open_risks": ["none|risk statement"],
-      "confidence": {
-        "score": 0.85,
-        "band": "HIGH|MEDIUM|LOW",
-        "rationale": "short reason for score"
-      },
       "citations": [
         {
           "type": "code|test|doc|log",
@@ -22,7 +17,37 @@
           "locator": "line:test-or-section",
           "claim": "claim supported by this citation"
         }
-      ]
+      ],
+      "machine_optimized": {
+        "confidence_level": {
+          "score": 0.85,
+          "band": "HIGH|MEDIUM|LOW",
+          "rationale": "short reason for score"
+        },
+        "problem_solving_alignment_score": 0.80,
+        "expertise_coverage": [
+          {
+            "domain": "system_eng|architect|principal|riskops|devsecops|qa",
+            "verdict": "APPLIED|NOT_REQUIRED|SKIPPED",
+            "rationale": "one-line reason"
+          }
+        ]
+      },
+      "response_views": {
+        "machine_view": {
+          "status": "READY|HOLD|REFRAME",
+          "decision_summary": "one-line machine-optimized summary",
+          "primary_evidence_ids": ["EV-001"]
+        },
+        "human_brief": "2-3 sentence brief for a human reviewer",
+        "paste_ready_block": "Task T-000\nDecision: one-line what changed and why\nDoD: PASS|PARTIAL|FAIL\nEvidence: EV-001\nOpen risks: none|risk statement"
+      },
+      "pm_first_principles": {
+        "problem": "fundamental problem statement",
+        "constraints": "technical/business limits",
+        "logic": "how solution navigates constraints",
+        "solution": "why this is optimal from first principles"
+      }
     }
   ]
 }

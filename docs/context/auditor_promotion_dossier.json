@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0.0",
+  "report_type": "dossier",
+  "generated_at_utc": "2026-03-09T01:53:09.392605+00:00",
+  "data_range": {
+    "from_utc": null,
+    "to_utc": null,
+    "runs_included": 14
+  },
+  "totals": {
+    "items_reviewed": 54,
+    "critical": 1,
+    "high": 42,
+    "medium": 34,
+    "low": 0,
+    "info": 0
+  },
+  "fp_analysis": {
+    "ledger_loaded": true,
+    "ch_total": 43,
+    "ch_annotated": 23,
+    "ch_unannotated": 20,
+    "ch_fp_count": 0,
+    "fp_rate": 0.0,
+    "annotation_coverage_ch": 0.5348837209302325
+  },
+  "per_rule_breakdown": {
+    "AUD-R001": {
+      "total": 1,
+      "critical": 1,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0,
+      "fp_count": 0
+    },
+    "AUD-R002": {
+      "total": 1,
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "low": 0,
+      "info": 0,
+      "fp_count": 0
+    },
+    "AUD-R004": {
+      "total": 1,
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "low": 0,
+      "info": 0,
+      "fp_count": 0
+    },
+    "AUD-R005": {
+      "total": 33,
+      "critical": 0,
+      "high": 0,
+      "medium": 33,
+      "low": 0,
+      "info": 0,
+      "fp_count": 0
+    },
+    "AUD-R007": {
+      "total": 1,
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 0,
+      "info": 0,
+      "fp_count": 0
+    },
+    "AUD-R003": {
+      "total": 40,
+      "critical": 0,
+      "high": 40,
+      "medium": 0,
+      "low": 0,
+      "info": 0,
+      "fp_count": 0
+    }
+  },
+  "weekly_windows": {
+    "2026-W10": {
+      "items": 54,
+      "critical": 1,
+      "high": 42,
+      "medium": 34,
+      "low": 0,
+      "info": 0
+    }
+  },
+  "promotion_criteria": {
+    "c0_infra_health": {
+      "met": true,
+      "value": "0 failures"
+    },
+    "c1_24b_close": {
+      "met": "MANUAL_CHECK",
+      "value": "MANUAL_CHECK"
+    },
+    "c2_min_items": {
+      "met": true,
+      "value": "54 >= 30"
+    },
+    "c3_min_weeks": {
+      "met": false,
+      "value": "1 consecutive weeks >= 2"
+    },
+    "c4_fp_rate": {
+      "met": true,
+      "value": "0.00%"
+    },
+    "c4b_annotation_coverage": {
+      "met": false,
+      "value": "53.49%"
+    },
+    "c5_all_v2": {
+      "met": true,
+      "value": "1 versions: ['2.0.0']"
+    }
+  }
+}
