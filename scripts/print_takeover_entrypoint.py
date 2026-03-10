@@ -41,6 +41,14 @@ ADVISORY_HANDOFFS: list[tuple[str, str]] = [
     ("advisory_board_decision_brief", BOARD_DECISION_BRIEF_PATH),
 ]
 
+STATUS_EMOJI = {
+    "green": "🟢",
+    "yellow": "🟡",
+    "blue": "🔵",
+    "gray": "⚪",  # White circle emoji - visible neutral marker
+    "red": "🔴",
+}
+
 MACHINE_VIEW_MARKERS: dict[str, tuple[str, ...]] = {
     "advisory_expert_request": (
         "REQUESTED_DOMAIN",
@@ -888,6 +896,137 @@ def _build_role_views(nodes: list[dict[str, Any]]) -> dict[str, Any]:
     return role_views
 
 
+def _derive_next_action_fallback(node: dict[str, Any]) -> str:
+    """Fallback next action derivation when node lacks next_action field."""
+    blockers = node.get("blockers", [])
+    if blockers:
+        return f"Resolve blockers: {', '.join(blockers)}"
+
+    status_color = node.get("status_color", "gray")
+    if status_color == "green":
+        return "Ready to proceed"
+    elif status_color == "gray":
+        return "Not started - awaiting prerequisites"
+    elif status_color == "blue":
+        return "In progress"
+    elif status_color == "yellow":
+        return "Needs attention"
+    elif status_color == "red":
+        return "Failed - requires intervention"
+
+    return "Status unclear"
+
+
+def _render_workflow_status_markdown(payload: dict[str, Any]) -> str:
+    """Render workflow status payload as human-readable Markdown.
+
+    Args:
+        payload: Complete workflow status payload from _assemble_workflow_status_payload
+
+    Returns:
+        Formatted Markdown string with trailing newline
+    """
+    lines = []
+
+    # Header section
+    lines.append("# Workflow Status Overlay")
+    lines.append("")
+    lines.append(f"**Generated:** {payload.get('generated_at_utc', 'N/A')}")
+
+    overall_status = payload.get("overall_status", "gray")
+    status_emoji = STATUS_EMOJI.get(overall_status, "⚪")
+    lines.append(f"**Overall Status:** {overall_status} {status_emoji}")
+    lines.append(f"**Summary:** {payload.get('overall_summary', 'N/A')}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # Legend section
+    lines.append("## Status Legend")
+    lines.append("")
+    lines.append("🟢 Green = Ready | 🟡 Yellow = Blocked | 🔵 Blue = In Progress | ⚪ Gray = Not Started | 🔴 Red = Failed")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # Railway section
+    lines.append("## Workflow Railway")
+    lines.append("")
+    nodes = payload.get("nodes", [])
+    railway_parts = []
+    for node in nodes:
+        node_title = node.get("title", node.get("node_id", "Unknown"))
+        node_color = node.get("status_color", "gray")
+        emoji = STATUS_EMOJI.get(node_color, "⚪")
+        railway_parts.append(f"{node_title}{emoji}")
+    lines.append(" → ".join(railway_parts))
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # Node details sections
+    lines.append("## Node Details")
+    lines.append("")
+
+    for idx, node in enumerate(nodes, 1):
+        node_title = node.get("title", "Unknown")
+        node_id = node.get("node_id", "unknown")
+        status_color = node.get("status_color", "gray")
+        progress_state = node.get("progress_state", "UNKNOWN")
+        owner_role = node.get("owner_role", "N/A")
+        blockers = node.get("blockers", [])
+        source_of_truth = node.get("source_of_truth", "N/A")
+
+        # Use next_action from payload first, fallback if missing
+        next_action = node.get("next_action")
+        if not next_action:
+            next_action = _derive_next_action_fallback(node)
+
+        emoji = STATUS_EMOJI.get(status_color, "⚪")
+
+        lines.append(f"### {idx}. {node_title}")
+        lines.append("")
+        lines.append(f"**Status:** {status_color} {emoji} ({progress_state})")
+        lines.append(f"**Owner:** {owner_role}")
+
+        if blockers:
+            lines.append(f"**Blockers:** {', '.join(blockers)}")
+        else:
+            lines.append("**Blockers:** None")
+
+        lines.append(f"**Source of Truth:** `{source_of_truth}`")
+        lines.append(f"**Next Action:** {next_action}")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+    # Role views section
+    lines.append("## Role Views")
+    lines.append("")
+    role_views = payload.get("role_views", {})
+    for role in ["PM", "CEO", "Worker", "Auditor", "QA"]:
+        node_ids = role_views.get(role, [])
+        if node_ids:
+            lines.append(f"**{role}:** {', '.join(node_ids)}")
+        else:
+            lines.append(f"**{role}:** (none)")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # Metadata section
+    lines.append("## Metadata")
+    lines.append("")
+    metadata = payload.get("metadata", {})
+    lines.append(f"- **Generator:** {metadata.get('generator', 'N/A')}")
+    lines.append(f"- **Advisory Only:** {metadata.get('advisory_only', True)}")
+    lines.append(f"- **Schema Version:** {payload.get('schema_version', 'N/A')}")
+    lines.append(f"- **Source Policy:** {payload.get('source_of_truth_policy', 'N/A')}")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
 def _assemble_workflow_status_payload(repo_root: Path, now_utc: datetime) -> dict[str, Any]:
     """Orchestrate all derivation and assemble complete workflow status payload."""
     # Derive all nodes
@@ -981,6 +1120,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Optional path to write workflow status overlay JSON (default: None, no overlay generated)"
     )
+    parser.add_argument(
+        "--workflow-status-md-out",
+        type=Path,
+        default=None,
+        help="Optional path to write workflow status overlay Markdown (default: None, no overlay generated)"
+    )
     args = parser.parse_args(argv)
 
     repo_root = args.repo_root.resolve()
@@ -1015,6 +1160,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"- {artifact}")
 
     # Optional workflow status overlay generation
+    payload_overlay = None
+
     if args.workflow_status_json_out is not None:
         try:
             now_utc = datetime.now(timezone.utc)
@@ -1026,6 +1173,20 @@ def main(argv: list[str] | None = None) -> int:
             _atomic_write_text(output_path, output_json + "\n")
         except Exception as exc:
             print(f"WARNING: Failed to generate workflow status overlay: {exc}", file=sys.stderr)
+            # Do not change exit code - overlay generation failure is non-fatal
+
+    if args.workflow_status_md_out is not None:
+        try:
+            if payload_overlay is None:
+                now_utc = datetime.now(timezone.utc)
+                payload_overlay = _assemble_workflow_status_payload(repo_root, now_utc)
+            output_path = args.workflow_status_md_out
+            if not output_path.is_absolute():
+                output_path = repo_root / output_path
+            output_md = _render_workflow_status_markdown(payload_overlay)
+            _atomic_write_text(output_path, output_md)
+        except Exception as exc:
+            print(f"WARNING: Failed to generate workflow status Markdown overlay: {exc}", file=sys.stderr)
             # Do not change exit code - overlay generation failure is non-fatal
 
     return _result_to_exit_code(result)

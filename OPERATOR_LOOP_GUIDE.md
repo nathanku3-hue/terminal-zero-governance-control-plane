@@ -13,6 +13,8 @@ Run these commands from the repository root. The sequence below assumes PowerShe
 .venv\Scripts\python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true
 .venv\Scripts\python scripts/validate_loop_closure.py --repo-root .
 .venv\Scripts\python scripts/print_takeover_entrypoint.py --repo-root .
+# Optional: Generate workflow status overlays
+.venv\Scripts\python scripts/print_takeover_entrypoint.py --repo-root . --workflow-status-json-out docs/context/workflow_status_latest.json --workflow-status-md-out docs/context/workflow_status_latest.md
 .venv\Scripts\python scripts/build_ceo_bridge_digest.py --sources "docs/context/worker_status_aggregate.json,docs/pm_to_code_traceability.yaml,docs/context/escalation_events.json,docs/context/worker_reply_packet.json,docs/context/auditor_findings.json,docs/context/exec_memory_packet_latest.json" --output docs/context/ceo_bridge_digest.md
 ```
 
@@ -24,6 +26,7 @@ Run these commands from the repository root. The sequence below assumes PowerShe
 - One full loop pass (without phase-end handover) plus refreshed context artifacts.
 - Closure verdict (`READY_TO_ESCALATE` or `NOT_READY`) in `docs/context/loop_closure_status_latest.json`.
 - Deterministic takeover/advisory output from `scripts/print_takeover_entrypoint.py`.
+- Optional workflow status overlays (JSON and/or Markdown) when flags are provided.
 - Fresh CEO digest at `docs/context/ceo_bridge_digest.md`.
 
 ## Optional milestone-close optimality note

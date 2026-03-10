@@ -990,3 +990,321 @@ def test_workflow_status_round_contract_clean_pass(tmp_path: Path) -> None:
     assert round_contract_node["status_color"] == "green"
     assert round_contract_node["progress_state"] == "READY"
     assert len(round_contract_node["blockers"]) == 0
+
+
+# ============================================================================
+# Workflow Status Markdown Tests
+# ============================================================================
+
+
+def _run_with_workflow_status_md(repo_root: Path, output_path: Path) -> subprocess.CompletedProcess[str]:
+    """Run script with workflow status Markdown output flag."""
+    return subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--repo-root",
+            str(repo_root),
+            "--workflow-status-md-out",
+            str(output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_workflow_status_md_generation(tmp_path: Path) -> None:
+    """Verify MD file created with --workflow-status-md-out flag."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+    output_path = repo_root / "docs" / "context" / "workflow_status_latest.md"
+
+    result = _run_with_workflow_status_md(repo_root, output_path)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    # Verify MD file is created
+    assert output_path.exists()
+
+    # Verify it's readable text
+    md_content = output_path.read_text(encoding="utf-8")
+    assert len(md_content) > 0
+    assert "# Workflow Status Overlay" in md_content
+
+
+def test_workflow_status_md_structure(tmp_path: Path) -> None:
+    """Verify MD contains expected sections."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+    output_path = repo_root / "docs" / "context" / "workflow_status_latest.md"
+
+    result = _run_with_workflow_status_md(repo_root, output_path)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    md_content = output_path.read_text(encoding="utf-8")
+
+    # Verify header section
+    assert "# Workflow Status Overlay" in md_content
+    assert "**Generated:**" in md_content
+    assert "**Overall Status:**" in md_content
+    assert "**Summary:**" in md_content
+
+    # Verify legend section
+    assert "## Status Legend" in md_content
+    assert "🟢 Green = Ready" in md_content
+    assert "🟡 Yellow = Blocked" in md_content
+    assert "🔵 Blue = In Progress" in md_content
+    assert "⚪ Gray = Not Started" in md_content
+    assert "🔴 Red = Failed" in md_content
+
+    # Verify railway section
+    assert "## Workflow Railway" in md_content
+    assert "→" in md_content
+
+    # Verify node details section
+    assert "## Node Details" in md_content
+
+    # Verify role views section
+    assert "## Role Views" in md_content
+
+    # Verify metadata section
+    assert "## Metadata" in md_content
+
+
+def test_workflow_status_md_node_count(tmp_path: Path) -> None:
+    """Verify MD renders all 9 nodes in stable order."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+    output_path = repo_root / "docs" / "context" / "workflow_status_latest.md"
+
+    result = _run_with_workflow_status_md(repo_root, output_path)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    md_content = output_path.read_text(encoding="utf-8")
+
+    # Verify all 9 nodes are present
+    expected_nodes = [
+        "Startup",
+        "Execution",
+        "ValidationClosure",
+        "RoundContract",
+        "MemoryArtifacts",
+        "Measurement",
+        "PublicEntry",
+        "DocsSpine",
+        "Authority",
+    ]
+
+    for node_name in expected_nodes:
+        assert node_name in md_content, f"Node {node_name} not found in MD"
+
+
+def test_workflow_status_md_blocked_startup(tmp_path: Path) -> None:
+    """Verify blocked startup renders with blockers in MD."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+    context_dir = fixtures["context_dir"]
+    output_path = repo_root / "docs" / "context" / "workflow_status_latest.md"
+
+    _write_json(
+        context_dir / "startup_intake_latest.json",
+        {
+            "schema_version": "1.0.0",
+            "generated_at_utc": "2026-03-10T00:00:00Z",
+            "startup_gate": {"status": "BLOCKED_READINESS"},
+        },
+    )
+
+    result = _run_with_workflow_status_md(repo_root, output_path)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    md_content = output_path.read_text(encoding="utf-8")
+
+    # Verify blocked status is rendered
+    assert "yellow" in md_content or "🟡" in md_content
+    assert "BLOCKED" in md_content
+
+
+def test_workflow_status_md_generation_failure_non_fatal(tmp_path: Path) -> None:
+    """Verify MD generation failure doesn't change exit code."""
+    context_dir = tmp_path / "docs" / "context"
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    closure_status = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": "2026-03-10T00:00:00Z",
+        "result": "READY_TO_ESCALATE",
+        "checks": [],
+    }
+    _write_json(context_dir / "loop_closure_status_latest.json", closure_status)
+
+    # Create a file where we expect a directory
+    blocking_file = tmp_path / "blocked"
+    blocking_file.write_text("blocking", encoding="utf-8")
+    invalid_output_path = blocking_file / "workflow_status.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+          str(SCRIPT_PATH),
+            "--repo-root",
+            str(tmp_path),
+            "--workflow-status-md-out",
+            str(invalid_output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    # Verify warning is printed to stderr
+    assert "WARNING: Failed to generate workflow status Markdown overlay" in result.stderr
+
+    # Verify exit code is NOT changed (still based on closure result)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    # Verify script completes successfully
+    assert "closure_result: READY_TO_ESCALATE" in result.stdout
+
+
+def test_workflow_status_both_flags_payload_reuse(tmp_path: Path, monkeypatch) -> None:
+    """Verify payload assembled only once when both flags present."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+
+    # Import the module to access main and _assemble_workflow_status_payload
+    import sys
+    from pathlib import Path as PathlibPath
+
+    script_dir = PathlibPath(__file__).resolve().parents[1] / "scripts"
+    sys.path.insert(0, str(script_dir))
+
+    import print_takeover_entrypoint
+
+    # Track calls to _assemble_workflow_status_payload
+    call_count = {"count": 0}
+    original_assemble = print_takeover_entrypoint._assemble_workflow_status_payload
+
+    def tracked_assemble(*args, **kwargs):
+        call_count["count"] += 1
+        return original_assemble(*args, **kwargs)
+
+    monkeypatch.setattr(
+        print_takeover_entrypoint,
+        "_assemble_workflow_status_payload",
+        tracked_assemble
+    )
+
+    # Call main with both flags
+    json_out = repo_root / "workflow_status.json"
+    md_out = repo_root / "workflow_status.md"
+
+    exit_code = print_takeover_entrypoint.main([
+        "--repo-root", str(repo_root),
+        "--workflow-status-json-out", str(json_out),
+        "--workflow-status-md-out", str(md_out),
+    ])
+
+    # Verify payload was assembled only once
+    assert call_count["count"] == 1, f"Expected 1 call, got {call_count['count']}"
+
+    # Verify both files were created
+    assert json_out.exists()
+    assert md_out.exists()
+
+
+def test_workflow_status_md_only_no_json(tmp_path: Path) -> None:
+    """Verify MD-only flag doesn't create JSON file."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+    md_output_path = repo_root / "docs" / "context" / "workflows_latest.md"
+    json_output_path = repo_root / "docs" / "context" / "workflow_status_latest.json"
+
+    result = _run_with_workflow_status_md(repo_root, md_output_path)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    # Verify MD file is created
+    assert md_output_path.exists()
+
+    # Verify JSON file is NOT created
+    assert not json_output_path.exists()
+
+
+def test_workflow_status_md_relative_path(tmp_path: Path) -> None:
+    """Verify relative MD path resolves to repo_root."""
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+
+    # Use relative path
+    relative_output_path = Path("workflow_status_test.md")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--repo-root",
+            str(repo_root),
+            "--workflow-status-md-out",
+            str(relative_output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    # Verify file is created at repo_root / relative_path
+    expected_path = repo_root / relative_output_path
+    assert expected_path.exists()
+
+    md_content = expected_path.read_text(encoding="utf-8")
+    assert "# Workflow Status Overlay" in md_content
+
+
+def test_workflow_status_md_fallback_next_action_when_missing(tmp_path: Path) -> None:
+    """Verify renderer uses _derive_next_action_fallback() when node lacks next_action field."""
+    # Import the renderer directly to test with a modified payload
+    import sys
+    from pathlib import Path as PathlibPath
+
+    script_dir = PathlibPath(__file__).resolve().parents[1] / "scripts"
+    sys.path.insert(0, str(script_dir))
+
+    import print_takeover_entrypoint
+
+    # Create a minimal payload with a node missing next_action
+    payload = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": "2026-03-10T00:00:00Z",
+        "repo_root": str(tmp_path),
+        "source_of_truth_policy": "docs/loop_operating_contract.md#source-of-truth-hierarchy",
+        "overall_status": "yellow",
+        "overall_summary": "Test node without next_action",
+        "nodes": [
+            {
+                "node_id": "TestNode",
+                "title": "Test Node",
+                "status_color": "yellow",
+                "progress_state": "BLOCKED",
+                "owner_role": "Worker",
+                "blockers": ["Test blocker"],
+                "source_of_truth": "test.json",
+                # Intentionally omit next_action to trigger fallback
+            }
+        ],
+        "role_views": {"Worker": ["TestNode"], "PM": [], "CEO": [], "Auditor": [], "QA": []},
+        "metadata": {
+            "generator": "test",
+            "advisory_only": True,
+        }
+    }
+
+    # Render the markdown
+    md_content = print_takeover_entrypoint._render_workflow_status_markdown(payload)
+
+    # Verify next action is present
+    assert "**Next Action:**" in md_content
+
+    # Verify fallback logic was used (should show "Resolve blockers: Test blocker")
+    assert "Resolve blockers: Test blocker" in md_content

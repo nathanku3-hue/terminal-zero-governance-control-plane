@@ -125,6 +125,7 @@ For authoritative internal operator procedures, start with:
 - `docs/loop_operating_contract.md` — governance contract and authority model.
 - `docs/security.md` — internal security operations policy.
 - `.github/pull_request_template.md` — PR evidence checklist used by maintainers/contributors.
+- `docs/context/workflow_status_latest.{json,md}` — optional runtime workflow status overlays (not part of public API).
 
 ## CI Surface
 
