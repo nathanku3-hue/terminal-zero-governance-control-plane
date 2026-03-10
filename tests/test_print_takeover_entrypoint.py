@@ -466,6 +466,35 @@ def test_workflow_status_derives_hold_state(tmp_path: Path) -> None:
     assert len(validation_node["blockers"]) > 0
 
 
+def test_workflow_status_marks_blocked_startup_gate_states_as_blocked(tmp_path: Path) -> None:
+    fixtures = _create_workflow_status_fixtures(tmp_path)
+    repo_root = fixtures["repo_root"]
+    context_dir = fixtures["context_dir"]
+    output_path = repo_root / "docs" / "context" / "workflow_status_latest.json"
+
+    _write_json(
+        context_dir / "startup_intake_latest.json",
+        {
+            "schema_version": "1.0.0",
+            "generated_at_utc": "2026-03-10T00:00:00Z",
+            "startup_gate": {"status": "BLOCKED_READINESS"},
+        },
+    )
+
+    result = _run_with_workflow_status(repo_root, output_path)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    workflow_status = json.loads(output_path.read_text(encoding="utf-8"))
+    startup_node = next(
+        (node for node in workflow_status["nodes"] if node["node_id"] == "Startup"),
+        None,
+    )
+    assert startup_node is not None
+    assert startup_node["status_color"] == "yellow"
+    assert startup_node["progress_state"] == "BLOCKED"
+    assert "BLOCKED_READINESS" in " ".join(startup_node["blockers"])
+
+
 def test_workflow_status_missing_artifacts_graceful(tmp_path: Path) -> None:
     """Verify graceful degradation when artifacts are missing."""
     context_dir = tmp_path / "docs" / "context"

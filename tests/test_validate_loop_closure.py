@@ -160,9 +160,11 @@ def _prepare_minimal_context(
     startup_status: str = "READY_TO_EXECUTE",
     go_action: str = "GO",
     round_contract_text: str | None = None,
+    include_startup_intake: bool = True,
 ) -> Path:
     context = repo_root / "docs" / "context"
-    _write_json(context / "startup_intake_latest.json", {"startup_gate": {"status": startup_status}})
+    if include_startup_intake:
+        _write_json(context / "startup_intake_latest.json", {"startup_gate": {"status": startup_status}})
     _write_json(context / "auditor_promotion_dossier.json", {"promotion_criteria": {}})
     _write_json(context / "auditor_calibration_report.json", {"summary": {}})
     _write_json(
@@ -560,6 +562,22 @@ def test_validate_loop_closure_not_ready_when_startup_gate_blocked(tmp_path: Pat
     checks = {check["name"]: check for check in payload["checks"]}
     assert checks["startup_gate_status"]["status"] == "FAIL"
     assert checks["go_signal_action_gate"]["status"] == "PASS"
+
+
+def test_validate_loop_closure_not_ready_when_startup_intake_missing(tmp_path: Path) -> None:
+    repo_root = tmp_path
+    context = _prepare_minimal_context(repo_root, include_startup_intake=False)
+    go_truth_script = repo_root / "go_truth_stub.py"
+    _write_go_truth_stub(go_truth_script, exit_code=0)
+
+    result = _run_validator(repo_root=repo_root, go_truth_script=go_truth_script)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    payload = json.loads((context / "loop_closure_status_latest.json").read_text(encoding="utf-8"))
+    assert payload["result"] == "NOT_READY"
+    checks = {check["name"]: check for check in payload["checks"]}
+    assert checks["startup_gate_status"]["status"] == "FAIL"
+    assert checks["startup_gate_status"]["message"] == "Required startup_intake_latest.json not found."
 
 
 def test_validate_loop_closure_not_ready_when_artifact_is_stale(tmp_path: Path) -> None:

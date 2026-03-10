@@ -63,12 +63,13 @@ Startup Rule (enforced):
   - `PARALLEL_SHARD_ID` (optional)
 - Intuition gate behavior:
   - If `INTUITION_GATE=HUMAN_REQUIRED`, no execution command may run until PM/CEO acknowledgment is recorded (`INTUITION_GATE_ACK` + `INTUITION_GATE_ACK_AT_UTC`).
-  - If `INTUITION_GATE=MACHINE_DEFAULT`, execution can proceed once all other mandatory startup fields are valid.
+  - If `INTUITION_GATE=MACHINE_DEFAULT`, execution can proceed once all other mandatory startup fields are valid and required readiness artifacts are `READY`.
 
 ## 1a) Startup Go/No-Go Artifact
 
 - `docs/context/init_execution_card_latest.md` is the authoritative startup go/no-go artifact.
 - Operators must use this card as the canonical one-glance startup view before any execution command.
+- Startup readiness is authoritative in practice: `startup_gate.status` must not be `READY_TO_EXECUTE` while required readiness artifacts are missing or stale.
 - `docs/context/next_round_handoff_latest.md` is non-authoritative; if it conflicts with startup intake or other authoritative artifacts, startup intake and the source-of-truth hierarchy below win.
 - `docs/context/expert_request_latest.md`, `docs/context/pm_ceo_research_brief_latest.md`, and `docs/context/board_decision_brief_latest.md` are also non-authoritative; if they conflict with startup intake, active round contract, or other authoritative artifacts, the authoritative artifacts win.
 - Advisory split-style convention:

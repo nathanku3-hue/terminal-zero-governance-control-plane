@@ -186,7 +186,7 @@ Each node in the `nodes` array has:
 
 **Status Derivation:**
 - Green: `startup_gate.status=READY_TO_EXECUTE`
-- Yellow: `startup_gate.status=NEEDS_ATTENTION`
+- Yellow: startup artifact exists and `startup_gate.status!=READY_TO_EXECUTE`
 - Gray: Startup artifacts missing
 
 **Key Signals:**

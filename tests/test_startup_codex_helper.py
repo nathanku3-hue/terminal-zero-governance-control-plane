@@ -57,6 +57,58 @@ def _run(
     )
 
 
+def _strict_startup_args() -> tuple[str, ...]:
+    return (
+        "--no-interactive",
+        "--original-intent",
+        "Close C3 with W11 evidence.",
+        "--deliverable-this-scope",
+        "Refresh cycle artifacts.",
+        "--non-goals",
+        "No architecture changes.",
+        "--done-when",
+        "Cycle status packet delivered.",
+        "--positioning-lock",
+        "Keep execution pinned to startup helper output.",
+        "--task-granularity-limit",
+        "1",
+        "--decision-class",
+        "TWO_WAY",
+        "--execution-lane",
+        "STANDARD",
+        "--risk-tier",
+        "LOW",
+        "--done-when-checks",
+        "startup_gate_status",
+        "--refactor-budget-minutes",
+        "0",
+        "--refactor-spend-minutes",
+        "0",
+        "--refactor-budget-exceeded-reason",
+        "N/A",
+        "--counterexample-test-command",
+        "N/A",
+        "--counterexample-test-result",
+        "N/A",
+        "--mock-policy-mode",
+        "NOT_APPLICABLE",
+        "--mocked-dependencies",
+        "N/A",
+        "--integration-coverage-for-mocks",
+        "N/A",
+        "--owned-files",
+        "scripts/startup_codex_helper.py",
+        "--interface-inputs",
+        "docs/loop_operating_contract.md,docs/round_contract_template.md",
+        "--interface-outputs",
+        "docs/context/startup_intake_latest.json,docs/context/init_execution_card_latest.md,docs/context/round_contract_seed_latest.md",
+        "--intuition-gate",
+        "MACHINE_DEFAULT",
+        "--intuition-gate-rationale",
+        "This run should proceed with machine defaults unless blocked.",
+    )
+
+
 def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path) -> None:
     _touch_files(tmp_path)
 
@@ -68,6 +120,7 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-md",
         str(output_md),
         "--output-json",
@@ -91,6 +144,32 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
         "TWO_WAY",
         "--execution-lane",
         "STANDARD",
+        "--risk-tier",
+        "LOW",
+        "--done-when-checks",
+        "startup_gate_status,go_signal_action_gate",
+        "--refactor-budget-minutes",
+        "20",
+        "--refactor-spend-minutes",
+        "5",
+        "--refactor-budget-exceeded-reason",
+        "N/A",
+        "--counterexample-test-command",
+        "N/A",
+        "--counterexample-test-result",
+        "N/A",
+        "--mock-policy-mode",
+        "NOT_APPLICABLE",
+        "--mocked-dependencies",
+        "N/A",
+        "--integration-coverage-for-mocks",
+        "N/A",
+        "--owned-files",
+        "scripts/startup_codex_helper.py,tests/test_startup_codex_helper.py",
+        "--interface-inputs",
+        "docs/loop_operating_contract.md,docs/round_contract_template.md",
+        "--interface-outputs",
+        "docs/context/startup_intake_latest.json,docs/context/init_execution_card_latest.md,docs/context/round_contract_seed_latest.md",
         "--intuition-gate",
         "MACHINE_DEFAULT",
         "--intuition-gate-rationale",
@@ -114,10 +193,23 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
     assert payload["interrogation"]["original_intent"].startswith("Close C3")
     assert payload["interrogation"]["positioning_lock"].startswith("Keep execution constrained")
     assert payload["interrogation"]["task_granularity_limit"] == 2
+    assert payload["interrogation"]["risk_tier"] == "LOW"
+    assert payload["interrogation"]["done_when_checks"] == [
+        "startup_gate_status",
+        "go_signal_action_gate",
+    ]
+    assert payload["interrogation"]["refactor_budget_minutes"] == 20
+    assert payload["interrogation"]["refactor_spend_minutes"] == 5
+    assert payload["interrogation"]["mock_policy_mode"] == "NOT_APPLICABLE"
+    assert payload["interrogation"]["owned_files"] == [
+        "scripts/startup_codex_helper.py",
+        "tests/test_startup_codex_helper.py",
+    ]
     assert payload["interrogation"]["intuition_gate"] == "MACHINE_DEFAULT"
     assert payload["interrogation"]["intuition_gate_rationale"].startswith("Cycle work is procedural")
     assert payload["interrogation"]["decision_class"] == "TWO_WAY"
     assert payload["interrogation"]["execution_lane"] == "STANDARD"
+    assert payload["startup_gate"]["readiness_policy"] == "AUTHORITATIVE"
     assert payload["handoff"]["target"] == "SONNET_WEB"
     assert payload["handoff"]["worker_header"] == "(paste to sonnet web)"
     assert payload["profile_selection_advisory"]["status"] == "RANKING_MISSING"
@@ -169,19 +261,22 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
     assert "DELIVERABLE_THIS_SCOPE: One audited cycle update with refreshed dossier and GO signal." in seed_text
     assert "TASK_GRANULARITY_LIMIT: 2" in seed_text
     assert "INTUITION_GATE: MACHINE_DEFAULT" in seed_text
-    assert "RISK_TIER: TODO(LOW|MEDIUM|HIGH)" in seed_text
-    assert "DONE_WHEN_CHECKS: TODO(comma-separated check IDs from loop/closure outputs)" in seed_text
-    assert "COUNTEREXAMPLE_TEST_COMMAND: TODO(use N/A only if TDD_MODE=NOT_APPLICABLE)" in seed_text
-    assert "COUNTEREXAMPLE_TEST_RESULT: TODO(use N/A only if TDD_MODE=NOT_APPLICABLE)" in seed_text
-    assert "REFACTOR_BUDGET_MINUTES: 0" in seed_text
-    assert "REFACTOR_SPEND_MINUTES: 0" in seed_text
+    assert "RISK_TIER: LOW" in seed_text
+    assert "DONE_WHEN_CHECKS: startup_gate_status,go_signal_action_gate" in seed_text
+    assert "COUNTEREXAMPLE_TEST_COMMAND: N/A" in seed_text
+    assert "COUNTEREXAMPLE_TEST_RESULT: N/A" in seed_text
+    assert "REFACTOR_BUDGET_MINUTES: 20" in seed_text
+    assert "REFACTOR_SPEND_MINUTES: 5" in seed_text
     assert "REFACTOR_BUDGET_EXCEEDED_REASON: N/A" in seed_text
     assert "MOCK_POLICY_MODE: NOT_APPLICABLE" in seed_text
     assert "MOCKED_DEPENDENCIES: N/A" in seed_text
     assert "INTEGRATION_COVERAGE_FOR_MOCKS: N/A" in seed_text
-    assert "OWNED_FILES: TODO(comma-separated repo-relative paths)" in seed_text
-    assert "INTERFACE_INPUTS: TODO(explicit inbound artifacts/params)" in seed_text
-    assert "INTERFACE_OUTPUTS: TODO(explicit outbound artifacts/outputs)" in seed_text
+    assert "OWNED_FILES: scripts/startup_codex_helper.py,tests/test_startup_codex_helper.py" in seed_text
+    assert "INTERFACE_INPUTS: docs/loop_operating_contract.md,docs/round_contract_template.md" in seed_text
+    assert (
+        "INTERFACE_OUTPUTS: docs/context/startup_intake_latest.json,docs/context/init_execution_card_latest.md,docs/context/round_contract_seed_latest.md"
+        in seed_text
+    )
     assert "PARALLEL_SHARD_ID: TODO(optional; use none if single-worker)" in seed_text
     assert "PROJECT_PROFILE: quant_default" in seed_text
     assert "EVIDENCE_PROFILE_RECOMMENDATION_STATUS: RANKING_MISSING" in seed_text
@@ -221,6 +316,7 @@ def test_startup_helper_surfaces_profile_selection_recommendation_when_present(
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-json",
         str(output_json),
         "--output-md",
@@ -287,6 +383,7 @@ def test_startup_helper_writes_custom_milestone_expert_roster(tmp_path: Path) ->
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-json",
         str(output_json),
         "--output-round-seed",
@@ -367,6 +464,7 @@ def test_startup_helper_supports_general_software_profile_defaults(tmp_path: Pat
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-json",
         str(output_json),
         "--output-domain-bootstrap-json",
@@ -424,6 +522,23 @@ def test_startup_helper_fails_when_interrogation_fields_missing(tmp_path: Path) 
     assert "Missing or invalid interrogation fields" in result.stderr
 
 
+def test_startup_helper_requires_risk_tier_and_done_when_checks(tmp_path: Path) -> None:
+    _touch_files(tmp_path)
+
+    result = _run(
+        tmp_path,
+        *_strict_startup_args(),
+        "--risk-tier",
+        "",
+        "--done-when-checks",
+        "",
+    )
+
+    assert result.returncode == 1
+    assert "risk_tier" in result.stderr
+    assert "done_when_checks" in result.stderr
+
+
 def test_startup_helper_marks_stale_artifact(tmp_path: Path) -> None:
     _touch_files(tmp_path)
 
@@ -434,35 +549,22 @@ def test_startup_helper_marks_stale_artifact(tmp_path: Path) -> None:
     output_json = tmp_path / "docs/context/startup_intake_latest.json"
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-json",
         str(output_json),
-        "--no-interactive",
-        "--original-intent",
-        "Close C3 with W11 evidence.",
-        "--deliverable-this-scope",
-        "Refresh cycle artifacts.",
-        "--non-goals",
-        "No architecture changes.",
-        "--done-when",
-        "Cycle status packet delivered.",
         "--positioning-lock",
         "Keep change scope pinned to refresh artifacts.",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
-        "--intuition-gate",
-        "MACHINE_DEFAULT",
         "--intuition-gate-rationale",
         "No escalation required for this bounded refresh run.",
     )
 
-    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.returncode == 1, result.stdout + result.stderr
     assert "READINESS_STATUS: NEEDS_ATTENTION" in result.stdout
+    assert "STARTUP_GATE_STATUS: BLOCKED_READINESS" in result.stdout
     payload = json.loads(output_json.read_text(encoding="utf-8"))
     assert payload["readiness_summary"]["stale_docs"] == 1
+    assert payload["startup_gate"]["status"] == "BLOCKED_READINESS"
+    assert payload["startup_gate"]["readiness_policy"] == "AUTHORITATIVE"
     stale_rows = [row for row in payload["readiness_docs"] if row["status"] == "STALE"]
     assert stale_rows
     assert stale_rows[0]["path"] == "docs/context/auditor_promotion_dossier.json"
@@ -475,29 +577,15 @@ def test_startup_helper_local_cli_handoff_uses_skills_header(tmp_path: Path) -> 
     output_md = tmp_path / "docs/context/startup_intake_latest.md"
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-json",
         str(output_json),
         "--output-md",
         str(output_md),
         "--handoff-target",
         "local_cli",
-        "--no-interactive",
-        "--original-intent",
-        "Run local worker/auditor loop.",
-        "--deliverable-this-scope",
-        "Init packet ready for local skill handoff.",
-        "--non-goals",
-        "No web handoff in this run.",
-        "--done-when",
-        "Kickoff block shows skill-call header.",
-        "--positioning-lock",
-        "Limit this run to local CLI handoff formatting.",
         "--task-granularity-limit",
         "2",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--intuition-gate",
         "HUMAN_REQUIRED",
         "--intuition-gate-rationale",
@@ -529,27 +617,10 @@ def test_startup_helper_fails_for_invalid_task_granularity_limit(tmp_path: Path)
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--no-interactive",
-        "--original-intent",
-        "Close C3 with W11 evidence.",
-        "--deliverable-this-scope",
-        "Refresh cycle artifacts.",
-        "--non-goals",
-        "No architecture changes.",
-        "--done-when",
-        "Cycle status packet delivered.",
-        "--positioning-lock",
-        "Keep execution pinned to startup helper output.",
         "--task-granularity-limit",
         "3",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
-        "--intuition-gate",
-        "MACHINE_DEFAULT",
-        "--intuition-gate-rationale",
-        "This run should proceed with machine defaults unless blocked.",
     )
 
     assert result.returncode == 1
@@ -558,26 +629,15 @@ def test_startup_helper_fails_for_invalid_task_granularity_limit(tmp_path: Path)
 
 def test_startup_helper_human_required_without_ack_fails(tmp_path: Path) -> None:
     _touch_files(tmp_path)
+    output_json = tmp_path / "docs/context/startup_intake_latest.json"
 
     result = _run(
         tmp_path,
-        "--no-interactive",
-        "--original-intent",
-        "Close C3 with W11 evidence.",
-        "--deliverable-this-scope",
-        "Refresh cycle artifacts.",
-        "--non-goals",
-        "No architecture changes.",
-        "--done-when",
-        "Cycle status packet delivered.",
-        "--positioning-lock",
-        "Keep execution pinned to startup helper output.",
+        *_strict_startup_args(),
+        "--output-json",
+        str(output_json),
         "--task-granularity-limit",
         "2",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--intuition-gate",
         "HUMAN_REQUIRED",
         "--intuition-gate-rationale",
@@ -588,6 +648,8 @@ def test_startup_helper_human_required_without_ack_fails(tmp_path: Path) -> None
     assert "Startup gate validation failed:" in result.stderr
     assert "intuition_gate_ack(required for HUMAN_REQUIRED; use PM_ACK|CEO_ACK)" in result.stderr
     assert "intuition_gate_ack_at_utc(required for HUMAN_REQUIRED" in result.stderr
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    assert payload["startup_gate"]["status"] == "BLOCKED_WAITING_FOR_HUMAN_ACK"
 
 
 def test_startup_helper_human_required_with_ack_passes_and_writes_card(tmp_path: Path) -> None:
@@ -596,25 +658,9 @@ def test_startup_helper_human_required_with_ack_passes_and_writes_card(tmp_path:
     output_card = tmp_path / "docs/context/init_execution_card_latest.md"
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-card",
         str(output_card),
-        "--no-interactive",
-        "--original-intent",
-        "Close C3 with W11 evidence.",
-        "--deliverable-this-scope",
-        "Refresh cycle artifacts.",
-        "--non-goals",
-        "No architecture changes.",
-        "--done-when",
-        "Cycle status packet delivered.",
-        "--positioning-lock",
-        "Keep execution pinned to startup helper output.",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--intuition-gate",
         "HUMAN_REQUIRED",
         "--intuition-gate-rationale",
@@ -638,25 +684,9 @@ def test_startup_helper_human_required_with_ack_writes_seed_ack_fields(tmp_path:
     output_round_seed = tmp_path / "docs/context/round_contract_seed_latest.md"
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-round-seed",
         str(output_round_seed),
-        "--no-interactive",
-        "--original-intent",
-        "Close C3 with W11 evidence.",
-        "--deliverable-this-scope",
-        "Refresh cycle artifacts.",
-        "--non-goals",
-        "No architecture changes.",
-        "--done-when",
-        "Cycle status packet delivered.",
-        "--positioning-lock",
-        "Keep execution pinned to startup helper output.",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--intuition-gate",
         "HUMAN_REQUIRED",
         "--intuition-gate-rationale",
@@ -672,7 +702,8 @@ def test_startup_helper_human_required_with_ack_writes_seed_ack_fields(tmp_path:
     seed_text = output_round_seed.read_text(encoding="utf-8")
     assert "INTUITION_GATE: HUMAN_REQUIRED" in seed_text
     assert "INTUITION_GATE_ACK: CEO_ACK" in seed_text
-    assert "ACK_AT_UTC: 2026-03-05T13:00:00Z" in seed_text
+    assert "INTUITION_GATE_ACK_AT_UTC: 2026-03-05T13:00:00Z" in seed_text
+    assert "\n- ACK_AT_UTC:" not in seed_text
 
 
 def test_startup_helper_fails_for_invalid_intuition_gate(tmp_path: Path) -> None:
@@ -680,23 +711,7 @@ def test_startup_helper_fails_for_invalid_intuition_gate(tmp_path: Path) -> None
 
     result = _run(
         tmp_path,
-        "--no-interactive",
-        "--original-intent",
-        "Close C3 with W11 evidence.",
-        "--deliverable-this-scope",
-        "Refresh cycle artifacts.",
-        "--non-goals",
-        "No architecture changes.",
-        "--done-when",
-        "Cycle status packet delivered.",
-        "--positioning-lock",
-        "Keep execution pinned to startup helper output.",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
+        *_strict_startup_args(),
         "--intuition-gate",
         "AUTO",
         "--intuition-gate-rationale",
@@ -715,9 +730,9 @@ def test_phase_a_workflow_lane_field_appears_in_seed(tmp_path: Path) -> None:
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-round-seed",
         str(output_round_seed),
-        "--no-interactive",
         "--original-intent",
         "Test Phase A WORKFLOW_LANE field",
         "--deliverable-this-scope",
@@ -728,16 +743,8 @@ def test_phase_a_workflow_lane_field_appears_in_seed(tmp_path: Path) -> None:
         "Field visible in seed",
         "--positioning-lock",
         "Test only",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--workflow-lane",
         "HIGH_RISK",
-        "--intuition-gate",
-        "MACHINE_DEFAULT",
         "--intuition-gate-rationale",
         "Test run",
     )
@@ -757,11 +764,11 @@ def test_phase_a_qa_socratic_request_fields_appear_in_seed(tmp_path: Path) -> No
 
     result = _run(
         tmp_path,
+        *_strict_startup_args(),
         "--output-round-seed",
         str(output_round_seed),
         "--output-json",
         str(output_json),
-        "--no-interactive",
         "--original-intent",
         "Test Phase A QA/Socratic fields",
         "--deliverable-this-scope",
@@ -772,20 +779,18 @@ def test_phase_a_qa_socratic_request_fields_appear_in_seed(tmp_path: Path) -> No
         "Fields visible",
         "--positioning-lock",
         "Test only",
-        "--task-granularity-limit",
-        "1",
         "--decision-class",
         "ONE_WAY",
-        "--execution-lane",
-        "STANDARD",
+        "--counterexample-test-command",
+        "pytest -q tests/test_startup_codex_helper.py -k qa_socratic",
+        "--counterexample-test-result",
+        "counterexample coverage recorded",
         "--workflow-lane",
         "DEFAULT",
         "--qa-pre-escalation-request",
         "YES",
         "--socratic-challenge-request",
         "YES",
-        "--intuition-gate",
-        "MACHINE_DEFAULT",
         "--intuition-gate-rationale",
         "Test run",
     )
@@ -808,7 +813,7 @@ def test_phase_a_workflow_lane_validation_rejects_invalid_values(tmp_path: Path)
 
     result = _run(
         tmp_path,
-        "--no-interactive",
+        *_strict_startup_args(),
         "--original-intent",
         "Test validation",
         "--deliverable-this-scope",
@@ -819,17 +824,9 @@ def test_phase_a_workflow_lane_validation_rejects_invalid_values(tmp_path: Path)
         "Validation works",
         "--positioning-lock",
         "Test only",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--workflow-lane",
         "INVALID_LANE",
-        "--intuition-gate",
-        "MACHINE_DEFAULT",
-   "--intuition-gate-rationale",
+        "--intuition-gate-rationale",
         "Test run",
     )
 
@@ -843,7 +840,7 @@ def test_phase_a_qa_request_validation_rejects_invalid_values(tmp_path: Path) ->
 
     result = _run(
         tmp_path,
-        "--no-interactive",
+        *_strict_startup_args(),
         "--original-intent",
         "Test validation",
         "--deliverable-this-scope",
@@ -854,16 +851,8 @@ def test_phase_a_qa_request_validation_rejects_invalid_values(tmp_path: Path) ->
         "Validation works",
         "--positioning-lock",
         "Test only",
-        "--task-granularity-limit",
-        "1",
-        "--decision-class",
-        "TWO_WAY",
-        "--execution-lane",
-        "STANDARD",
         "--qa-pre-escalation-request",
         "MAYBE",
-        "--intuition-gate",
-        "MACHINE_DEFAULT",
         "--intuition-gate-rationale",
         "Test run",
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -183,6 +184,16 @@ def _normalize_optional_float(value: Any) -> float | None:
         except ValueError:
             return None
     return None
+
+
+def _display_value(value: Any) -> str:
+    if isinstance(value, list):
+        return ",".join(str(item) for item in value) if value else "N/A"
+    if isinstance(value, float):
+        if value.is_integer():
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
 
 
 def _build_milestone_expert_roster(
@@ -485,6 +496,16 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
         "execution_lane",
         "intuition_gate",
         "intuition_gate_rationale",
+        "risk_tier",
+        "done_when_checks",
+        "counterexample_test_command",
+        "counterexample_test_result",
+        "mock_policy_mode",
+        "mocked_dependencies",
+        "integration_coverage_for_mocks",
+        "owned_files",
+        "interface_inputs",
+        "interface_outputs",
     ):
         value = interrogation.get(field, "")
         if not isinstance(value, str) or not value.strip():
@@ -497,6 +518,10 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
     execution_lane = str(interrogation.get("execution_lane", "")).strip()
     if execution_lane and execution_lane not in {"STANDARD", "FAST"}:
         errors.append("execution_lane(invalid; use STANDARD|FAST)")
+
+    risk_tier = str(interrogation.get("risk_tier", "")).strip()
+    if risk_tier and risk_tier not in {"LOW", "MEDIUM", "HIGH"}:
+        errors.append("risk_tier(invalid; use LOW|MEDIUM|HIGH)")
 
     intuition_gate = str(interrogation.get("intuition_gate", "")).strip()
     if intuition_gate and intuition_gate not in {"MACHINE_DEFAULT", "HUMAN_REQUIRED"}:
@@ -520,6 +545,13 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
     workflow_lane = str(interrogation.get("workflow_lane", "DEFAULT")).strip()
     if workflow_lane and workflow_lane not in {"DEFAULT", "PROTOTYPE", "HIGH_RISK", "MILESTONE_REVIEW"}:
         errors.append("workflow_lane(invalid; use DEFAULT|PROTOTYPE|HIGH_RISK|MILESTONE_REVIEW)")
+    if workflow_lane == "MILESTONE_REVIEW" and intuition_gate != "HUMAN_REQUIRED":
+        errors.append(
+            "workflow_lane(milestone_review requires intuition_gate=HUMAN_REQUIRED)"
+        )
+
+    if execution_lane == "FAST" and decision_class != "TWO_WAY":
+        errors.append("execution_lane(FAST requires decision_class=TWO_WAY)")
 
     qa_request = str(interrogation.get("qa_pre_escalation_request", "NO")).strip().upper()
     if qa_request and qa_request not in {"YES", "NO"}:
@@ -529,7 +561,95 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
     if socratic_request and socratic_request not in {"YES", "NO"}:
         errors.append("socratic_challenge_request(invalid; use YES|NO)")
 
-    return errors
+    done_when_checks = _normalize_csv_values(str(interrogation.get("done_when_checks", "")))
+    if not done_when_checks:
+        errors.append("done_when_checks")
+    elif any(re.fullmatch(r"[A-Za-z0-9_]+", item) is None for item in done_when_checks):
+        errors.append(
+            "done_when_checks(invalid; use comma-separated check IDs like startup_gate_status,go_signal_action_gate)"
+        )
+    else:
+        interrogation["done_when_checks"] = done_when_checks
+
+    refactor_budget = _normalize_optional_float(interrogation.get("refactor_budget_minutes"))
+    if refactor_budget is None or refactor_budget < 0:
+        errors.append("refactor_budget_minutes(invalid; use numeric value >= 0)")
+    else:
+        interrogation["refactor_budget_minutes"] = refactor_budget
+
+    refactor_spend = _normalize_optional_float(interrogation.get("refactor_spend_minutes"))
+    if refactor_spend is None or refactor_spend < 0:
+        errors.append("refactor_spend_minutes(invalid; use numeric value >= 0)")
+    else:
+        interrogation["refactor_spend_minutes"] = refactor_spend
+
+    exceeded_reason = str(interrogation.get("refactor_budget_exceeded_reason", "")).strip()
+    if refactor_budget is not None and refactor_spend is not None:
+        if refactor_spend > refactor_budget:
+            if not exceeded_reason or exceeded_reason == "N/A":
+                errors.append(
+                    "refactor_budget_exceeded_reason(required when refactor_spend_minutes > refactor_budget_minutes)"
+                )
+        else:
+            exceeded_reason = exceeded_reason or "N/A"
+        interrogation["refactor_budget_exceeded_reason"] = exceeded_reason
+
+    mock_policy_mode = str(interrogation.get("mock_policy_mode", "")).strip().upper()
+    if mock_policy_mode and mock_policy_mode not in {"STRICT", "NOT_APPLICABLE"}:
+        errors.append("mock_policy_mode(invalid; use STRICT|NOT_APPLICABLE)")
+    else:
+        interrogation["mock_policy_mode"] = mock_policy_mode
+
+    mocked_dependencies = str(interrogation.get("mocked_dependencies", "")).strip()
+    integration_coverage = str(interrogation.get("integration_coverage_for_mocks", "")).strip().upper()
+    if integration_coverage and integration_coverage not in {"YES", "NO", "N/A"}:
+        errors.append("integration_coverage_for_mocks(invalid; use YES|NO|N/A)")
+    else:
+        interrogation["integration_coverage_for_mocks"] = integration_coverage
+
+    if mock_policy_mode == "STRICT":
+        if not mocked_dependencies or mocked_dependencies == "N/A":
+            errors.append("mocked_dependencies(required when mock_policy_mode=STRICT)")
+        if integration_coverage != "YES":
+            errors.append(
+                "integration_coverage_for_mocks(required YES when mock_policy_mode=STRICT)"
+            )
+    elif mock_policy_mode == "NOT_APPLICABLE":
+        if mocked_dependencies != "N/A":
+            errors.append("mocked_dependencies(must be N/A when mock_policy_mode=NOT_APPLICABLE)")
+        if integration_coverage != "N/A":
+            errors.append(
+                "integration_coverage_for_mocks(must be N/A when mock_policy_mode=NOT_APPLICABLE)"
+            )
+
+    owned_files = _normalize_csv_values(str(interrogation.get("owned_files", "")))
+    if not owned_files:
+        errors.append("owned_files")
+    else:
+        interrogation["owned_files"] = owned_files
+
+    interface_inputs = _normalize_csv_values(str(interrogation.get("interface_inputs", "")))
+    if not interface_inputs:
+        errors.append("interface_inputs")
+    else:
+        interrogation["interface_inputs"] = interface_inputs
+
+    interface_outputs = _normalize_csv_values(str(interrogation.get("interface_outputs", "")))
+    if not interface_outputs:
+        errors.append("interface_outputs")
+    else:
+        interrogation["interface_outputs"] = interface_outputs
+
+    counterexample_command = str(interrogation.get("counterexample_test_command", "")).strip()
+    counterexample_result = str(interrogation.get("counterexample_test_result", "")).strip()
+    if (risk_tier == "HIGH" or decision_class == "ONE_WAY") and (
+        counterexample_command == "N/A" or counterexample_result == "N/A"
+    ):
+        errors.append(
+            "counterexample_test_command(counterexample evidence cannot be N/A when risk_tier=HIGH or decision_class=ONE_WAY)"
+        )
+
+    return list(dict.fromkeys(errors))
 
 
 def _readiness_line_items(rows: list[dict[str, Any]], *, status: str) -> str:
@@ -581,29 +701,50 @@ def _evaluate_startup_gate(
     intuition_gate: str,
     intuition_gate_ack: str,
     intuition_gate_ack_at_utc: str,
+    readiness_rows: list[dict[str, Any]],
 ) -> dict[str, Any]:
     ack = intuition_gate_ack.strip()
     ack_at_utc = intuition_gate_ack_at_utc.strip()
+    human_ack_errors: list[str] = []
+    readiness_blockers: list[str] = []
     errors: list[str] = []
+
+    missing_paths = [str(row["path"]) for row in readiness_rows if row.get("status") == "MISSING"]
+    stale_paths = [str(row["path"]) for row in readiness_rows if row.get("status") == "STALE"]
+    if missing_paths:
+        readiness_blockers.append("missing readiness artifacts: " + ", ".join(missing_paths))
+    if stale_paths:
+        readiness_blockers.append("stale readiness artifacts: " + ", ".join(stale_paths))
 
     if intuition_gate == "MACHINE_DEFAULT":
         status = "READY_TO_EXECUTE"
     elif intuition_gate == "HUMAN_REQUIRED":
         if ack not in {"PM_ACK", "CEO_ACK"}:
-            errors.append("intuition_gate_ack(required for HUMAN_REQUIRED; use PM_ACK|CEO_ACK)")
+            human_ack_errors.append("intuition_gate_ack(required for HUMAN_REQUIRED; use PM_ACK|CEO_ACK)")
         if not _is_utcish_iso8601(ack_at_utc):
-            errors.append(
+            human_ack_errors.append(
                 "intuition_gate_ack_at_utc(required for HUMAN_REQUIRED; use ISO8601 UTC, e.g. 2026-03-05T12:00:00Z)"
             )
-        status = "READY_TO_EXECUTE" if not errors else "BLOCKED_WAITING_FOR_HUMAN_ACK"
+        status = "READY_TO_EXECUTE" if not human_ack_errors else "BLOCKED_WAITING_FOR_HUMAN_ACK"
     else:
         status = "BLOCKED_INVALID_GATE"
-        errors.append("intuition_gate(invalid; use MACHINE_DEFAULT|HUMAN_REQUIRED)")
+        human_ack_errors.append("intuition_gate(invalid; use MACHINE_DEFAULT|HUMAN_REQUIRED)")
+
+    if readiness_blockers:
+        status = "BLOCKED_READINESS"
+    if human_ack_errors and readiness_blockers:
+        status = "BLOCKED_READINESS_AND_HUMAN_ACK"
+
+    errors.extend(human_ack_errors)
+    errors.extend(readiness_blockers)
 
     return {
         "status": status,
         "intuition_gate_ack": ack,
         "intuition_gate_ack_at_utc": ack_at_utc,
+        "readiness_policy": "AUTHORITATIVE",
+        "readiness_blockers": readiness_blockers,
+        "human_ack_blockers": human_ack_errors,
         "errors": errors,
     }
 
@@ -650,11 +791,25 @@ def _render_markdown(payload: dict[str, Any]) -> str:
             f"- DONE_WHEN: {interrogation['done_when']}",
             f"- DECISION_CLASS: {interrogation['decision_class']}",
             f"- EXECUTION_LANE: {interrogation['execution_lane']}",
+            f"- RISK_TIER: {interrogation['risk_tier']}",
+            f"- DONE_WHEN_CHECKS: {_display_value(interrogation['done_when_checks'])}",
             f"- POSITIONING_LOCK: {interrogation['positioning_lock']}",
             f"- TASK_GRANULARITY_LIMIT: {interrogation['task_granularity_limit']}",
+            f"- REFACTOR_BUDGET_MINUTES: {_display_value(interrogation['refactor_budget_minutes'])}",
+            f"- REFACTOR_SPEND_MINUTES: {_display_value(interrogation['refactor_spend_minutes'])}",
+            f"- REFACTOR_BUDGET_EXCEEDED_REASON: {interrogation['refactor_budget_exceeded_reason']}",
+            f"- COUNTEREXAMPLE_TEST_COMMAND: {interrogation['counterexample_test_command']}",
+            f"- COUNTEREXAMPLE_TEST_RESULT: {interrogation['counterexample_test_result']}",
+            f"- MOCK_POLICY_MODE: {interrogation['mock_policy_mode']}",
+            f"- MOCKED_DEPENDENCIES: {interrogation['mocked_dependencies']}",
+            f"- INTEGRATION_COVERAGE_FOR_MOCKS: {interrogation['integration_coverage_for_mocks']}",
+            f"- OWNED_FILES: {_display_value(interrogation['owned_files'])}",
+            f"- INTERFACE_INPUTS: {_display_value(interrogation['interface_inputs'])}",
+            f"- INTERFACE_OUTPUTS: {_display_value(interrogation['interface_outputs'])}",
             f"- INTUITION_GATE: {interrogation['intuition_gate']}",
             f"- INTUITION_GATE_RATIONALE: {interrogation['intuition_gate_rationale']}",
             f"- STARTUP_GATE_STATUS: {payload['startup_gate']['status']}",
+            f"- STARTUP_GATE_READINESS_POLICY: {payload['startup_gate']['readiness_policy']}",
             f"- INTUITION_GATE_ACK: {payload['startup_gate']['intuition_gate_ack']}",
             f"- INTUITION_GATE_ACK_AT_UTC: {payload['startup_gate']['intuition_gate_ack_at_utc']}",
             f"- HANDOFF_TARGET: {handoff['target']}",
@@ -692,11 +847,25 @@ def _render_markdown(payload: dict[str, Any]) -> str:
             f"DONE_WHEN: {interrogation['done_when']}",
             f"DECISION_CLASS: {interrogation['decision_class']}",
             f"EXECUTION_LANE: {interrogation['execution_lane']}",
+            f"RISK_TIER: {interrogation['risk_tier']}",
+            f"DONE_WHEN_CHECKS: {_display_value(interrogation['done_when_checks'])}",
             f"POSITIONING_LOCK: {interrogation['positioning_lock']}",
             f"TASK_GRANULARITY_LIMIT: {interrogation['task_granularity_limit']}",
+            f"REFACTOR_BUDGET_MINUTES: {_display_value(interrogation['refactor_budget_minutes'])}",
+            f"REFACTOR_SPEND_MINUTES: {_display_value(interrogation['refactor_spend_minutes'])}",
+            f"REFACTOR_BUDGET_EXCEEDED_REASON: {interrogation['refactor_budget_exceeded_reason']}",
+            f"COUNTEREXAMPLE_TEST_COMMAND: {interrogation['counterexample_test_command']}",
+            f"COUNTEREXAMPLE_TEST_RESULT: {interrogation['counterexample_test_result']}",
+            f"MOCK_POLICY_MODE: {interrogation['mock_policy_mode']}",
+            f"MOCKED_DEPENDENCIES: {interrogation['mocked_dependencies']}",
+            f"INTEGRATION_COVERAGE_FOR_MOCKS: {interrogation['integration_coverage_for_mocks']}",
+            f"OWNED_FILES: {_display_value(interrogation['owned_files'])}",
+            f"INTERFACE_INPUTS: {_display_value(interrogation['interface_inputs'])}",
+            f"INTERFACE_OUTPUTS: {_display_value(interrogation['interface_outputs'])}",
             f"INTUITION_GATE: {interrogation['intuition_gate']}",
             f"INTUITION_GATE_RATIONALE: {interrogation['intuition_gate_rationale']}",
             f"STARTUP_GATE_STATUS: {payload['startup_gate']['status']}",
+            f"STARTUP_GATE_READINESS_POLICY: {payload['startup_gate']['readiness_policy']}",
             f"INTUITION_GATE_ACK: {payload['startup_gate']['intuition_gate_ack']}",
             f"INTUITION_GATE_ACK_AT_UTC: {payload['startup_gate']['intuition_gate_ack_at_utc']}",
             (
@@ -749,7 +918,9 @@ def _render_init_execution_card(
     kickoff_ref = _relative_or_absolute(output_md, repo_root=repo_root)
     required_fields = (
         "ORIGINAL_INTENT, DELIVERABLE_THIS_SCOPE, NON_GOALS, DONE_WHEN, "
-        "DECISION_CLASS, EXECUTION_LANE, POSITIONING_LOCK, TASK_GRANULARITY_LIMIT, "
+        "DECISION_CLASS, EXECUTION_LANE, RISK_TIER, DONE_WHEN_CHECKS, "
+        "POSITIONING_LOCK, TASK_GRANULARITY_LIMIT, REFACTOR_* controls, "
+        "COUNTEREXAMPLE_TEST_*, MOCK_POLICY_*, OWNED_FILES, INTERFACE_* fields, "
         "INTUITION_GATE, INTUITION_GATE_RATIONALE"
     )
 
@@ -758,6 +929,7 @@ def _render_init_execution_card(
         "",
         f"- GeneratedAtUTC: {payload['generated_at_utc']}",
         f"- StartupGateStatus: {startup_gate['status']}",
+        f"- ReadinessPolicy: {startup_gate['readiness_policy']}",
         f"- HandoffTarget: {handoff['target']}",
         f"- WorkerHeader: {handoff['worker_header']}",
         (
@@ -765,6 +937,8 @@ def _render_init_execution_card(
             f"{profile_selection_advisory['status']} -> "
             f"{profile_selection_advisory['recommended_profile'] or 'none'}"
         ),
+        f"- RiskTier: {interrogation['risk_tier']}",
+        f"- DoneWhenChecks: {_display_value(interrogation['done_when_checks'])}",
         f"- RequiredContractFields: {required_fields}",
         f"- AckStatus: {ack_status}",
         (
@@ -809,7 +983,7 @@ def _render_round_contract_seed(payload: dict[str, Any]) -> str:
         f"- POSITIONING_LOCK: {interrogation['positioning_lock']}",
         f"- TASK_GRANULARITY_LIMIT: {interrogation['task_granularity_limit']}",
         f"- DECISION_CLASS: {interrogation['decision_class']}",
-        "- RISK_TIER: TODO(LOW|MEDIUM|HIGH)",
+        f"- RISK_TIER: {interrogation['risk_tier']}",
         f"- EXECUTION_LANE: {interrogation['execution_lane']}",
         f"- WORKFLOW_LANE: {interrogation.get('workflow_lane', 'DEFAULT')}",
         f"- WORKFLOW_LANE_RATIONALE: TODO(one line on why this governance lane is appropriate)",
@@ -845,25 +1019,25 @@ def _render_round_contract_seed(payload: dict[str, Any]) -> str:
         f"- UNKNOWN_EXPERT_DOMAIN_POLICY: {milestone_expert_roster['unknown_expert_domain_policy']}",
         "- BOARD_REENTRY_REQUIRED: TODO(YES|NO)",
         "- BOARD_REENTRY_REASON: TODO(or N/A)",
-        "- DONE_WHEN_CHECKS: TODO(comma-separated check IDs from loop/closure outputs)",
-        "- COUNTEREXAMPLE_TEST_COMMAND: TODO(use N/A only if TDD_MODE=NOT_APPLICABLE)",
-        "- COUNTEREXAMPLE_TEST_RESULT: TODO(use N/A only if TDD_MODE=NOT_APPLICABLE)",
-        "- REFACTOR_BUDGET_MINUTES: 0",
-        "- REFACTOR_SPEND_MINUTES: 0",
-        "- REFACTOR_BUDGET_EXCEEDED_REASON: N/A",
-        "- MOCK_POLICY_MODE: NOT_APPLICABLE",
-        "- MOCKED_DEPENDENCIES: N/A",
-        "- INTEGRATION_COVERAGE_FOR_MOCKS: N/A",
-        "- OWNED_FILES: TODO(comma-separated repo-relative paths)",
-        "- INTERFACE_INPUTS: TODO(explicit inbound artifacts/params)",
-        "- INTERFACE_OUTPUTS: TODO(explicit outbound artifacts/outputs)",
+        f"- DONE_WHEN_CHECKS: {_display_value(interrogation['done_when_checks'])}",
+        f"- COUNTEREXAMPLE_TEST_COMMAND: {interrogation['counterexample_test_command']}",
+        f"- COUNTEREXAMPLE_TEST_RESULT: {interrogation['counterexample_test_result']}",
+        f"- REFACTOR_BUDGET_MINUTES: {_display_value(interrogation['refactor_budget_minutes'])}",
+        f"- REFACTOR_SPEND_MINUTES: {_display_value(interrogation['refactor_spend_minutes'])}",
+        f"- REFACTOR_BUDGET_EXCEEDED_REASON: {interrogation['refactor_budget_exceeded_reason']}",
+        f"- MOCK_POLICY_MODE: {interrogation['mock_policy_mode']}",
+        f"- MOCKED_DEPENDENCIES: {interrogation['mocked_dependencies']}",
+        f"- INTEGRATION_COVERAGE_FOR_MOCKS: {interrogation['integration_coverage_for_mocks']}",
+        f"- OWNED_FILES: {_display_value(interrogation['owned_files'])}",
+        f"- INTERFACE_INPUTS: {_display_value(interrogation['interface_inputs'])}",
+        f"- INTERFACE_OUTPUTS: {_display_value(interrogation['interface_outputs'])}",
         "- PARALLEL_SHARD_ID: TODO(optional; use none if single-worker)",
     ]
 
     if ack and ack != "N/A":
         lines.append(f"- INTUITION_GATE_ACK: {ack}")
     if ack_at_utc and ack_at_utc != "N/A":
-        lines.append(f"- ACK_AT_UTC: {ack_at_utc}")
+        lines.append(f"- INTUITION_GATE_ACK_AT_UTC: {ack_at_utc}")
 
     lines.extend(
         [
@@ -893,7 +1067,7 @@ def _print_terminal_summary(
     *,
     generated_at_utc: str,
     summary: dict[str, Any],
-    interrogation: dict[str, str],
+    interrogation: dict[str, Any],
     startup_gate: dict[str, Any],
     profile_selection_advisory: dict[str, Any],
     rows: list[dict[str, Any]],
@@ -922,12 +1096,26 @@ def _print_terminal_summary(
     print(f"DONE_WHEN: {interrogation['done_when']}")
     print(f"DECISION_CLASS: {interrogation['decision_class']}")
     print(f"EXECUTION_LANE: {interrogation['execution_lane']}")
+    print(f"RISK_TIER: {interrogation['risk_tier']}")
+    print(f"DONE_WHEN_CHECKS: {_display_value(interrogation['done_when_checks'])}")
     print(f"POSITIONING_LOCK: {interrogation['positioning_lock']}")
     print(f"TASK_GRANULARITY_LIMIT: {interrogation['task_granularity_limit']}")
+    print(f"REFACTOR_BUDGET_MINUTES: {_display_value(interrogation['refactor_budget_minutes'])}")
+    print(f"REFACTOR_SPEND_MINUTES: {_display_value(interrogation['refactor_spend_minutes'])}")
+    print(f"REFACTOR_BUDGET_EXCEEDED_REASON: {interrogation['refactor_budget_exceeded_reason']}")
+    print(f"COUNTEREXAMPLE_TEST_COMMAND: {interrogation['counterexample_test_command']}")
+    print(f"COUNTEREXAMPLE_TEST_RESULT: {interrogation['counterexample_test_result']}")
+    print(f"MOCK_POLICY_MODE: {interrogation['mock_policy_mode']}")
+    print(f"MOCKED_DEPENDENCIES: {interrogation['mocked_dependencies']}")
+    print(f"INTEGRATION_COVERAGE_FOR_MOCKS: {interrogation['integration_coverage_for_mocks']}")
+    print(f"OWNED_FILES: {_display_value(interrogation['owned_files'])}")
+    print(f"INTERFACE_INPUTS: {_display_value(interrogation['interface_inputs'])}")
+    print(f"INTERFACE_OUTPUTS: {_display_value(interrogation['interface_outputs'])}")
     print(f"INTUITION_GATE: {interrogation['intuition_gate']}")
     print(f"INTUITION_GATE_RATIONALE: {interrogation['intuition_gate_rationale']}")
     print(f"INTUITION_GATE_ACK: {startup_gate['intuition_gate_ack']}")
     print(f"INTUITION_GATE_ACK_AT_UTC: {startup_gate['intuition_gate_ack_at_utc']}")
+    print(f"STARTUP_GATE_READINESS_POLICY: {startup_gate['readiness_policy']}")
     print(f"STARTUP_GATE_STATUS: {startup_gate['status']}")
 
 
@@ -976,6 +1164,38 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task-granularity-limit", type=str, default="")
     parser.add_argument("--decision-class", type=str, default="")
     parser.add_argument("--execution-lane", type=str, default="")
+    parser.add_argument("--risk-tier", type=str, default="")
+    parser.add_argument(
+        "--done-when-checks",
+        type=str,
+        default="",
+        help="Comma-separated closure/cycle check IDs that must PASS before escalation.",
+    )
+    parser.add_argument(
+        "--refactor-budget-minutes",
+        type=str,
+        default="",
+        help="Numeric refactor budget in minutes (>= 0).",
+    )
+    parser.add_argument(
+        "--refactor-spend-minutes",
+        type=str,
+        default="",
+        help="Numeric refactor spend in minutes (>= 0).",
+    )
+    parser.add_argument(
+        "--refactor-budget-exceeded-reason",
+        type=str,
+        default="N/A",
+    )
+    parser.add_argument("--counterexample-test-command", type=str, default="")
+    parser.add_argument("--counterexample-test-result", type=str, default="")
+    parser.add_argument("--mock-policy-mode", type=str, default="")
+    parser.add_argument("--mocked-dependencies", type=str, default="")
+    parser.add_argument("--integration-coverage-for-mocks", type=str, default="")
+    parser.add_argument("--owned-files", type=str, default="")
+    parser.add_argument("--interface-inputs", type=str, default="")
+    parser.add_argument("--interface-outputs", type=str, default="")
     parser.add_argument(
         "--workflow-lane",
         type=str,
@@ -1110,6 +1330,71 @@ def main() -> int:
             prompt="EXECUTION_LANE (STANDARD|FAST): ",
             no_interactive=args.no_interactive,
         ),
+        "risk_tier": _prompt_or_value(
+            current=args.risk_tier,
+            prompt="RISK_TIER (LOW|MEDIUM|HIGH): ",
+            no_interactive=args.no_interactive,
+        ),
+        "done_when_checks": _prompt_or_value(
+            current=args.done_when_checks,
+            prompt="DONE_WHEN_CHECKS (comma-separated check IDs): ",
+            no_interactive=args.no_interactive,
+        ),
+        "refactor_budget_minutes": _prompt_or_value(
+            current=args.refactor_budget_minutes,
+            prompt="REFACTOR_BUDGET_MINUTES (numeric >= 0): ",
+            no_interactive=args.no_interactive,
+        ),
+        "refactor_spend_minutes": _prompt_or_value(
+            current=args.refactor_spend_minutes,
+            prompt="REFACTOR_SPEND_MINUTES (numeric >= 0): ",
+            no_interactive=args.no_interactive,
+        ),
+        "refactor_budget_exceeded_reason": _prompt_or_value(
+            current=args.refactor_budget_exceeded_reason,
+            prompt="REFACTOR_BUDGET_EXCEEDED_REASON (or N/A): ",
+            no_interactive=args.no_interactive,
+        ),
+        "counterexample_test_command": _prompt_or_value(
+            current=args.counterexample_test_command,
+            prompt="COUNTEREXAMPLE_TEST_COMMAND: ",
+            no_interactive=args.no_interactive,
+        ),
+        "counterexample_test_result": _prompt_or_value(
+            current=args.counterexample_test_result,
+            prompt="COUNTEREXAMPLE_TEST_RESULT: ",
+            no_interactive=args.no_interactive,
+        ),
+        "mock_policy_mode": _prompt_or_value(
+            current=args.mock_policy_mode,
+            prompt="MOCK_POLICY_MODE (STRICT|NOT_APPLICABLE): ",
+            no_interactive=args.no_interactive,
+        ),
+        "mocked_dependencies": _prompt_or_value(
+            current=args.mocked_dependencies,
+            prompt="MOCKED_DEPENDENCIES: ",
+            no_interactive=args.no_interactive,
+        ),
+        "integration_coverage_for_mocks": _prompt_or_value(
+            current=args.integration_coverage_for_mocks,
+            prompt="INTEGRATION_COVERAGE_FOR_MOCKS (YES|NO|N/A): ",
+            no_interactive=args.no_interactive,
+        ),
+        "owned_files": _prompt_or_value(
+            current=args.owned_files,
+            prompt="OWNED_FILES (comma-separated repo-relative paths): ",
+            no_interactive=args.no_interactive,
+        ),
+        "interface_inputs": _prompt_or_value(
+            current=args.interface_inputs,
+            prompt="INTERFACE_INPUTS (comma-separated inbound artifacts/params): ",
+            no_interactive=args.no_interactive,
+        ),
+        "interface_outputs": _prompt_or_value(
+            current=args.interface_outputs,
+            prompt="INTERFACE_OUTPUTS (comma-separated outbound artifacts/outputs): ",
+            no_interactive=args.no_interactive,
+        ),
         "workflow_lane": _prompt_or_value(
             current=args.workflow_lane,
             prompt="WORKFLOW_LANE (DEFAULT|PROTOTYPE|HIGH_RISK|MILESTONE_REVIEW): ",
@@ -1152,13 +1437,8 @@ def main() -> int:
         intuition_gate=interrogation["intuition_gate"],
         intuition_gate_ack=args.intuition_gate_ack,
         intuition_gate_ack_at_utc=args.intuition_gate_ack_at_utc,
+        readiness_rows=readiness_rows,
     )
-    if startup_gate["errors"]:
-        print(
-            "Startup gate validation failed: " + ", ".join(startup_gate["errors"]),
-            file=sys.stderr,
-        )
-        return 1
 
     profile_definition = PROJECT_PROFILE_DEFINITIONS[args.project_profile]
     default_mandatory_domains = tuple(profile_definition.get("mandatory_domains", ()))
@@ -1250,6 +1530,12 @@ def main() -> int:
         rows=readiness_rows,
     )
 
+    if startup_gate["errors"]:
+        print(
+            "Startup gate validation failed: " + ", ".join(startup_gate["errors"]),
+            file=sys.stderr,
+        )
+        return 1
     if readiness_summary["ready_ratio"] < args.min_ready_ratio:
         print(
             (

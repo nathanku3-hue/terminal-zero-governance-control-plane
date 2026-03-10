@@ -581,8 +581,8 @@ def run_validation(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         checks.append(
             _check_record(
                 name="startup_gate_status",
-                status="SKIP",
-                message="startup_intake_latest.json not found; startup gate check skipped.",
+                status="FAIL",
+                message="Required startup_intake_latest.json not found.",
                 path=startup_intake_path,
             )
         )

@@ -323,10 +323,10 @@ def _derive_startup_node(repo_root: Path) -> dict[str, Any]:
         if gate_status == "READY_TO_EXECUTE":
             status_color = "green"
             status_label = "READY"
-        elif gate_status == "NEEDS_ATTENTION":
+        elif gate_status:
             status_color = "yellow"
             status_label = "BLOCKED"
-            blockers.append("Startup gate needs attention")
+            blockers.append(f"Startup gate blocked: {gate_status}")
 
     return {
         "node_id": "Startup",
