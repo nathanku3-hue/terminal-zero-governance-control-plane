@@ -372,6 +372,9 @@ def _fake_run_factory(
     closure_result: str | None = None,
     dossier_exit_code: int = 0,
     dossier_stderr: str = "",
+    memory_packet_exit_code: int = 0,
+    write_exec_memory_outputs: bool = True,
+    memory_build_authoritative_written: bool = True,
     next_round_handoff: dict[str, object] | None = None,
     expert_request: dict[str, object] | None = None,
     pm_ceo_research_brief: dict[str, object] | None = None,
@@ -397,7 +400,8 @@ def _fake_run_factory(
                     exit_code = dossier_exit_code
                     stderr = dossier_stderr
         if any("build_exec_memory_packet.py" in token for token in command):
-            if "--output-json" in command:
+            exit_code = memory_packet_exit_code
+            if write_exec_memory_outputs and "--output-json" in command:
                 output_index = command.index("--output-json")
                 output_json = Path(command[output_index + 1])
                 output_json.parent.mkdir(parents=True, exist_ok=True)
@@ -417,11 +421,30 @@ def _fake_run_factory(
                     json.dumps(output_payload),
                     encoding="utf-8",
                 )
-            if "--output-md" in command:
+            if write_exec_memory_outputs and "--output-md" in command:
                 output_index = command.index("--output-md")
                 output_md = Path(command[output_index + 1])
                 output_md.parent.mkdir(parents=True, exist_ok=True)
                 output_md.write_text("# Exec Memory Packet\n", encoding="utf-8")
+            if "--status-json" in command:
+                status_index = command.index("--status-json")
+                status_json = Path(command[status_index + 1])
+                status_json.parent.mkdir(parents=True, exist_ok=True)
+                status_json.write_text(
+                    json.dumps(
+                        {
+                            "schema_version": "1.0.0",
+                            "generated_at_utc": "2026-03-07T00:00:00Z",
+                            "authoritative_latest_written": memory_build_authoritative_written,
+                            "reason": (
+                                "ok"
+                                if memory_build_authoritative_written
+                                else "critical_inputs_failed"
+                            ),
+                        }
+                    ),
+                    encoding="utf-8",
+                )
         if any("validate_loop_closure.py" in token for token in command):
             exit_code = closure_exit_code
             if "--output-json" in command:
@@ -534,8 +557,8 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
         "refresh_dossier",
         "generate_ceo_go_signal",
         "refresh_ceo_weekly_summary",
-        "evaluate_context_compaction_trigger",
         "build_exec_memory_packet",
+        "evaluate_context_compaction_trigger",
         "validate_ceo_go_signal_truth",
         "validate_ceo_weekly_summary_truth",
         "validate_exec_memory_truth",
@@ -592,10 +615,33 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     closure_command = next(
         command for command in calls if any("validate_loop_closure.py" in token for token in command)
     )
+    memory_command = next(
+        command
+        for command in calls
+        if any("build_exec_memory_packet.py" in token for token in command)
+    )
+    compaction_command = next(
+        command
+        for command in calls
+        if any("evaluate_context_compaction_trigger.py" in token for token in command)
+    )
     round_contract_command = next(
         command
         for command in calls
         if any("validate_round_contract_checks.py" in token for token in command)
+    )
+    assert calls.index(memory_command) < calls.index(compaction_command)
+    assert "--status-json" in memory_command
+    assert memory_command[memory_command.index("--status-json") + 1].endswith(
+        "exec_memory_packet_build_status_current.json"
+    )
+    assert "--loop-summary-json" in memory_command
+    assert memory_command[memory_command.index("--loop-summary-json") + 1].endswith(
+        "loop_cycle_summary_current.json"
+    )
+    assert "--memory-json" in compaction_command
+    assert compaction_command[compaction_command.index("--memory-json") + 1].endswith(
+        "exec_memory_packet_latest_current.json"
     )
     assert "--weekly-summary-md" in closure_command
     assert "--memory-json" in closure_command
@@ -603,6 +649,9 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert "--refactor-mock-policy-script" in closure_command
     assert "--review-checklist-script" in closure_command
     assert "--interface-contracts-script" in closure_command
+    assert closure_command[closure_command.index("--memory-json") + 1].endswith(
+        "exec_memory_packet_latest_current.json"
+    )
     assert calls.index(closure_command) < calls.index(round_contract_command)
 
     assert len(round_contract_observations) == 1
@@ -872,6 +921,99 @@ def test_run_loop_cycle_persists_next_round_handoff_artifacts(
     assert "## Board Decision Brief" in markdown
 
 
+def test_run_loop_cycle_does_not_republish_stale_exec_memory_without_authoritative_build_status(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo_root = tmp_path
+    context = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=True)
+    _write_text(context / "ceo_weekly_summary_latest.md", "# Weekly Summary\n")
+    _write_text(context / "phase_end_logs" / ".keep", "")
+
+    stale_packet = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": "2020-01-01T00:00:00Z",
+        "next_round_handoff": {
+            "status": "ACTION_REQUIRED",
+            "recommended_intent": "stale intent",
+            "deliverable_this_scope": "stale deliverable",
+            "non_goals": "stale non-goals",
+            "done_when": "stale done when",
+            "done_when_checks": ["stale_check"],
+            "human_brief": "Stale handoff that must not be republished.",
+            "machine_view": "SURFACE: next_round_handoff\nSTATUS: ACTION_REQUIRED",
+            "artifacts_to_refresh": ["docs/context/stale.json"],
+            "blocking_gap_codes": ["stale_gap"],
+            "source_paths": ["docs/context/stale.json"],
+            "paste_ready_block": "ORIGINAL_INTENT: stale intent",
+        },
+    }
+    stale_latest_json = context / "exec_memory_packet_latest.json"
+    stale_latest_md = context / "exec_memory_packet_latest.md"
+    _write_text(stale_latest_json, json.dumps(stale_packet, indent=2))
+    _write_text(stale_latest_md, "# Stale Exec Memory Packet\n")
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(
+            calls,
+            memory_packet_exit_code=2,
+            write_exec_memory_outputs=False,
+            memory_build_authoritative_written=False,
+        ),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 2
+    assert payload["final_result"] == "ERROR"
+    assert payload["next_round_handoff"] is None
+    assert payload["expert_request"] is None
+    assert payload["pm_ceo_research_brief"] is None
+    assert payload["board_decision_brief"] is None
+    assert payload["repo_root_convenience"] == {}
+    assert payload["artifacts"]["exec_memory_latest_promoted"] is False
+
+    build_step = next(step for step in payload["steps"] if step["name"] == "build_exec_memory_packet")
+    compaction_step = next(
+        step for step in payload["steps"] if step["name"] == "evaluate_context_compaction_trigger"
+    )
+    memory_truth_step = next(
+        step for step in payload["steps"] if step["name"] == "validate_exec_memory_truth"
+    )
+    assert build_step["status"] == "FAIL"
+    assert build_step["exit_code"] == 2
+    assert "authoritative current-cycle outputs" in build_step["message"]
+    assert compaction_step["status"] == "SKIP"
+    assert memory_truth_step["status"] == "SKIP"
+
+    assert not any(
+        any("evaluate_context_compaction_trigger.py" in token for token in command)
+        for command in calls
+    )
+
+    assert json.loads(stale_latest_json.read_text(encoding="utf-8"))["generated_at_utc"] == (
+        "2020-01-01T00:00:00Z"
+    )
+    assert stale_latest_md.read_text(encoding="utf-8") == "# Stale Exec Memory Packet\n"
+    assert not (context / "next_round_handoff_latest.json").exists()
+    assert not (context / "next_round_handoff_latest.md").exists()
+    root_convenience = _repo_root_convenience_paths(repo_root)
+    assert all(not path.exists() for path in root_convenience.values())
+
+
 def test_run_loop_cycle_returns_nonzero_when_closure_fails(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -917,6 +1059,88 @@ def test_run_loop_cycle_returns_nonzero_when_closure_fails(
     assert not (context / "board_decision_brief_latest.md").exists()
     assert payload["repo_root_convenience"] == {}
     assert all(not path.exists() for path in root_convenience.values())
+
+
+def test_run_loop_cycle_does_not_republish_stale_exec_memory_when_current_build_fails(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo_root = tmp_path
+    context = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+    _write_text(context / "phase_end_logs" / ".keep", "")
+    _write_text(context / "ceo_weekly_summary_latest.md", "# Weekly Summary\n")
+    _write_text(
+        context / "exec_memory_packet_latest.json",
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "generated_at_utc": "2026-03-01T00:00:00Z",
+                "next_round_handoff": {
+                    "status": "ACTION_REQUIRED",
+                    "recommended_intent": "stale advisory should not republish",
+                },
+            }
+        ),
+    )
+    _write_text(context / "exec_memory_packet_latest.md", "# stale exec memory\n")
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(
+            calls,
+            memory_packet_exit_code=2,
+            write_exec_memory_outputs=False,
+            closure_exit_code=0,
+        ),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 2
+    assert payload["final_result"] == "ERROR"
+    build_step = next(step for step in payload["steps"] if step["name"] == "build_exec_memory_packet")
+    compaction_step = next(
+        step for step in payload["steps"] if step["name"] == "evaluate_context_compaction_trigger"
+    )
+    memory_truth_step = next(
+        step for step in payload["steps"] if step["name"] == "validate_exec_memory_truth"
+    )
+    assert build_step["status"] == "FAIL"
+    assert build_step["exit_code"] == 2
+    assert compaction_step["status"] == "SKIP"
+    assert "Current-cycle exec memory packet unavailable" in compaction_step["message"]
+    assert memory_truth_step["status"] == "SKIP"
+    assert "Current-cycle exec memory packet not available" in memory_truth_step["message"]
+    assert not any(
+        any("evaluate_context_compaction_trigger.py" in token for token in command)
+        for command in calls
+    )
+    assert payload["next_round_handoff"] is None
+    assert payload["expert_request"] is None
+    assert payload["pm_ceo_research_brief"] is None
+    assert payload["board_decision_brief"] is None
+    assert payload["repo_root_convenience"] == {}
+    assert not (context / "next_round_handoff_latest.json").exists()
+    assert not (context / "next_round_handoff_latest.md").exists()
+
+    closure_command = next(
+        command for command in calls if any("validate_loop_closure.py" in token for token in command)
+    )
+    assert closure_command[closure_command.index("--memory-json") + 1].endswith(
+        "exec_memory_packet_latest_current.json"
+    )
 
 
 def test_run_loop_cycle_returns_hold_for_expected_dossier_shortfall_and_not_ready_closure(

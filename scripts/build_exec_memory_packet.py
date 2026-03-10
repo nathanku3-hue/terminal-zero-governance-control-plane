@@ -59,6 +59,49 @@ def _append_input_status(
         print(f"WARNING: Important input degraded: {path}", file=sys.stderr)
 
 
+def _critical_input_failures(
+    input_status: dict[str, list[dict[str, str]]],
+) -> list[dict[str, str]]:
+    return [
+        item
+        for item in input_status["critical"]
+        if item["status"] == "missing_or_invalid"
+    ]
+
+
+def _is_authoritative_latest_path(path: Path) -> bool:
+    return path.stem.endswith("_latest")
+
+
+def _write_build_status(
+    *,
+    path: Path,
+    generated_at_utc: str,
+    output_json_path: Path,
+    output_md_path: Path,
+    input_status: dict[str, list[dict[str, str]]],
+    critical_failures: list[dict[str, str]],
+    authoritative_latest_written: bool,
+    degraded_preview_written: bool,
+    exit_code: int,
+    reason: str,
+) -> None:
+    payload = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": generated_at_utc,
+        "output_json": str(output_json_path),
+        "output_md": str(output_md_path),
+        "authoritative_latest_written": authoritative_latest_written,
+        "degraded_preview_written": degraded_preview_written,
+        "critical_failures": [item["file"] for item in critical_failures],
+        "critical_inputs_ok": len(critical_failures) == 0,
+        "input_status": input_status,
+        "exit_code": exit_code,
+        "reason": reason,
+    }
+    _atomic_write_text(path, json.dumps(payload, indent=2) + "\n")
+
+
 def _coerce_domain_list(value: object) -> list[str]:
     if not isinstance(value, list):
         return []
@@ -1693,6 +1736,19 @@ def main() -> int:
         default="docs/context/exec_memory_packet_latest.md",
         help="Output markdown path"
     )
+    parser.add_argument(
+        "--status-json",
+        default="docs/context/exec_memory_packet_build_status_latest.json",
+        help="Build status JSON path",
+    )
+    parser.add_argument(
+        "--allow-degraded-output",
+        action="store_true",
+        help=(
+            "When critical inputs are missing or invalid, still write the requested "
+            "outputs as a non-authoritative degraded preview and return exit code 2."
+        ),
+    )
     args = parser.parse_args()
 
     # Resolve paths
@@ -1704,6 +1760,8 @@ def main() -> int:
     decision_log_path = Path(args.decision_log_md)
     output_json_path = Path(args.output_json)
     output_md_path = Path(args.output_md)
+    status_json_path = Path(args.status_json)
+    generated_at_utc = _now_utc_iso()
 
     input_status: dict[str, list[dict[str, str]]] = {
         "critical": [],
@@ -1728,6 +1786,32 @@ def main() -> int:
         _append_input_status(input_status, path=decision_log_path, loaded=bool(decision_log_text))
     except Exception as e:
         print(f"ERROR: Failed to load inputs: {e}", file=sys.stderr)
+        return 2
+
+    critical_failures = _critical_input_failures(input_status)
+    degraded_output_allowed = (
+        args.allow_degraded_output
+        and not _is_authoritative_latest_path(output_json_path)
+        and not _is_authoritative_latest_path(output_md_path)
+    )
+    if critical_failures and not degraded_output_allowed:
+        failed_names = ", ".join(item["file"] for item in critical_failures)
+        try:
+            _write_build_status(
+                path=status_json_path,
+                generated_at_utc=generated_at_utc,
+                output_json_path=output_json_path,
+                output_md_path=output_md_path,
+                input_status=input_status,
+                critical_failures=critical_failures,
+                authoritative_latest_written=False,
+                degraded_preview_written=False,
+                exit_code=2,
+                reason="critical_inputs_failed",
+            )
+        except Exception as exc:
+            print(f"ERROR: Failed to write build status: {exc}", file=sys.stderr)
+        print(f"ERROR: Critical inputs failed to load: {failed_names}", file=sys.stderr)
         return 2
 
     # Build hierarchical summaries
@@ -1829,7 +1913,7 @@ def main() -> int:
     # Build JSON packet
     packet = {
         "schema_version": "1.0.0",
-        "generated_at_utc": _now_utc_iso(),
+        "generated_at_utc": generated_at_utc,
         "inputs": {
             "loop_summary": str(loop_summary_path) if loop_summary_path.exists() else None,
             "dossier": str(dossier_path) if dossier_path.exists() else None,
@@ -1869,6 +1953,21 @@ def main() -> int:
     try:
         _atomic_write_text(output_json_path, json.dumps(packet, indent=2))
     except Exception as e:
+        try:
+            _write_build_status(
+                path=status_json_path,
+                generated_at_utc=generated_at_utc,
+                output_json_path=output_json_path,
+                output_md_path=output_md_path,
+                input_status=input_status,
+                critical_failures=critical_failures,
+                authoritative_latest_written=False,
+                degraded_preview_written=False,
+                exit_code=2,
+                reason="write_json_failed",
+            )
+        except Exception as status_exc:
+            print(f"ERROR: Failed to write build status: {status_exc}", file=sys.stderr)
         print(f"ERROR: Failed to write JSON: {e}", file=sys.stderr)
         return 2
 
@@ -2033,22 +2132,82 @@ def main() -> int:
     try:
         _atomic_write_text(output_md_path, "\n".join(md_lines))
     except Exception as e:
+        try:
+            _write_build_status(
+                path=status_json_path,
+                generated_at_utc=generated_at_utc,
+                output_json_path=output_json_path,
+                output_md_path=output_md_path,
+                input_status=input_status,
+                critical_failures=critical_failures,
+                authoritative_latest_written=False,
+                degraded_preview_written=bool(critical_failures),
+                exit_code=2,
+                reason="write_markdown_failed",
+            )
+        except Exception as status_exc:
+            print(f"ERROR: Failed to write build status: {status_exc}", file=sys.stderr)
         print(f"ERROR: Failed to write markdown: {e}", file=sys.stderr)
         return 2
 
     # Check for critical input failures before final return
-    critical_failures = [
-        item for item in input_status["critical"] if item["status"] == "missing_or_invalid"
-    ]
     if critical_failures:
         failed_names = ", ".join(item["file"] for item in critical_failures)
+        try:
+            _write_build_status(
+                path=status_json_path,
+                generated_at_utc=generated_at_utc,
+                output_json_path=output_json_path,
+                output_md_path=output_md_path,
+                input_status=input_status,
+                critical_failures=critical_failures,
+                authoritative_latest_written=False,
+                degraded_preview_written=True,
+                exit_code=2,
+                reason="critical_inputs_failed_degraded_preview_only",
+            )
+        except Exception as status_exc:
+            print(f"ERROR: Failed to write build status: {status_exc}", file=sys.stderr)
         print(f"ERROR: Critical inputs failed to load: {failed_names}", file=sys.stderr)
         return 2
 
     # Exit with validation status
     if not pm_budget_ok or not ceo_budget_ok:
+        try:
+            _write_build_status(
+                path=status_json_path,
+                generated_at_utc=generated_at_utc,
+                output_json_path=output_json_path,
+                output_md_path=output_md_path,
+                input_status=input_status,
+                critical_failures=critical_failures,
+                authoritative_latest_written=True,
+                degraded_preview_written=False,
+                exit_code=1,
+                reason="token_budget_exceeded",
+            )
+        except Exception as status_exc:
+            print(f"ERROR: Failed to write build status: {status_exc}", file=sys.stderr)
+            return 2
         print("WARNING: Token budget exceeded", file=sys.stderr)
         return 1
+
+    try:
+        _write_build_status(
+            path=status_json_path,
+            generated_at_utc=generated_at_utc,
+            output_json_path=output_json_path,
+            output_md_path=output_md_path,
+            input_status=input_status,
+            critical_failures=critical_failures,
+            authoritative_latest_written=True,
+            degraded_preview_written=False,
+            exit_code=0,
+            reason="ok",
+        )
+    except Exception as status_exc:
+        print(f"ERROR: Failed to write build status: {status_exc}", file=sys.stderr)
+        return 2
 
     return 0
 

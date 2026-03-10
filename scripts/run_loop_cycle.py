@@ -686,6 +686,18 @@ def _load_closure_result(path: Path) -> str:
     return result.strip()
 
 
+def _load_exec_memory_build_status(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
 def _apply_hold_semantics(
     *,
     steps: list[dict[str, Any]],
@@ -802,6 +814,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--memory-truth-script", type=Path, default=None)
     parser.add_argument("--exec-memory-json", type=Path, default=None)
     parser.add_argument("--exec-memory-md", type=Path, default=None)
+    parser.add_argument("--exec-memory-build-status-json", type=Path, default=None)
     parser.add_argument("--compaction-state-json", type=Path, default=None)
     parser.add_argument("--compaction-status-json", type=Path, default=None)
     parser.add_argument("--compaction-pm-warn", type=float, default=0.75)
@@ -945,15 +958,26 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         value=args.memory_truth_script,
         default_path=script_dir / "validate_exec_memory_truth.py",
     )
-    exec_memory_json = _resolve_with_default(
+    exec_memory_latest_json = _resolve_with_default(
         repo_root=repo_root,
         value=args.exec_memory_json,
         default_path=context_dir / "exec_memory_packet_latest.json",
     )
-    exec_memory_md = _resolve_with_default(
+    exec_memory_latest_md = _resolve_with_default(
         repo_root=repo_root,
         value=args.exec_memory_md,
         default_path=context_dir / "exec_memory_packet_latest.md",
+    )
+    exec_memory_current_json = exec_memory_latest_json.with_name(
+        f"{exec_memory_latest_json.stem}_current{exec_memory_latest_json.suffix}"
+    )
+    exec_memory_current_md = exec_memory_latest_md.with_name(
+        f"{exec_memory_latest_md.stem}_current{exec_memory_latest_md.suffix}"
+    )
+    exec_memory_build_status_json = _resolve_with_default(
+        repo_root=repo_root,
+        value=args.exec_memory_build_status_json,
+        default_path=context_dir / "exec_memory_packet_build_status_current.json",
     )
     next_round_handoff_json = context_dir / "next_round_handoff_latest.json"
     next_round_handoff_md = context_dir / "next_round_handoff_latest.md"
@@ -985,6 +1009,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
 
     repo_id = args.repo_id.strip() or repo_root.name or "repo"
     steps: list[dict[str, Any]] = []
+    exec_memory_cycle_ready = False
+    temp_summary_path = context_dir / "loop_cycle_summary_current.json"
 
     def build_summary_payload(
         *,
@@ -1053,8 +1079,12 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "weekly_summary_md": str(weekly_summary_md),
                 "review_checklist_md": str(review_checklist_md),
                 "interface_contract_manifest_json": str(interface_contract_manifest_json),
-                "exec_memory_json": str(exec_memory_json),
-                "exec_memory_md": str(exec_memory_md),
+                "exec_memory_json": str(exec_memory_latest_json),
+                "exec_memory_md": str(exec_memory_latest_md),
+                "exec_memory_current_json": str(exec_memory_current_json),
+                "exec_memory_current_md": str(exec_memory_current_md),
+                "exec_memory_build_status_json": str(exec_memory_build_status_json),
+                "exec_memory_latest_promoted": exec_memory_cycle_ready,
                 "next_round_handoff_json": str(next_round_handoff_json),
                 "next_round_handoff_md": str(next_round_handoff_md),
                 "expert_request_json": str(expert_request_json),
@@ -1137,6 +1167,87 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             return
         command = [args.python_exe, str(script_path)] + script_args
         steps.append(_run_command(step_name=step_name, command=command, cwd=repo_root))
+
+    def _step_by_name(step_name: str) -> dict[str, Any] | None:
+        return next((step for step in steps if step.get("name") == step_name), None)
+
+    def _remove_if_exists(path: Path) -> None:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        except OSError:
+            pass
+
+    def _promote_exec_memory_outputs(
+        memory_step: dict[str, Any] | None,
+        build_status: dict[str, Any] | None,
+    ) -> bool:
+        if memory_step is None:
+            return False
+        if build_status is None:
+            memory_step["status"] = "FAIL"
+            memory_step["exit_code"] = 2
+            memory_step["message"] = "Exec memory build status missing or invalid."
+            return False
+        if not bool(build_status.get("authoritative_latest_written")):
+            reason = str(build_status.get("reason", "")).strip() or "not_authoritative"
+            if memory_step.get("status") == "PASS":
+                memory_step["status"] = "FAIL"
+                memory_step["exit_code"] = 2
+            memory_step["message"] = (
+                "Exec memory build did not produce authoritative current-cycle outputs "
+                f"({reason})."
+            )
+            return False
+        if memory_step.get("status") not in {"PASS", "FAIL"}:
+            return False
+        if not exec_memory_current_json.exists() or not exec_memory_current_md.exists():
+            memory_step["status"] = "FAIL"
+            memory_step["exit_code"] = 2
+            memory_step["message"] = (
+                "Current-cycle exec memory outputs were not produced."
+            )
+            return False
+        try:
+            _atomic_write_text(
+                exec_memory_latest_json,
+                exec_memory_current_json.read_text(encoding="utf-8-sig"),
+            )
+            _atomic_write_text(
+                exec_memory_latest_md,
+                exec_memory_current_md.read_text(encoding="utf-8-sig"),
+            )
+        except OSError as exc:
+            memory_step["status"] = "FAIL"
+            memory_step["exit_code"] = 2
+            memory_step["message"] = f"Failed to promote exec memory outputs: {exc}"
+            return False
+        return True
+
+    def _write_temp_summary_snapshot() -> bool:
+        temp_summary_dict = build_summary_payload(
+            disagreement_sla=_scan_disagreement_sla(path=disagreement_ledger_jsonl, now_utc=_utc_now())
+        )
+        try:
+            _atomic_write_text(temp_summary_path, json.dumps(temp_summary_dict, indent=2))
+        except OSError as exc:
+            steps.append(
+                {
+                    "name": "write_temp_summary",
+                    "status": "ERROR",
+                    "exit_code": None,
+                    "command": [],
+                    "started_utc": generated_at_utc,
+                    "ended_utc": generated_at_utc,
+                    "duration_seconds": 0.0,
+                    "stdout": "",
+                    "stderr": str(exc),
+                    "message": f"Failed to write temp summary: {exc}",
+                }
+            )
+            return False
+        return True
 
     if args.skip_phase_end:
         steps.append(_skip_step("phase_end_handover", "Skipped by --skip-phase-end."))
@@ -1248,59 +1359,89 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
 
-    if compaction_trigger_script.exists():
-        run_python_step(
-            step_name="evaluate_context_compaction_trigger",
-            script_path=compaction_trigger_script,
-            script_args=[
-                "--memory-json",
-                str(exec_memory_json),
-                "--dossier-json",
-                str(dossier_json),
-                "--go-signal-md",
-                str(go_signal_md),
-                "--state-json",
-                str(compaction_state_json),
-                "--output-json",
-                str(compaction_status_json),
-                "--pm-warn",
-                str(args.compaction_pm_warn),
-                "--ceo-warn",
-                str(args.compaction_ceo_warn),
-                "--force",
-                str(args.compaction_force),
-                "--max-age-hours",
-                str(args.compaction_max_age_hours),
-            ],
-        )
-    else:
+    _remove_if_exists(exec_memory_current_json)
+    _remove_if_exists(exec_memory_current_md)
+    _remove_if_exists(exec_memory_build_status_json)
+    if not memory_packet_script.exists():
         steps.append(
             _skip_step(
-                "evaluate_context_compaction_trigger",
-                f"Script not found: {compaction_trigger_script}",
+                "build_exec_memory_packet",
+                f"Script not found: {memory_packet_script}",
             )
         )
-
-    if memory_packet_script.exists():
+    elif _write_temp_summary_snapshot():
         run_python_step(
             step_name="build_exec_memory_packet",
             script_path=memory_packet_script,
             script_args=[
+                "--loop-summary-json",
+                str(temp_summary_path),
                 "--output-json",
-                str(exec_memory_json),
+                str(exec_memory_current_json),
                 "--output-md",
-                str(exec_memory_md),
+                str(exec_memory_current_md),
+                "--status-json",
+                str(exec_memory_build_status_json),
                 "--pm-budget-tokens",
                 str(args.pm_budget_tokens),
                 "--ceo-budget-tokens",
                 str(args.ceo_budget_tokens),
             ],
         )
+        exec_memory_build_status = _load_exec_memory_build_status(exec_memory_build_status_json)
+        exec_memory_cycle_ready = _promote_exec_memory_outputs(
+            _step_by_name("build_exec_memory_packet"),
+            exec_memory_build_status,
+        )
     else:
         steps.append(
             _skip_step(
                 "build_exec_memory_packet",
-                f"Script not found: {memory_packet_script}",
+                f"Current-cycle summary snapshot unavailable: {temp_summary_path}",
+            )
+        )
+
+    if compaction_trigger_script.exists():
+        if exec_memory_cycle_ready:
+            run_python_step(
+                step_name="evaluate_context_compaction_trigger",
+                script_path=compaction_trigger_script,
+                script_args=[
+                    "--memory-json",
+                    str(exec_memory_current_json),
+                    "--dossier-json",
+                    str(dossier_json),
+                    "--go-signal-md",
+                    str(go_signal_md),
+                    "--state-json",
+                    str(compaction_state_json),
+                    "--output-json",
+                    str(compaction_status_json),
+                    "--pm-warn",
+                    str(args.compaction_pm_warn),
+                    "--ceo-warn",
+                    str(args.compaction_ceo_warn),
+                    "--force",
+                    str(args.compaction_force),
+                    "--max-age-hours",
+                    str(args.compaction_max_age_hours),
+                ],
+            )
+        else:
+            steps.append(
+                _skip_step(
+                    "evaluate_context_compaction_trigger",
+                    (
+                        "Current-cycle exec memory packet unavailable: "
+                        f"{exec_memory_current_json}"
+                    ),
+                )
+            )
+    else:
+        steps.append(
+            _skip_step(
+                "evaluate_context_compaction_trigger",
+                f"Script not found: {compaction_trigger_script}",
             )
         )
 
@@ -1353,22 +1494,25 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
 
-    if exec_memory_json.exists() and memory_truth_script.exists():
+    if exec_memory_cycle_ready and memory_truth_script.exists():
         run_python_step(
             step_name="validate_exec_memory_truth",
             script_path=memory_truth_script,
             script_args=[
                 "--memory-json",
-                str(exec_memory_json),
+                str(exec_memory_current_json),
                 "--repo-root",
                 str(repo_root),
             ],
         )
-    elif not exec_memory_json.exists():
+    elif not exec_memory_cycle_ready:
         steps.append(
             _skip_step(
                 "validate_exec_memory_truth",
-                f"Exec memory packet not found: {exec_memory_json}",
+                (
+                    "Current-cycle exec memory packet not available: "
+                    f"{exec_memory_current_json}"
+                ),
             )
         )
     else:
@@ -1470,7 +1614,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "--weekly-truth-script",
             str(weekly_truth_script),
             "--memory-json",
-            str(exec_memory_json),
+            str(exec_memory_current_json),
             "--memory-truth-script",
             str(memory_truth_script),
             "--refactor-mock-policy-script",
@@ -1488,27 +1632,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         ],
     )
 
-    temp_summary_path = context_dir / "loop_cycle_summary_current.json"
-    temp_summary_dict = build_summary_payload(
-        disagreement_sla=_scan_disagreement_sla(path=disagreement_ledger_jsonl, now_utc=_utc_now())
-    )
-    try:
-        _atomic_write_text(temp_summary_path, json.dumps(temp_summary_dict, indent=2))
-    except OSError as exc:
-        steps.append(
-            {
-                "name": "write_temp_summary",
-                "status": "ERROR",
-                "exit_code": None,
-                "command": [],
-                "started_utc": generated_at_utc,
-                "ended_utc": generated_at_utc,
-                "duration_seconds": 0.0,
-                "stdout": "",
-                "stderr": str(exc),
-                "message": f"Failed to write temp summary: {exc}",
-            }
-        )
+    _write_temp_summary_snapshot()
 
     run_python_step(
         step_name="validate_round_contract_checks",
@@ -1535,32 +1659,39 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         closure_output_json=closure_output_json,
     )
 
-    next_round_handoff_artifacts = _persist_next_round_handoff(
-        context_dir=context_dir,
-        exec_memory_json=exec_memory_json,
-    )
-    expert_request_artifacts = _persist_expert_request(
-        context_dir=context_dir,
-        exec_memory_json=exec_memory_json,
-    )
-    pm_ceo_research_brief_artifacts = _persist_pm_ceo_research_brief(
-        context_dir=context_dir,
-        exec_memory_json=exec_memory_json,
-    )
-    board_decision_brief_artifacts = _persist_board_decision_brief(
-        context_dir=context_dir,
-        exec_memory_json=exec_memory_json,
-    )
-    repo_root_convenience = _mirror_repo_root_convenience_files(
-        repo_root=repo_root,
-        context_dir=context_dir,
-        advisory_artifacts={
-            "next_round_handoff": next_round_handoff_artifacts,
-            "expert_request": expert_request_artifacts,
-            "pm_ceo_research_brief": pm_ceo_research_brief_artifacts,
-            "board_decision_brief": board_decision_brief_artifacts,
-        },
-    )
+    if exec_memory_cycle_ready:
+        next_round_handoff_artifacts = _persist_next_round_handoff(
+            context_dir=context_dir,
+            exec_memory_json=exec_memory_latest_json,
+        )
+        expert_request_artifacts = _persist_expert_request(
+            context_dir=context_dir,
+            exec_memory_json=exec_memory_latest_json,
+        )
+        pm_ceo_research_brief_artifacts = _persist_pm_ceo_research_brief(
+            context_dir=context_dir,
+            exec_memory_json=exec_memory_latest_json,
+        )
+        board_decision_brief_artifacts = _persist_board_decision_brief(
+            context_dir=context_dir,
+            exec_memory_json=exec_memory_latest_json,
+        )
+        repo_root_convenience = _mirror_repo_root_convenience_files(
+            repo_root=repo_root,
+            context_dir=context_dir,
+            advisory_artifacts={
+                "next_round_handoff": next_round_handoff_artifacts,
+                "expert_request": expert_request_artifacts,
+                "pm_ceo_research_brief": pm_ceo_research_brief_artifacts,
+                "board_decision_brief": board_decision_brief_artifacts,
+            },
+        )
+    else:
+        next_round_handoff_artifacts = None
+        expert_request_artifacts = None
+        pm_ceo_research_brief_artifacts = None
+        board_decision_brief_artifacts = None
+        repo_root_convenience = {}
 
     disagreement_sla = _scan_disagreement_sla(path=disagreement_ledger_jsonl, now_utc=_utc_now())
 

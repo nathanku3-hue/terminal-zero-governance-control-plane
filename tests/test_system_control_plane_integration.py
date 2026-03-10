@@ -210,15 +210,20 @@ def _write_memory_packet_stub(path: Path) -> None:
         "import json\n"
         "from pathlib import Path\n"
         "parser = argparse.ArgumentParser()\n"
+        "parser.add_argument('--loop-summary-json')\n"
         "parser.add_argument('--output-json', required=True)\n"
         "parser.add_argument('--output-md', required=True)\n"
+        "parser.add_argument('--status-json', required=True)\n"
+        "parser.add_argument('--allow-degraded-output', action='store_true')\n"
         "parser.add_argument('--pm-budget-tokens')\n"
         "parser.add_argument('--ceo-budget-tokens')\n"
         "args = parser.parse_args()\n"
         "json_path = Path(args.output_json)\n"
         "md_path = Path(args.output_md)\n"
+        "status_path = Path(args.status_json)\n"
         "json_path.parent.mkdir(parents=True, exist_ok=True)\n"
         "md_path.parent.mkdir(parents=True, exist_ok=True)\n"
+        "status_path.parent.mkdir(parents=True, exist_ok=True)\n"
         "payload = {\n"
         "    'schema_version': '1.0.0',\n"
         "    'generated_at_utc': '2026-03-07T00:00:00Z',\n"
@@ -296,7 +301,8 @@ def _write_memory_packet_stub(path: Path) -> None:
         "    'semantic_claims': [],\n"
         "}\n"
         "json_path.write_text(json.dumps(payload, indent=2) + '\\n', encoding='utf-8')\n"
-        "md_path.write_text('# Exec Memory Packet\\n', encoding='utf-8')\n",
+        "md_path.write_text('# Exec Memory Packet\\n', encoding='utf-8')\n"
+        "status_path.write_text(json.dumps({'schema_version': '1.0.0', 'generated_at_utc': '2026-03-07T00:00:00Z', 'authoritative_latest_written': True, 'reason': 'authoritative_written'}, indent=2) + '\\n', encoding='utf-8')\n",
     )
 
 

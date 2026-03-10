@@ -204,6 +204,9 @@ def _run_script(
     milestone_roster: dict | None = None,
     pm_budget: int = 3000,
     ceo_budget: int = 1800,
+    output_json_name: str = "exec_memory_packet_latest.json",
+    output_md_name: str = "exec_memory_packet_latest.md",
+    extra_args: list[str] | None = None,
 ) -> tuple[subprocess.CompletedProcess[str], Path, Path]:
     context_dir = tmp_path / "docs" / "context"
     context_dir.mkdir(parents=True, exist_ok=True)
@@ -213,8 +216,9 @@ def _run_script(
     calibration_path = context_dir / "auditor_calibration_report.json"
     go_signal_path = context_dir / "ceo_go_signal.md"
     decision_log_path = tmp_path / "docs" / "decision log.md"
-    output_json_path = context_dir / "exec_memory_packet_latest.json"
-    output_md_path = context_dir / "exec_memory_packet_latest.md"
+    output_json_path = context_dir / output_json_name
+    output_md_path = context_dir / output_md_name
+    status_json_path = context_dir / "exec_memory_packet_build_status_latest.json"
 
     if loop_summary is not None:
         _write_json(loop_path, loop_summary)
@@ -229,31 +233,37 @@ def _run_script(
     if milestone_roster is not None:
         _write_json(context_dir / "milestone_expert_roster_latest.json", milestone_roster)
 
+    command = [
+        sys.executable,
+        str(SCRIPT_PATH),
+        "--context-dir",
+        str(context_dir),
+        "--loop-summary-json",
+        str(loop_path),
+        "--dossier-json",
+        str(dossier_path),
+        "--calibration-json",
+        str(calibration_path),
+        "--go-signal-md",
+        str(go_signal_path),
+        "--decision-log-md",
+        str(decision_log_path),
+        "--pm-budget-tokens",
+        str(pm_budget),
+        "--ceo-budget-tokens",
+        str(ceo_budget),
+        "--output-json",
+        str(output_json_path),
+        "--output-md",
+        str(output_md_path),
+        "--status-json",
+        str(status_json_path),
+    ]
+    if extra_args:
+        command.extend(extra_args)
+
     result = subprocess.run(
-        [
-            sys.executable,
-            str(SCRIPT_PATH),
-            "--context-dir",
-            str(context_dir),
-            "--loop-summary-json",
-            str(loop_path),
-            "--dossier-json",
-            str(dossier_path),
-            "--calibration-json",
-            str(calibration_path),
-            "--go-signal-md",
-            str(go_signal_path),
-            "--decision-log-md",
-            str(decision_log_path),
-            "--pm-budget-tokens",
-            str(pm_budget),
-            "--ceo-budget-tokens",
-            str(ceo_budget),
-            "--output-json",
-            str(output_json_path),
-            "--output-md",
-            str(output_md_path),
-        ],
+        command,
         capture_output=True,
         text=True,
         check=False,
@@ -279,6 +289,13 @@ def test_success_path_generates_json_and_markdown(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stdout + result.stderr
     assert json_path.exists()
     assert md_path.exists()
+    status_payload = json.loads(
+        (json_path.parent / "exec_memory_packet_build_status_latest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert status_payload["authoritative_latest_written"] is True
+    assert status_payload["reason"] == "ok"
 
     packet = json.loads(json_path.read_text(encoding="utf-8"))
     assert packet["schema_version"] == "1.0.0"
@@ -599,6 +616,15 @@ def test_missing_loop_summary_fails(tmp_path: Path) -> None:
     )
     assert result.returncode == 2, "Should fail with exit code 2 for missing critical input"
     assert "Critical input missing or invalid" in result.stderr
+    assert not json_path.exists()
+    assert not md_path.exists()
+    status_payload = json.loads(
+        (json_path.parent / "exec_memory_packet_build_status_latest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert status_payload["authoritative_latest_written"] is False
+    assert status_payload["reason"] == "critical_inputs_failed"
 
 
 def test_missing_go_signal_fails(tmp_path: Path) -> None:
@@ -612,6 +638,15 @@ def test_missing_go_signal_fails(tmp_path: Path) -> None:
     )
     assert result.returncode == 2, "Should fail with exit code 2 for missing critical input"
     assert "Critical input missing or invalid" in result.stderr
+    assert not json_path.exists()
+    assert not md_path.exists()
+    status_payload = json.loads(
+        (json_path.parent / "exec_memory_packet_build_status_latest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert status_payload["authoritative_latest_written"] is False
+    assert status_payload["reason"] == "critical_inputs_failed"
 
 
 def test_missing_optional_inputs_succeeds(tmp_path: Path) -> None:
@@ -1118,6 +1153,7 @@ def test_critical_input_missing_fails(tmp_path: Path) -> None:
     decision_log_path = tmp_path / "docs" / "decision log.md"
     output_json_path = context_dir / "exec_memory_packet_latest.json"
     output_md_path = context_dir / "exec_memory_packet_latest.md"
+    status_json_path = context_dir / "exec_memory_packet_build_status_latest.json"
 
     # Missing: loop_summary_path
     loop_path = context_dir / "loop_cycle_summary_latest.json"
@@ -1147,6 +1183,8 @@ def test_critical_input_missing_fails(tmp_path: Path) -> None:
             str(output_json_path),
             "--output-md",
             str(output_md_path),
+            "--status-json",
+            str(status_json_path),
         ],
         capture_output=True,
         text=True,
@@ -1156,13 +1194,59 @@ def test_critical_input_missing_fails(tmp_path: Path) -> None:
     assert result.returncode == 2, f"Expected exit code 2, got {result.returncode}. stderr: {result.stderr}"
     assert "Critical input missing or invalid" in result.stderr
 
+    assert not output_json_path.exists()
+    assert not output_md_path.exists()
+    status_payload = json.loads(status_json_path.read_text(encoding="utf-8"))
+    assert status_payload["authoritative_latest_written"] is False
+    assert status_payload["critical_inputs_ok"] is False
+    assert status_payload["reason"] == "critical_inputs_failed"
+
+
+def test_critical_input_missing_writes_only_non_authoritative_preview(tmp_path: Path) -> None:
+    context_dir = tmp_path / "docs" / "context"
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    dossier_path = context_dir / "auditor_promotion_dossier.json"
+    calibration_path = context_dir / "auditor_calibration_report.json"
+    go_signal_path = context_dir / "ceo_go_signal.md"
+    decision_log_path = tmp_path / "docs" / "decision log.md"
+
+    _write_json(dossier_path, _make_dossier())
+    _write_json(calibration_path, _make_calibration())
+    _write_text(go_signal_path, _make_go_signal())
+    _write_text(decision_log_path, _make_decision_log())
+
+    result, output_json_path, output_md_path = _run_script(
+        tmp_path,
+        dossier=_make_dossier(),
+        calibration=_make_calibration(),
+        go_signal=_make_go_signal(),
+        decision_log=_make_decision_log(),
+        output_json_name="exec_memory_packet_current.json",
+        output_md_name="exec_memory_packet_current.md",
+        extra_args=["--allow-degraded-output"],
+    )
+
+    assert result.returncode == 2, result.stdout + result.stderr
     assert output_json_path.exists()
+    assert output_md_path.exists()
+    status_payload = json.loads(
+        (context_dir / "exec_memory_packet_build_status_latest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert status_payload["authoritative_latest_written"] is False
+    assert status_payload["degraded_preview_written"] is True
+    assert status_payload["reason"] == "critical_inputs_failed_degraded_preview_only"
+
     packet = json.loads(output_json_path.read_text(encoding="utf-8"))
     critical_failures = [
         item for item in packet["input_status"]["critical"] if item["status"] == "missing_or_invalid"
     ]
-    assert len(critical_failures) == 1
-    assert critical_failures[0]["file"] == "loop_cycle_summary_latest.json"
+    assert [item["file"] for item in critical_failures] == ["loop_cycle_summary_latest.json"]
+
+    assert not (context_dir / "exec_memory_packet_latest.json").exists()
+    assert not (context_dir / "exec_memory_packet_latest.md").exists()
 
 
 def test_important_input_missing_warns(tmp_path: Path) -> None:
@@ -1178,6 +1262,7 @@ def test_important_input_missing_warns(tmp_path: Path) -> None:
     decision_log_path = tmp_path / "docs" / "decision log.md"
     output_json_path = context_dir / "exec_memory_packet_latest.json"
     output_md_path = context_dir / "exec_memory_packet_latest.md"
+    status_json_path = context_dir / "exec_memory_packet_build_status_latest.json"
 
     _write_json(loop_path, _make_loop_summary())
     # Missing: dossier
@@ -1205,6 +1290,8 @@ def test_important_input_missing_warns(tmp_path: Path) -> None:
             str(output_json_path),
             "--output-md",
             str(output_md_path),
+            "--status-json",
+            str(status_json_path),
         ],
         capture_output=True,
         text=True,
@@ -1219,6 +1306,9 @@ def test_important_input_missing_warns(tmp_path: Path) -> None:
 
     # Check output JSON has input_status with degradation info
     assert output_json_path.exists()
+    status_payload = json.loads(status_json_path.read_text(encoding="utf-8"))
+    assert status_payload["authoritative_latest_written"] is True
+    assert status_payload["critical_inputs_ok"] is True
     packet = json.loads(output_json_path.read_text(encoding="utf-8"))
 
     assert "input_status" in packet

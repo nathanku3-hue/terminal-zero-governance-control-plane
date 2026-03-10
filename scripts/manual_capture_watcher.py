@@ -117,15 +117,38 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     _atomic_write_text(path, json.dumps(payload, indent=2, ensure_ascii=True) + "\n")
 
 
+def _quarantine_corrupt_json(path: Path) -> Path:
+    timestamp = _iso_utc(_now_utc()).replace(":", "").replace("-", "")
+    candidate = path.with_name(f"{path.stem}.corrupt.{timestamp}{path.suffix}")
+    counter = 1
+    while candidate.exists():
+        candidate = path.with_name(
+            f"{path.stem}.corrupt.{timestamp}.{counter}{path.suffix}"
+        )
+        counter += 1
+    os.replace(path, candidate)
+    return candidate
+
+
 def _safe_read_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
+        raw = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ManualCaptureError(f"Failed to read JSON state file {path}: {exc}") from exc
+    try:
+        data = json.loads(raw)
+    except Exception as exc:
+        quarantined = _quarantine_corrupt_json(path)
+        raise ManualCaptureError(
+            f"Malformed JSON in {path}; quarantined to {quarantined}: {exc}"
+        ) from exc
     if not isinstance(data, dict):
-        return None
+        quarantined = _quarantine_corrupt_json(path)
+        raise ManualCaptureError(
+            f"JSON root must be an object in {path}; quarantined to {quarantined}"
+        )
     return data
 
 

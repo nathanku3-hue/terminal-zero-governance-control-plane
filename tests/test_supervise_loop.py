@@ -201,10 +201,12 @@ def test_supervisor_writes_outputs_with_missing_artifacts(tmp_path: Path) -> Non
 
     result = _run(repo_root)
 
-    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.returncode == 1, result.stdout + result.stderr
     assert _status_path(repo_root).exists()
     assert _alerts_path(repo_root).exists()
     payload = json.loads(_status_path(repo_root).read_text(encoding="utf-8"))
+    assert payload["overall_status"] == "CRITICAL"
+    assert payload["critical_found"] is True
     assert any(event["code"] == "ARTIFACT_MISSING" for event in payload["events"])
     assert payload["manual_actions"]
     assert any("Generate missing artifact" in item["action"] for item in payload["manual_actions"])

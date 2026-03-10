@@ -499,9 +499,9 @@ def _run_supervision_cycle(
         else:
             events.append(
                 _event(
-                    "INFO",
+                    "CRITICAL",
                     "ARTIFACT_MISSING",
-                    f"{name} not found",
+                    f"Required artifact missing: {name}",
                     artifact=name,
                 )
             )

@@ -5,9 +5,14 @@ from datetime import timedelta
 from datetime import timezone
 from pathlib import Path
 
+import pytest
+
+from scripts.manual_capture_watcher import _load_or_init_registry
+from scripts.manual_capture_watcher import _load_or_init_state
 from scripts.manual_capture_watcher import _iso_utc
 from scripts.manual_capture_watcher import _load_or_init_alerts
 from scripts.manual_capture_watcher import _update_index_lines
+from scripts.manual_capture_watcher import ManualCaptureError
 from scripts.manual_capture_watcher import ensure_queue_payload
 from scripts.manual_capture_watcher import infer_task_id
 from scripts.manual_capture_watcher import load_index_rows
@@ -215,3 +220,50 @@ def test_accept_any_filename_assigns_fifo_without_naming(tmp_path: Path) -> None
     assert first_item["evidence_file"].startswith("T12_manual1_")
     assert first_item["evidence_file"].endswith(".png")
     assert (evidence_dir / first_item["evidence_file"]).exists()
+
+
+def test_corrupt_queue_json_is_quarantined_instead_of_reset(tmp_path: Path) -> None:
+    index_path = tmp_path / "e2e" / "index.md"
+    queue_path = tmp_path / "e2e" / "manual_capture_queue.json"
+    drop_dir = tmp_path / "drop"
+    evidence_dir = tmp_path / "e2e"
+    _build_index(index_path)
+    _write(queue_path, "{not valid json")
+
+    lines, rows = load_index_rows(index_path)
+    now = datetime(2026, 3, 1, 10, 0, tzinfo=timezone.utc)
+
+    with pytest.raises(ManualCaptureError, match="Malformed JSON"):
+        ensure_queue_payload(
+            queue_path=queue_path,
+            rows=rows,
+            task_id="T12",
+            drop_dir=drop_dir,
+            evidence_dir=evidence_dir,
+            now=now,
+        )
+
+    quarantined = list(queue_path.parent.glob("manual_capture_queue.corrupt.*.json"))
+    assert len(quarantined) == 1
+    assert not queue_path.exists()
+
+
+@pytest.mark.parametrize(
+    ("loader", "filename"),
+    [
+        (_load_or_init_alerts, "manual_capture_alerts.json"),
+        (_load_or_init_state, "repo_capture_state.json"),
+        (_load_or_init_registry, "repo_capture_registry.json"),
+    ],
+)
+def test_corrupt_loader_state_is_quarantined(loader, filename: str, tmp_path: Path) -> None:
+    path = tmp_path / filename
+    _write(path, "[]")
+    now_iso = "2026-03-01T10:00:00Z"
+
+    with pytest.raises(ManualCaptureError, match="quarantined"):
+        loader(path, now_iso)
+
+    quarantined = list(path.parent.glob(f"{path.stem}.corrupt.*{path.suffix}"))
+    assert len(quarantined) == 1
+    assert not path.exists()
