@@ -1167,50 +1167,39 @@ def test_workflow_status_md_generation_failure_non_fatal(tmp_path: Path) -> None
     assert "closure_result: READY_TO_ESCALATE" in result.stdout
 
 
-def test_workflow_status_both_flags_payload_reuse(tmp_path: Path, monkeypatch) -> None:
-    """Verify payload assembled only once when both flags present."""
+def test_workflow_status_both_flags_emit_consistent_outputs(tmp_path: Path) -> None:
+    """Verify a single run can emit both JSON and Markdown workflow overlays."""
     fixtures = _create_workflow_status_fixtures(tmp_path)
     repo_root = fixtures["repo_root"]
 
-    # Import the module to access main and _assemble_workflow_status_payload
-    import sys
-    from pathlib import Path as PathlibPath
-
-    script_dir = PathlibPath(__file__).resolve().parents[1] / "scripts"
-    sys.path.insert(0, str(script_dir))
-
-    import print_takeover_entrypoint
-
-    # Track calls to _assemble_workflow_status_payload
-    call_count = {"count": 0}
-    original_assemble = print_takeover_entrypoint._assemble_workflow_status_payload
-
-    def tracked_assemble(*args, **kwargs):
-        call_count["count"] += 1
-        return original_assemble(*args, **kwargs)
-
-    monkeypatch.setattr(
-        print_takeover_entrypoint,
-        "_assemble_workflow_status_payload",
-        tracked_assemble
-    )
-
-    # Call main with both flags
     json_out = repo_root / "workflow_status.json"
     md_out = repo_root / "workflow_status.md"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--repo-root",
+            str(repo_root),
+            "--workflow-status-json-out",
+            str(json_out),
+            "--workflow-status-md-out",
+            str(md_out),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
-    exit_code = print_takeover_entrypoint.main([
-        "--repo-root", str(repo_root),
-        "--workflow-status-json-out", str(json_out),
-        "--workflow-status-md-out", str(md_out),
-    ])
-
-    # Verify payload was assembled only once
-    assert call_count["count"] == 1, f"Expected 1 call, got {call_count['count']}"
-
-    # Verify both files were created
+    assert result.returncode == 1, result.stdout + result.stderr
     assert json_out.exists()
     assert md_out.exists()
+
+    payload = json.loads(json_out.read_text(encoding="utf-8"))
+    md_content = md_out.read_text(encoding="utf-8")
+
+    assert f"**Overall Status:** {payload['overall_status']}" in md_content
+    for node in payload["nodes"]:
+        assert node["title"] in md_content
 
 
 def test_workflow_status_md_only_no_json(tmp_path: Path) -> None:

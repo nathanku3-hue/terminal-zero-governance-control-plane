@@ -8,7 +8,17 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
+
+from print_takeover_workflow_overlay_models import (
+    ArtifactInput,
+    WorkflowNode,
+    WorkflowOverlayMetadata,
+    WorkflowStatusOverlay,
+    WorkflowStatusOverlayPayload,
+    coerce_workflow_overlay_payload_dict,
+    render_workflow_overlay_payload,
+)
 
 
 NEXT_ROUND_HANDOFF_PATH = "docs/context/next_round_handoff_latest.md"
@@ -313,7 +323,7 @@ def _parse_markdown_key_values(raw: str) -> dict[str, str]:
     return fields
 
 
-def _derive_startup_node(repo_root: Path) -> dict[str, Any]:
+def _derive_startup_node(repo_root: Path) -> WorkflowNode:
     """Derive startup node from startup_intake_latest.json."""
     intake_path = repo_root / "docs" / "context" / "startup_intake_latest.json"
     intake = _load_optional_json(intake_path)
@@ -336,26 +346,26 @@ def _derive_startup_node(repo_root: Path) -> dict[str, Any]:
             status_label = "BLOCKED"
             blockers.append(f"Startup gate blocked: {gate_status}")
 
-    return {
-        "node_id": "Startup",
-        "title": "Startup Intake",
-        "status_color": status_color,
-        "progress_state": status_label,
-        "owner_role": "PM",
-        "blockers": blockers,
-        "source_of_truth": str(intake_path.relative_to(repo_root)),
-        "updated_at_utc": intake.get("generated_at_utc") if intake else None,
-        "advisory_roles": ["Worker", "Auditor"],
-        "complexity_band": "LOW",
-        "rigor_mode": "STANDARD",
-        "capability_band": "agent_plus_review",
-        "supporting_artifacts": ["docs/context/init_execution_card_latest.md"],
-        "key_signals": [f"startup_gate.status={startup_status}"],
-        "next_action": "Proceed to execution" if startup_status == "READY_TO_EXECUTE" else "Fix startup blockers",
-    }
+    return WorkflowNode(
+        node_id="Startup",
+        title="Startup Intake",
+        status_color=status_color,
+        progress_state=status_label,
+        owner_role="PM",
+        blockers=blockers,
+        source_of_truth=str(intake_path.relative_to(repo_root)),
+        updated_at_utc=intake.get("generated_at_utc") if intake else None,
+        advisory_roles=["Worker", "Auditor"],
+        complexity_band="LOW",
+        rigor_mode="STANDARD",
+        capability_band="agent_plus_review",
+        supporting_artifacts=["docs/context/init_execution_card_latest.md"],
+        key_signals=[f"startup_gate.status={startup_status}"],
+        next_action="Proceed to execution" if startup_status == "READY_TO_EXECUTE" else "Fix startup blockers",
+    )
 
 
-def _derive_execution_node(repo_root: Path) -> dict[str, Any]:
+def _derive_execution_node(repo_root: Path) -> WorkflowNode:
     """Derive execution node from loop_cycle_summary_latest.json."""
     cycle_path = repo_root / "docs" / "context" / "loop_cycle_summary_latest.json"
     cycle = _load_optional_json(cycle_path)
@@ -380,26 +390,26 @@ def _derive_execution_node(repo_root: Path) -> dict[str, Any]:
             status_label = "BLOCKED"
             blockers.append(f"Execution {final_result.lower()}")
 
-    return {
-        "node_id": "Execution",
-        "title": "Loop Execution",
-        "status_color": status_color,
-        "progress_state": status_label,
-        "owner_role": "Worker",
-        "blockers": blockers,
-        "source_of_truth": str(cycle_path.relative_to(repo_root)),
-        "updated_at_utc": cycle.get("generated_at_utc") if cycle else None,
-        "advisory_roles": ["PM", "QA"],
-        "complexity_band": "HIGH",
-        "rigor_mode": "STANDARD",
-        "capability_band": "agent_ok",
-        "supporting_artifacts": ["docs/context/round_contract_latest.md"],
-        "key_signals": [f"final_result={final_result}"],
-        "next_action": "Proceed to validation" if final_result == "PASS" else "Review execution issues",
-    }
+    return WorkflowNode(
+        node_id="Execution",
+        title="Loop Execution",
+        status_color=status_color,
+        progress_state=status_label,
+        owner_role="Worker",
+        blockers=blockers,
+        source_of_truth=str(cycle_path.relative_to(repo_root)),
+        updated_at_utc=cycle.get("generated_at_utc") if cycle else None,
+        advisory_roles=["PM", "QA"],
+        complexity_band="HIGH",
+        rigor_mode="STANDARD",
+        capability_band="agent_ok",
+        supporting_artifacts=["docs/context/round_contract_latest.md"],
+        key_signals=[f"final_result={final_result}"],
+        next_action="Proceed to validation" if final_result == "PASS" else "Review execution issues",
+    )
 
 
-def _derive_validation_closure_node(repo_root: Path) -> dict[str, Any]:
+def _derive_validation_closure_node(repo_root: Path) -> WorkflowNode:
     """Derive validation/closure node from loop_closure_status_latest.json."""
     closure_path = repo_root / "docs" / "context" / "loop_closure_status_latest.json"
     closure = _load_optional_json(closure_path)
@@ -429,47 +439,47 @@ def _derive_validation_closure_node(repo_root: Path) -> dict[str, Any]:
             status_label = "BLOCKED"
             blockers.append("Input or infrastructure error")
 
-    return {
-        "node_id": "ValidationClosure",
-        "title": "Validation & Closure",
-        "status_color": status_color,
-        "progress_state": status_label,
-        "owner_role": "Auditor",
-        "blockers": blockers,
-        "source_of_truth": str(closure_path.relative_to(repo_root)),
-        "updated_at_utc": closure.get("generated_at_utc") if closure else None,
-        "advisory_roles": ["PM", "CEO"],
-        "complexity_band": "MEDIUM",
-        "rigor_mode": "HIGH_RIGOR",
-        "capability_band": "agent_plus_review",
-        "supporting_artifacts": ["docs/context/loop_cycle_summary_latest.json"],
-        "key_signals": [f"closure_result={result}"],
-        "next_action": "Escalate to PM/CEO" if result == "READY_TO_ESCALATE" else "Fix validation issues",
-    }
+    return WorkflowNode(
+        node_id="ValidationClosure",
+        title="Validation & Closure",
+        status_color=status_color,
+        progress_state=status_label,
+        owner_role="Auditor",
+        blockers=blockers,
+        source_of_truth=str(closure_path.relative_to(repo_root)),
+        updated_at_utc=closure.get("generated_at_utc") if closure else None,
+        advisory_roles=["PM", "CEO"],
+        complexity_band="MEDIUM",
+        rigor_mode="HIGH_RIGOR",
+        capability_band="agent_plus_review",
+        supporting_artifacts=["docs/context/loop_cycle_summary_latest.json"],
+        key_signals=[f"closure_result={result}"],
+        next_action="Escalate to PM/CEO" if result == "READY_TO_ESCALATE" else "Fix validation issues",
+    )
 
 
-def _derive_round_contract_node(repo_root: Path) -> dict[str, Any]:
+def _derive_round_contract_node(repo_root: Path) -> WorkflowNode:
     """Derive RoundContract node status from round contract artifact."""
     contract_path = repo_root / "docs" / "context" / "round_contract_latest.md"
 
     if not contract_path.exists():
-        return {
-            "node_id": "RoundContract",
-            "title": "Round Contract",
-            "status_color": "gray",
-            "progress_state": "NOT_STARTED",
-            "owner_role": "Worker",
-            "advisory_roles": ["Auditor", "PM"],
-            "complexity_band": "MEDIUM",
-            "rigor_mode": "STANDARD",
-            "capability_band": "agent_ok",
-            "blockers": ["Round contract not found"],
-            "source_of_truth": "docs/context/round_contract_latest.md",
-            "supporting_artifacts": [],
-            "key_signals": [],
-            "next_action": "Create round contract",
-            "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
+        return WorkflowNode(
+            node_id="RoundContract",
+            title="Round Contract",
+            status_color="gray",
+            progress_state="NOT_STARTED",
+            owner_role="Worker",
+            advisory_roles=["Auditor", "PM"],
+            complexity_band="MEDIUM",
+            rigor_mode="STANDARD",
+            capability_band="agent_ok",
+            blockers=["Round contract not found"],
+            source_of_truth="docs/context/round_contract_latest.md",
+            supporting_artifacts=[],
+            key_signals=[],
+            next_action="Create round contract",
+            updated_at_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
 
     # Parse contract fields
     try:
@@ -561,44 +571,44 @@ def _derive_round_contract_node(repo_root: Path) -> dict[str, Any]:
 
         key_signals = [f"{k}={v}" for k, v in fields.items() if k in required_fields]
 
-        return {
-            "node_id": "RoundContract",
-            "title": "Round Contract",
-            "status_color": status_color,
-            "progress_state": status_label,
-            "owner_role": "Worker",
-            "advisory_roles": ["Auditor", "PM"],
-            "complexity_band": "MEDIUM",
-            "rigor_mode": "STANDARD",
-            "capability_band": "agent_ok",
-            "blockers": blockers,
-            "source_of_truth": "docs/context/round_contract_latest.md",
-            "supporting_artifacts": ["docs/round_contract_template.md"],
-            "key_signals": key_signals,
-            "next_action": "Fix missing fields" if blockers else "Proceed with execution",
-            "updated_at_utc": updated_utc
-        }
+        return WorkflowNode(
+            node_id="RoundContract",
+            title="Round Contract",
+            status_color=status_color,
+            progress_state=status_label,
+            owner_role="Worker",
+            advisory_roles=["Auditor", "PM"],
+            complexity_band="MEDIUM",
+            rigor_mode="STANDARD",
+            capability_band="agent_ok",
+            blockers=blockers,
+            source_of_truth="docs/context/round_contract_latest.md",
+            supporting_artifacts=["docs/round_contract_template.md"],
+            key_signals=key_signals,
+            next_action="Fix missing fields" if blockers else "Proceed with execution",
+            updated_at_utc=updated_utc,
+        )
     except Exception as exc:
-        return {
-            "node_id": "RoundContract",
-            "title": "Round Contract",
-            "status_color": "red",
-            "progress_state": "ERROR",
-            "owner_role": "Worker",
-            "advisory_roles": ["Auditor", "PM"],
-            "complexity_band": "MEDIUM",
-            "rigor_mode": "STANDARD",
-            "capability_band": "agent_ok",
-            "blockers": [f"Failed to parse contract: {exc}"],
-            "source_of_truth": "docs/context/round_contract_latest.md",
-            "supporting_artifacts": [],
-            "key_signals": [],
-            "next_action": "Fix contract parsing error",
-            "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
+        return WorkflowNode(
+            node_id="RoundContract",
+            title="Round Contract",
+            status_color="red",
+            progress_state="ERROR",
+            owner_role="Worker",
+            advisory_roles=["Auditor", "PM"],
+            complexity_band="MEDIUM",
+            rigor_mode="STANDARD",
+            capability_band="agent_ok",
+            blockers=[f"Failed to parse contract: {exc}"],
+            source_of_truth="docs/context/round_contract_latest.md",
+            supporting_artifacts=[],
+            key_signals=[],
+            next_action="Fix contract parsing error",
+            updated_at_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
 
 
-def _derive_memory_artifacts_node(repo_root: Path) -> dict[str, Any]:
+def _derive_memory_artifacts_node(repo_root: Path) -> WorkflowNode:
     """Derive MemoryArtifacts node status from memory and advisory artifacts."""
     context_dir = repo_root / "docs" / "context"
 
@@ -648,47 +658,47 @@ def _derive_memory_artifacts_node(repo_root: Path) -> dict[str, Any]:
     source_of_truth = f"docs/context/{present[0]}" if present else "docs/context/exec_memory_packet_latest.json"
     supporting = [f"docs/context/{name}" for name in present[1:]] if len(present) > 1 else []
 
-    return {
-        "node_id": "MemoryArtifacts",
-        "title": "Memory & Advisory Artifacts",
-        "status_color": status_color,
-        "progress_state": status_label,
-        "owner_role": "Worker",
-        "advisory_roles": ["PM", "CEO"],
-        "complexity_band": "LOW",
-        "rigor_mode": "STANDARD",
-        "capability_band": "agent_ok",
-        "blockers": blockers,
-        "source_of_truth": source_of_truth,
-        "supporting_artifacts": supporting,
-        "key_signals": [f"Present: {len(present)}/{len(artifacts_to_check)}"],
-        "next_action": "Refresh stale artifacts" if stale else "Continue",
-        "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    }
+    return WorkflowNode(
+        node_id="MemoryArtifacts",
+        title="Memory & Advisory Artifacts",
+        status_color=status_color,
+        progress_state=status_label,
+        owner_role="Worker",
+        advisory_roles=["PM", "CEO"],
+        complexity_band="LOW",
+        rigor_mode="STANDARD",
+        capability_band="agent_ok",
+        blockers=blockers,
+        source_of_truth=source_of_truth,
+        supporting_artifacts=supporting,
+        key_signals=[f"Present: {len(present)}/{len(artifacts_to_check)}"],
+        next_action="Refresh stale artifacts" if stale else "Continue",
+        updated_at_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )
 
 
-def _derive_measurement_node(repo_root: Path) -> dict[str, Any]:
+def _derive_measurement_node(repo_root: Path) -> WorkflowNode:
     """Derive Measurement node status from phase_c_measurement artifacts."""
     measurement_dir = repo_root / "phase_c_measurement"
 
     if not measurement_dir.exists():
-        return {
-            "node_id": "Measurement",
-            "title": "Phase C Measurement",
-            "status_color": "gray",
-            "progress_state": "NOT_STARTED",
-            "owner_role": "PM",
-            "advisory_roles": ["CEO", "Worker"],
-            "complexity_band": "LOW",
-            "rigor_mode": "STANDARD",
-            "capability_band": "agent_ok",
-            "blockers": ["Measurement directory not found"],
-            "source_of_truth": "phase_c_measurement/live_rounds.csv",
-            "supporting_artifacts": [],
-            "key_signals": [],
-            "next_action": "Initialize measurement collection",
-            "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
+        return WorkflowNode(
+            node_id="Measurement",
+            title="Phase C Measurement",
+            status_color="gray",
+            progress_state="NOT_STARTED",
+            owner_role="PM",
+            advisory_roles=["CEO", "Worker"],
+            complexity_band="LOW",
+            rigor_mode="STANDARD",
+            capability_band="agent_ok",
+            blockers=["Measurement directory not found"],
+            source_of_truth="phase_c_measurement/live_rounds.csv",
+            supporting_artifacts=[],
+            key_signals=[],
+            next_action="Initialize measurement collection",
+            updated_at_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
 
     # Parse live_rounds.csv
     csv_path = measurement_dir / "live_rounds.csv"
@@ -742,26 +752,26 @@ def _derive_measurement_node(repo_root: Path) -> dict[str, Any]:
         status_label = "ACTIVE"
         blockers = []
 
-    return {
-        "node_id": "Measurement",
-        "title": "Phase C Measurement",
-        "status_color": status_color,
-        "progress_state": status_label,
-        "owner_role": "PM",
-        "advisory_roles": ["CEO", "Worker"],
-        "complexity_band": "LOW",
-        "rigor_mode": "STANDARD",
-        "capability_band": "agent_ok",
-        "blockers": blockers,
-        "source_of_truth": "phase_c_measurement/live_rounds.csv",
-        "supporting_artifacts": ["phase_c_measurement/README.md"],
-        "key_signals": [f"Progress: {round_count}/{target_threshold} ({progress_pct:.1f}%)"],
-        "next_action": "Continue collection" if progress_pct < 100 else "Review results",
-        "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    }
+    return WorkflowNode(
+        node_id="Measurement",
+        title="Phase C Measurement",
+        status_color=status_color,
+        progress_state=status_label,
+        owner_role="PM",
+        advisory_roles=["CEO", "Worker"],
+        complexity_band="LOW",
+        rigor_mode="STANDARD",
+        capability_band="agent_ok",
+        blockers=blockers,
+        source_of_truth="phase_c_measurement/live_rounds.csv",
+        supporting_artifacts=["phase_c_measurement/README.md"],
+        key_signals=[f"Progress: {round_count}/{target_threshold} ({progress_pct:.1f}%)"],
+        next_action="Continue collection" if progress_pct < 100 else "Review results",
+        updated_at_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )
 
 
-def _derive_static_docs_nodes(repo_root: Path) -> list[dict[str, Any]]:
+def _derive_static_docs_nodes(repo_root: Path) -> list[WorkflowNode]:
     """Derive static documentation nodes."""
     nodes = []
 
@@ -772,81 +782,87 @@ def _derive_static_docs_nodes(repo_root: Path) -> list[dict[str, Any]]:
     public_entry_label = "READY" if readme_path.exists() else "BLOCKED"
     public_entry_blockers = [] if readme_path.exists() else ["README.md missing"]
 
-    nodes.append({
-        "node_id": "PublicEntry",
-        "title": "Public Entry Points",
-        "status_color": public_entry_status,
-        "progress_state": public_entry_label,
-        "owner_role": "PM",
-        "blockers": public_entry_blockers,
-        "source_of_truth": "README.md",
-        "updated_at_utc": None,
-        "advisory_roles": ["CEO"],
-        "complexity_band": "LOW",
-        "rigor_mode": "STANDARD",
-        "capability_band": "agent_plus_review",
-        "supporting_artifacts": ["CONTRIBUTING.md"],
-        "key_signals": [f"readme_exists={readme_path.exists()}"],
-        "next_action": "Maintain documentation" if readme_path.exists() else "Create README",
-    })
+    nodes.append(
+        WorkflowNode(
+            node_id="PublicEntry",
+            title="Public Entry Points",
+            status_color=public_entry_status,
+            progress_state=public_entry_label,
+            owner_role="PM",
+            blockers=public_entry_blockers,
+            source_of_truth="README.md",
+            updated_at_utc=None,
+            advisory_roles=["CEO"],
+            complexity_band="LOW",
+            rigor_mode="STANDARD",
+            capability_band="agent_plus_review",
+            supporting_artifacts=["CONTRIBUTING.md"],
+            key_signals=[f"readme_exists={readme_path.exists()}"],
+            next_action="Maintain documentation" if readme_path.exists() else "Create README",
+        )
+    )
 
     # DocsSpine node
-    nodes.append({
-        "node_id": "DocsSpine",
-        "title": "Documentation Spine",
-        "status_color": "green",
-        "progress_state": "READY",
-        "owner_role": "PM",
-        "blockers": [],
-        "source_of_truth": "docs/loop_operating_contract.md",
-        "updated_at_utc": None,
-        "advisory_roles": ["CEO", "Worker"],
-        "complexity_band": "MEDIUM",
-        "rigor_mode": "HIGH_RIGOR",
-        "capability_band": "human_required",
-        "supporting_artifacts": ["docs/round_contract_template.md"],
-        "key_signals": ["docs_spine=PRESENT"],
-        "next_action": "Keep docs current",
-    })
+    nodes.append(
+        WorkflowNode(
+            node_id="DocsSpine",
+            title="Documentation Spine",
+            status_color="green",
+            progress_state="READY",
+            owner_role="PM",
+            blockers=[],
+            source_of_truth="docs/loop_operating_contract.md",
+            updated_at_utc=None,
+            advisory_roles=["CEO", "Worker"],
+            complexity_band="MEDIUM",
+            rigor_mode="HIGH_RIGOR",
+            capability_band="human_required",
+            supporting_artifacts=["docs/round_contract_template.md"],
+            key_signals=["docs_spine=PRESENT"],
+            next_action="Keep docs current",
+        )
+    )
 
     # Authority node
-    nodes.append({
-        "node_id": "Authority",
-        "title": "Authority & Policy",
-        "status_color": "green",
-        "progress_state": "READY",
-        "owner_role": "PM",
-        "blockers": [],
-        "source_of_truth": "docs/decision_authority_matrix.md",
-        "updated_at_utc": None,
-        "advisory_roles": ["CEO", "Auditor"],
-        "complexity_band": "HIGH",
-        "rigor_mode": "HIGH_RIGOR",
-        "capability_band": "human_required",
-        "supporting_artifacts": ["docs/expert_invocation_policy.md"],
-        "key_signals": ["authority_docs=PRESENT"],
-        "next_action": "Review policy as needed",
-    })
+    nodes.append(
+        WorkflowNode(
+            node_id="Authority",
+            title="Authority & Policy",
+            status_color="green",
+            progress_state="READY",
+            owner_role="PM",
+            blockers=[],
+            source_of_truth="docs/decision_authority_matrix.md",
+            updated_at_utc=None,
+            advisory_roles=["CEO", "Auditor"],
+            complexity_band="HIGH",
+            rigor_mode="HIGH_RIGOR",
+            capability_band="human_required",
+            supporting_artifacts=["docs/expert_invocation_policy.md"],
+            key_signals=["authority_docs=PRESENT"],
+            next_action="Review policy as needed",
+        )
+    )
 
     return nodes
 
 
-def _compute_overall_summary(nodes: list[dict[str, Any]]) -> str:
+def _compute_overall_summary(nodes: list[WorkflowNode]) -> str:
     """Compute human-readable overall summary from node statuses."""
-    blocked_nodes = [n for n in nodes if n["progress_state"] == "BLOCKED"]
+    blocked_nodes = [node for node in nodes if node.progress_state == "BLOCKED"]
     if not blocked_nodes:
         return "All nodes ready"
-    node_names = ", ".join(n["title"] for n in blocked_nodes)
+    node_names = ", ".join(node.title for node in blocked_nodes)
     return f"Blocked nodes: {node_names}"
 
 
-def _collect_artifact_inputs(repo_root: Path, nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _collect_artifact_inputs(repo_root: Path, nodes: list[WorkflowNode]) -> list[ArtifactInput]:
     """Collect artifact provenance from all nodes."""
-    artifacts = []
-    seen = set()
+    artifacts: list[ArtifactInput] = []
+    seen: set[str] = set()
     for node in nodes:
         # Collect from source_of_truth
-        source = node.get("source_of_truth")
+        source = node.source_of_truth
         if source and source not in seen:
             seen.add(source)
             full_path = repo_root / source
@@ -855,12 +871,14 @@ def _collect_artifact_inputs(repo_root: Path, nodes: list[dict[str, Any]]) -> li
                 updated_utc = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             except (OSError, ValueError):
                 updated_utc = "unknown"
-            artifacts.append({
-                "path": source,
-                "updated_at_utc": updated_utc
-            })
+            artifacts.append(
+                ArtifactInput(
+                    path=source,
+                    updated_at_utc=updated_utc,
+                )
+            )
         # Collect from supporting_artifacts
-        for path_str in node.get("supporting_artifacts", []):
+        for path_str in node.supporting_artifacts:
             if path_str in seen:
                 continue
             seen.add(path_str)
@@ -870,14 +888,16 @@ def _collect_artifact_inputs(repo_root: Path, nodes: list[dict[str, Any]]) -> li
                 updated_utc = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             except (OSError, ValueError):
                 updated_utc = "unknown"
-            artifacts.append({
-                "path": path_str,
-                "updated_at_utc": updated_utc
-            })
+            artifacts.append(
+                ArtifactInput(
+                    path=path_str,
+                    updated_at_utc=updated_utc,
+                )
+            )
     return artifacts
 
 
-def _build_role_views(nodes: list[dict[str, Any]]) -> dict[str, Any]:
+def _build_role_views(nodes: list[WorkflowNode]) -> dict[str, list[str]]:
     """Group nodes by owner_role."""
     role_views: dict[str, list[str]] = {
         "PM": [],
@@ -888,8 +908,8 @@ def _build_role_views(nodes: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
     for node in nodes:
-        role = node.get("owner_role")
-        node_id = node.get("node_id")
+        role = node.owner_role
+        node_id = node.node_id
         if role in role_views and node_id:
             role_views[role].append(node_id)
 
@@ -917,7 +937,9 @@ def _derive_next_action_fallback(node: dict[str, Any]) -> str:
     return "Status unclear"
 
 
-def _render_workflow_status_markdown(payload: dict[str, Any]) -> str:
+def _render_workflow_status_markdown(
+    payload: dict[str, Any] | WorkflowStatusOverlayPayload,
+) -> str:
     """Render workflow status payload as human-readable Markdown.
 
     Args:
@@ -926,17 +948,18 @@ def _render_workflow_status_markdown(payload: dict[str, Any]) -> str:
     Returns:
         Formatted Markdown string with trailing newline
     """
+    payload_dict = coerce_workflow_overlay_payload_dict(payload)
     lines = []
 
     # Header section
     lines.append("# Workflow Status Overlay")
     lines.append("")
-    lines.append(f"**Generated:** {payload.get('generated_at_utc', 'N/A')}")
+    lines.append(f"**Generated:** {payload_dict.get('generated_at_utc', 'N/A')}")
 
-    overall_status = payload.get("overall_status", "gray")
+    overall_status = payload_dict.get("overall_status", "gray")
     status_emoji = STATUS_EMOJI.get(overall_status, "⚪")
     lines.append(f"**Overall Status:** {overall_status} {status_emoji}")
-    lines.append(f"**Summary:** {payload.get('overall_summary', 'N/A')}")
+    lines.append(f"**Summary:** {payload_dict.get('overall_summary', 'N/A')}")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -952,7 +975,7 @@ def _render_workflow_status_markdown(payload: dict[str, Any]) -> str:
     # Railway section
     lines.append("## Workflow Railway")
     lines.append("")
-    nodes = payload.get("nodes", [])
+    nodes = payload_dict.get("nodes", [])
     railway_parts = []
     for node in nodes:
         node_title = node.get("title", node.get("node_id", "Unknown"))
@@ -1003,7 +1026,7 @@ def _render_workflow_status_markdown(payload: dict[str, Any]) -> str:
     # Role views section
     lines.append("## Role Views")
     lines.append("")
-    role_views = payload.get("role_views", {})
+    role_views = payload_dict.get("role_views", {})
     for role in ["PM", "CEO", "Worker", "Auditor", "QA"]:
         node_ids = role_views.get(role, [])
         if node_ids:
@@ -1017,11 +1040,11 @@ def _render_workflow_status_markdown(payload: dict[str, Any]) -> str:
     # Metadata section
     lines.append("## Metadata")
     lines.append("")
-    metadata = payload.get("metadata", {})
+    metadata = payload_dict.get("metadata", {})
     lines.append(f"- **Generator:** {metadata.get('generator', 'N/A')}")
     lines.append(f"- **Advisory Only:** {metadata.get('advisory_only', True)}")
-    lines.append(f"- **Schema Version:** {payload.get('schema_version', 'N/A')}")
-    lines.append(f"- **Source Policy:** {payload.get('source_of_truth_policy', 'N/A')}")
+    lines.append(f"- **Schema Version:** {payload_dict.get('schema_version', 'N/A')}")
+    lines.append(f"- **Source Policy:** {payload_dict.get('source_of_truth_policy', 'N/A')}")
     lines.append("")
 
     return "\n".join(lines)
@@ -1049,8 +1072,8 @@ def _assemble_workflow_status_payload(repo_root: Path, now_utc: datetime) -> dic
     overall_status = "green"
 
     for node in nodes:
-        if node["node_id"] in critical_node_ids:
-            color = node["status_color"]
+        if node.node_id in critical_node_ids:
+            color = node.status_color
             if color == "red":
                 overall_status = "red"
                 break
@@ -1059,23 +1082,23 @@ def _assemble_workflow_status_payload(repo_root: Path, now_utc: datetime) -> dic
             elif color == "blue" and overall_status not in ("red", "yellow"):
                 overall_status = "blue"
 
-    # Assemble payload
-    return {
-        "schema_version": "1.0.0",
-        "generated_at_utc": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "repo_root": str(repo_root),
-        "source_of_truth_policy": "docs/loop_operating_contract.md#source-of-truth-hierarchy",
-        "overall_status": overall_status,
-        "overall_summary": _compute_overall_summary(nodes),
-        "artifact_inputs": _collect_artifact_inputs(repo_root, nodes),
-        "nodes": nodes,
-        "role_views": role_views,
-        "metadata": {
-            "generator": "print_takeover_entrypoint.py",
-            "advisory_only": True,
-            "description": "Workflow status overlay derived from existing artifacts",
-        },
-    }
+    typed_payload = WorkflowStatusOverlay(
+        schema_version="1.0.0",
+        generated_at_utc=now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        repo_root=str(repo_root),
+        source_of_truth_policy="docs/loop_operating_contract.md#source-of-truth-hierarchy",
+        overall_status=overall_status,
+        overall_summary=_compute_overall_summary(nodes),
+        artifact_inputs=_collect_artifact_inputs(repo_root, nodes),
+        nodes=nodes,
+        role_views=role_views,
+        metadata=WorkflowOverlayMetadata(
+            generator="print_takeover_entrypoint.py",
+            advisory_only=True,
+            description="Workflow status overlay derived from existing artifacts",
+        ),
+    )
+    return render_workflow_overlay_payload(typed_payload)
 
 
 def _print_optional_advisory(repo_root: Path, label: str, relative_path: str) -> None:

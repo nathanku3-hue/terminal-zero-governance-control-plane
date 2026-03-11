@@ -59,6 +59,7 @@ The workflow status overlay explicitly does NOT:
   "overall_summary": "Execution HOLD, ValidationClosure NOT_READY",
   "nodes": [...],
   "role_views": {...},
+  "metadata": {...},
   "artifact_inputs": [...]
 }
 ```
@@ -69,15 +70,15 @@ Each node in the `nodes` array has:
 
 ```json
 {
-  "node_id": "startup",
-  "title": "Startup Gate",
+  "node_id": "Startup",
+  "title": "Startup Intake",
   "owner_role": "PM",
   "advisory_roles": ["Worker", "Auditor"],
   "status_color": "green",
   "progress_state": "READY",
   "complexity_band": "LOW",
   "rigor_mode": "STANDARD",
-  "capability_band": "agent_ok",
+  "capability_band": "agent_plus_review",
   "source_of_truth": "docs/context/startup_intake_latest.json",
   "supporting_artifacts": [
     "docs/context/init_execution_card_latest.md"
@@ -99,10 +100,11 @@ Each node in the `nodes` array has:
 | `generated_at_utc` | string | ISO 8601 | Generation timestamp |
 | `repo_root` | string | path | Repository root directory |
 | `source_of_truth_policy` | string | reference | Link to authority hierarchy doc |
-| `overall_status` | string | green/yellow/red/gray | Worst status across critical nodes |
+| `overall_status` | string | green/yellow/red/gray/blue | Worst status across critical nodes |
 | `overall_summary` | string | text | Human-readable summary |
 | `nodes` | array | node objects | All workflow nodes |
 | `role_views` | object | role → nodes | Nodes grouped by owner_role |
+| `metadata` | object | generator metadata | Overlay generation context and advisory marker |
 | `artifact_inputs` | array | provenance objects | Input artifacts with timestamps |
 
 ### Node Field Definitions
@@ -114,7 +116,7 @@ Each node in the `nodes` array has:
 | `owner_role` | string | PM/CEO/Worker/Auditor/QA | Primary decision owner |
 | `advisory_roles` | array | role strings | Supporting/advisory roles |
 | `status_color` | string | green/yellow/red/gray/blue | Visual status indicator |
-| `progress_state` | string | READY/IN_PROGRESS/BLOCKED/NOT_STARTED | Execution state |
+| `progress_state` | string | READY/IN_PROGRESS/BLOCKED/NOT_STARTED/ACTIVE/COMPLETE/ERROR | Execution state |
 | `complexity_band` | string | LOW/MEDIUM/HIGH | Estimated complexity |
 | `rigor_mode` | string | STANDARD/FAST/HIGH_RIGOR | Quality/speed tradeoff |
 | `capability_band` | string | agent_ok/agent_plus_review/human_required | Automation boundary |
@@ -123,7 +125,7 @@ Each node in the `nodes` array has:
 | `key_signals` | array | signal strings | Key status indicators |
 | `blockers` | array | blocker strings | Current blocking issues |
 | `next_action` | string | text | Recommended next step |
-| `updated_at_utc` | string | ISO 8601 | Last update timestamp |
+| `updated_at_utc` | string or null | ISO 8601 or null | Last update timestamp when source metadata is available |
 
 ---
 
@@ -134,20 +136,22 @@ Each node in the `nodes` array has:
 **Purpose:** Public-facing documentation and entry points
 
 **Owner Role:** PM
-**Advisory Roles:** Worker, CEO
+**Advisory Roles:** CEO
 
 **Source of Truth:**
 - `README.md`
-- `CONTRIBUTING.md`
-- `SECURITY.md`
-- `SUPPORT.md`
 
 **Status Derivation:**
-- Green: All required docs present and recently updated
-- Yellow: Some docs stale (>90 days)
-- Gray: Missing required docs
+- Green: `README.md` exists
+- Yellow: `README.md` is missing
 
-**Capability Band:** `agent_ok` (docs can be updated by agents within guidelines)
+**Key Signals:**
+- `readme_exists=True/False`
+
+**Blockers:**
+- `README.md missing` when the primary public entrypoint is absent
+
+**Capability Band:** `agent_plus_review` (docs can be updated by agents, with PM review on public-facing entrypoints)
 
 ---
 
@@ -156,18 +160,20 @@ Each node in the `nodes` array has:
 **Purpose:** Governance documentation spine
 
 **Owner Role:** PM
-**Advisory Roles:** CEO, Auditor
+**Advisory Roles:** CEO, Worker
 
 **Source of Truth:**
 - `docs/loop_operating_contract.md`
-- `docs/round_contract_template.md`
-- `docs/decision_authority_matrix.md`
-- `docs/expert_invocation_policy.md`
+- `docs/round_contract_template.md` (supporting artifact in the current emitter)
 
 **Status Derivation:**
-- Green: All governance docs present and consistent
-- Yellow: Docs present but version mismatches detected
-- Red: Critical governance doc missing
+- Green: Current emitter reports the docs spine as present
+
+**Key Signals:**
+- `docs_spine=PRESENT`
+
+**Blockers:**
+- None in the current emitter path
 
 **Capability Band:** `human_required` (governance changes require PM/CEO approval)
 
@@ -186,17 +192,14 @@ Each node in the `nodes` array has:
 
 **Status Derivation:**
 - Green: `startup_gate.status=READY_TO_EXECUTE`
-- Yellow: startup artifact exists and `startup_gate.status!=READY_TO_EXECUTE`
-- Gray: Startup artifacts missing
+- Yellow: startup artifact exists and `startup_gate.status` is present but not `READY_TO_EXECUTE`
+- Gray: Startup artifacts missing, or startup artifact exists but `startup_gate.status` is empty/missing
 
 **Key Signals:**
 - `startup_gate.status`
-- `intuition_gate`
-- `intuition_gate_ack` (if HUMAN_REQUIRED)
 
 **Blockers:**
-- Missing required interrogation fields
-- Intuition gate not acknowledged when required
+- `Startup gate blocked: <STATUS>` when a startup artifact exists but is not ready
 
 **Capability Band:** `agent_plus_review` (agent can draft, PM reviews)
 
@@ -213,9 +216,8 @@ Each node in the `nodes` array has:
 - `docs/context/round_contract_latest.md`
 
 **Status Derivation:**
-- Green: Contract complete with all required fields
-- Yellow: Contract present but missing optional fields
-- Red: Contract missing required fields or Phase C fail-closed requirements violated
+- Green: Contract present with no fail-closed blockers
+- Red: Contract has one or more fail-closed blockers (including missing required fields or parse failure)
 - Gray: No contract found
 
 **Key Signals:**
@@ -229,6 +231,8 @@ Each node in the `nodes` array has:
 - Missing `DECISION_CLASS` or `RISK_TIER`
 - Invalid `EXECUTION_LANE` for scope
 - TDD contract incomplete
+- Fail-closed QA/Socratic triggers not satisfied
+- Contract parsing failure
 
 **Capability Band:** `agent_ok` (worker owns contract)
 
@@ -243,13 +247,16 @@ Each node in the `nodes` array has:
 
 **Source of Truth:**
 - `docs/decision_authority_matrix.md`
-- `docs/expert_invocation_policy.md`
-- `docs/disagreement_taxonomy.md`
+- `docs/expert_invocation_policy.md` (supporting artifact in the current emitter)
 
 **Status Derivation:**
-- Green: Authority docs present and no active conflicts
-- Yellow: Authority docs present, minor conflicts logged
-- Red: Authority conflict unresolved or docs missing
+- Green: Current emitter reports the authority docs as present
+
+**Key Signals:**
+- `authority_docs=PRESENT`
+
+**Blockers:**
+- None in the current emitter path
 
 **Capability Band:** `human_required` (authority changes require CEO approval)
 
@@ -260,7 +267,7 @@ Each node in the `nodes` array has:
 **Purpose:** Loop cycle execution and results
 
 **Owner Role:** Worker
-**Advisory Roles:** Auditor, QA
+**Advisory Roles:** PM, QA
 
 **Source of Truth:**
 - `docs/context/loop_cycle_summary_latest.json`
@@ -273,14 +280,10 @@ Each node in the `nodes` array has:
 
 **Key Signals:**
 - `final_result`
-- `step_summary.pass_count`
-- `step_summary.fail_count`
-- `step_summary.hold_count`
 
 **Blockers:**
-- Failed steps in cycle
-- Dossier criteria not met
-- Closure validation failures
+- `Execution on hold` when `final_result=HOLD`
+- `Execution fail` or `Execution error` when `final_result` is terminal
 
 **Capability Band:** `agent_ok` (worker executes within contract)
 
@@ -327,20 +330,15 @@ Each node in the `nodes` array has:
 **Status Derivation:**
 - Green: `result=READY_TO_ESCALATE`
 - Yellow: `result=NOT_READY`
-- Red: `result=INPUT_OR_INFRA_ERROR`
+- Red: `result=INPUT_OR_INFRA_ERROR` or `result=ERROR`
 - Gray: No closure status found
 
 **Key Signals:**
 - `result`
-- `summary.pass_count`
-- `summary.fail_count`
-- Failed check names
 
 **Blockers:**
-- `go_signal_action_gate` not GO
-- `tdd_contract_gate` not PASS
-- `done_when_checks_gate` not PASS
-- Missing required artifacts
+- `Check failed: <name>` for each failed closure check when `result=NOT_READY`
+- `Input or infrastructure error` when the closure result is terminal
 
 **Capability Band:** `agent_plus_review` (auditor validates, PM/CEO escalate)
 
@@ -411,7 +409,7 @@ The `capability_band` field maps workflow nodes to automation boundaries based o
 ### Mapping Rules
 
 - **agent_ok**: Worker-owned nodes with clear contract boundaries (Execution, RoundContract, MemoryArtifacts, Measurement)
-- **agent_plus_review**: Nodes requiring validation before escalation (Startup, ValidationClosure)
+- **agent_plus_review**: Nodes requiring review before escalation or public-facing publication (PublicEntry, Startup, ValidationClosure)
 - **human_required**: Strategic/governance nodes requiring PM/CEO authority (DocsSpine, Authority, promotion decisions)
 
 ### Derivation from Existing Semantics
@@ -432,19 +430,22 @@ The capability band is derived from:
 ```bash
 python scripts/print_takeover_entrypoint.py \
   --repo-root . \
-  --workflow-status-json-out docs/context/workflow_status_latest.json
+  --workflow-status-json-out docs/context/workflow_status_latest.json \
+  --workflow-status-md-out docs/context/workflow_status_latest.md
 ```
 
 ### Default Behavior (No Flag)
 
-Without the `--workflow-status-json-out` flag, the script behaves exactly as before:
+Without the workflow status output flags, the script behaves exactly as before:
 - Prints closure result and advisory handoffs to stdout
 - Returns exit code based on closure result
-- No workflow status JSON is generated
+- No workflow status JSON or Markdown overlay is generated
 
 ### Output Location
 
-**Canonical location:** `docs/context/workflow_status_latest.json`
+**Canonical JSON location:** `docs/context/workflow_status_latest.json`
+
+**Optional Markdown companion:** `docs/context/workflow_status_latest.md`
 
 This follows the existing artifact convention where `docs/context/` contains all generated runtime state.
 
@@ -483,7 +484,7 @@ Consumers of the workflow status JSON should:
 
 ## 9. Roadmap
 
-### v0 (Current)
+### v0 (Baseline)
 
 - ✅ JSON-only overlay
 - ✅ 9 workflow nodes
@@ -492,11 +493,11 @@ Consumers of the workflow status JSON should:
 - ✅ Optional generation via flag
 - ✅ No control-plane changes
 
-### v1 (Future)
+### v1 (Current)
 
-- Add `docs/context/workflow_status_latest.md` (human-readable companion)
-- Markdown includes: summary, legend, railway/flow view, collapsible node sections
-- Update operator docs to reference both JSON and MD artifacts
+- ✅ `docs/context/workflow_status_latest.md` human-readable companion
+- ✅ Markdown summary, legend, railway view, node details, role views, and metadata sections
+- ✅ Operator docs updated to reference both JSON and MD artifacts
 
 ### v2 (Future)
 
@@ -528,23 +529,23 @@ Based on the current repository state with `go_signal_action_gate=FAIL` and `clo
   "overall_summary": "Execution HOLD, ValidationClosure NOT_READY (go_signal_action_gate FAIL)",
   "nodes": [
     {
-      "node_id": "startup",
+      "node_id": "Startup",
       "status_color": "green",
       "progress_state": "READY",
       "key_signals": ["startup_gate.status=READY_TO_EXECUTE"]
     },
     {
-      "node_id": "execution",
+      "node_id": "Execution",
       "status_color": "yellow",
       "progress_state": "BLOCKED",
       "key_signals": ["final_result=HOLD"],
       "blockers": ["Dossier criteria not met: c3_min_weeks, c4b_annotation_coverage"]
     },
     {
-      "node_id": "validation_closure",
+      "node_id": "ValidationClosure",
       "status_color": "yellow",
       "progress_state": "BLOCKED",
-      "key_signals": ["result=NOT_READY"],
+      "key_signals": ["closure_result=NOT_READY"],
       "blockers": ["go_signal_action_gate: Recommended action must be GO (actual=HOLD)"]
     }
   ]
