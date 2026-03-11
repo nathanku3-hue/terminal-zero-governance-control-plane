@@ -921,6 +921,259 @@ def test_run_loop_cycle_persists_next_round_handoff_artifacts(
     assert "## Board Decision Brief" in markdown
 
 
+def test_run_loop_cycle_delegates_advisory_publication_without_payload_shape_drift(
+    tmp_path: Path, monkeypatch
+) -> None:
+    ready_repo_root = tmp_path / "ready"
+    ready_context = ready_repo_root / "docs" / "context"
+    ready_scripts_dir = ready_repo_root / "scripts"
+    _prepare_scripts_dir(ready_scripts_dir, include_weekly_truth=True)
+    _write_text(ready_context / "ceo_weekly_summary_latest.md", "# Weekly Summary\n")
+    _write_text(ready_context / "phase_end_logs" / ".keep", "")
+
+    handoff_json = ready_context / "next_round_handoff_latest.json"
+    handoff_md = ready_context / "next_round_handoff_latest.md"
+    expert_request_json = ready_context / "expert_request_latest.json"
+    expert_request_md = ready_context / "expert_request_latest.md"
+    pm_ceo_research_brief_json = ready_context / "pm_ceo_research_brief_latest.json"
+    pm_ceo_research_brief_md = ready_context / "pm_ceo_research_brief_latest.md"
+    board_decision_brief_json = ready_context / "board_decision_brief_latest.json"
+    board_decision_brief_md = ready_context / "board_decision_brief_latest.md"
+    root_convenience = _repo_root_convenience_paths(ready_repo_root)
+
+    advisory_artifacts = {
+        "next_round_handoff": {
+            "json": handoff_json,
+            "md": handoff_md,
+            "status": "ACTION_REQUIRED",
+            "payload": {
+                "status": "ACTION_REQUIRED",
+                "recommended_intent": "delegate publication path",
+            },
+        },
+        "expert_request": {
+            "json": expert_request_json,
+            "md": expert_request_md,
+            "status": "ADVISORY",
+            "payload": {
+                "status": "ADVISORY",
+                "target_expert": "qa",
+            },
+        },
+        "pm_ceo_research_brief": {
+            "json": pm_ceo_research_brief_json,
+            "md": pm_ceo_research_brief_md,
+            "status": "ADVISORY",
+            "payload": {
+                "status": "ADVISORY",
+                "delegated_to": "principal",
+            },
+        },
+        "board_decision_brief": {
+            "json": board_decision_brief_json,
+            "md": board_decision_brief_md,
+            "status": "ADVISORY",
+            "payload": {
+                "status": "ADVISORY",
+                "decision_topic": "promotion readiness cutover",
+                "recommended_option": "hold escalation until dossier evidence is refreshed",
+            },
+        },
+    }
+    mirrored_paths = {
+        "next_round_handoff": root_convenience["next_round_handoff"],
+        "expert_request": root_convenience["expert_request"],
+        "pm_ceo_research_brief": root_convenience["pm_ceo_research_brief"],
+        "board_decision_brief": root_convenience["board_decision_brief"],
+        "takeover": root_convenience["takeover"],
+    }
+
+    persist_calls: list[dict[str, object]] = []
+    mirror_calls: list[dict[str, object]] = []
+
+    def _fake_persist_advisory_sections(
+        *, context_dir: Path, exec_memory_json: Path
+    ) -> dict[str, dict[str, object] | None]:
+        persist_calls.append(
+            {
+                "context_dir": context_dir,
+                "exec_memory_json": exec_memory_json,
+            }
+        )
+        return advisory_artifacts
+
+    def _fake_mirror_repo_root_convenience(
+        *,
+        repo_root: Path,
+        context_dir: Path,
+        advisory_artifacts: dict[str, dict[str, object] | None],
+    ) -> dict[str, Path]:
+        mirror_calls.append(
+            {
+                "repo_root": repo_root,
+                "context_dir": context_dir,
+                "advisory_artifacts": advisory_artifacts,
+            }
+        )
+        return mirrored_paths
+
+    monkeypatch.setattr(
+        run_loop_cycle,
+        "persist_advisory_sections",
+        _fake_persist_advisory_sections,
+    )
+    monkeypatch.setattr(
+        run_loop_cycle,
+        "mirror_repo_root_convenience",
+        _fake_mirror_repo_root_convenience,
+    )
+
+    ready_calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(
+            ready_calls,
+            closure_exit_code=0,
+            next_round_handoff={
+                "status": "ACTION_REQUIRED",
+                "recommended_intent": "close remaining promotion blockers",
+            },
+        ),
+    )
+
+    ready_args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(ready_repo_root),
+            "--scripts-dir",
+            str(ready_scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    ready_exit_code, ready_payload, ready_markdown = run_loop_cycle.run_cycle(ready_args)
+
+    assert ready_exit_code == 0
+    assert ready_payload["artifacts"]["exec_memory_latest_promoted"] is True
+    assert persist_calls == [
+        {
+            "context_dir": ready_context,
+            "exec_memory_json": ready_context / "exec_memory_packet_latest.json",
+        }
+    ]
+    assert mirror_calls == [
+        {
+            "repo_root": ready_repo_root,
+            "context_dir": ready_context,
+            "advisory_artifacts": advisory_artifacts,
+        }
+    ]
+    assert ready_payload["next_round_handoff"] == {
+        "status": "ACTION_REQUIRED",
+        "json": str(handoff_json),
+        "md": str(handoff_md),
+    }
+    assert ready_payload["expert_request"] == {
+        "status": "ADVISORY",
+        "json": str(expert_request_json),
+        "md": str(expert_request_md),
+        "target_expert": "qa",
+    }
+    assert ready_payload["pm_ceo_research_brief"] == {
+        "status": "ADVISORY",
+        "json": str(pm_ceo_research_brief_json),
+        "md": str(pm_ceo_research_brief_md),
+        "delegated_to": "principal",
+    }
+    assert ready_payload["board_decision_brief"] == {
+        "status": "ADVISORY",
+        "json": str(board_decision_brief_json),
+        "md": str(board_decision_brief_md),
+        "decision_topic": "promotion readiness cutover",
+        "recommended_option": "hold escalation until dossier evidence is refreshed",
+    }
+    assert ready_payload["repo_root_convenience"] == {
+        "next_round_handoff": str(root_convenience["next_round_handoff"]),
+        "expert_request": str(root_convenience["expert_request"]),
+        "pm_ceo_research_brief": str(root_convenience["pm_ceo_research_brief"]),
+        "board_decision_brief": str(root_convenience["board_decision_brief"]),
+        "takeover": str(root_convenience["takeover"]),
+    }
+    assert ready_payload["artifacts"]["next_round_handoff_json"] == str(handoff_json)
+    assert ready_payload["artifacts"]["next_round_handoff_md"] == str(handoff_md)
+    assert ready_payload["artifacts"]["expert_request_json"] == str(expert_request_json)
+    assert ready_payload["artifacts"]["expert_request_md"] == str(expert_request_md)
+    assert ready_payload["artifacts"]["pm_ceo_research_brief_json"] == str(
+        pm_ceo_research_brief_json
+    )
+    assert ready_payload["artifacts"]["pm_ceo_research_brief_md"] == str(
+        pm_ceo_research_brief_md
+    )
+    assert ready_payload["artifacts"]["board_decision_brief_json"] == str(
+        board_decision_brief_json
+    )
+    assert ready_payload["artifacts"]["board_decision_brief_md"] == str(
+        board_decision_brief_md
+    )
+    assert "## Next Round Handoff" in ready_markdown
+    assert "## Expert Request" in ready_markdown
+    assert "## PM/CEO Research Brief" in ready_markdown
+    assert "## Board Decision Brief" in ready_markdown
+
+    blocked_repo_root = tmp_path / "blocked"
+    blocked_context = blocked_repo_root / "docs" / "context"
+    blocked_scripts_dir = blocked_repo_root / "scripts"
+    _prepare_scripts_dir(blocked_scripts_dir, include_weekly_truth=True)
+    _write_text(blocked_context / "ceo_weekly_summary_latest.md", "# Weekly Summary\n")
+    _write_text(blocked_context / "phase_end_logs" / ".keep", "")
+
+    blocked_calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(
+            blocked_calls,
+            closure_exit_code=0,
+            memory_packet_exit_code=2,
+            write_exec_memory_outputs=False,
+            memory_build_authoritative_written=False,
+        ),
+    )
+
+    blocked_args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(blocked_repo_root),
+            "--scripts-dir",
+            str(blocked_scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    blocked_exit_code, blocked_payload, _ = run_loop_cycle.run_cycle(blocked_args)
+
+    assert blocked_exit_code == 2
+    assert blocked_payload["final_result"] == "ERROR"
+    assert blocked_payload["artifacts"]["exec_memory_latest_promoted"] is False
+    assert blocked_payload["next_round_handoff"] is None
+    assert blocked_payload["expert_request"] is None
+    assert blocked_payload["pm_ceo_research_brief"] is None
+    assert blocked_payload["board_decision_brief"] is None
+    assert blocked_payload["repo_root_convenience"] == {}
+    assert persist_calls == [
+        {
+            "context_dir": ready_context,
+            "exec_memory_json": ready_context / "exec_memory_packet_latest.json",
+        }
+    ]
+    assert mirror_calls == [
+        {
+            "repo_root": ready_repo_root,
+            "context_dir": ready_context,
+            "advisory_artifacts": advisory_artifacts,
+        }
+    ]
+
+
 def test_run_loop_cycle_does_not_republish_stale_exec_memory_without_authoritative_build_status(
     tmp_path: Path, monkeypatch
 ) -> None:

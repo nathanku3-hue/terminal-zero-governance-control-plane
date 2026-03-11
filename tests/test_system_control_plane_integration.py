@@ -11,10 +11,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_ROOT = REPO_ROOT / "scripts"
 ACTUAL_SCRIPTS = (
     "startup_codex_helper.py",
+    "loop_cycle_artifacts.py",
     "run_loop_cycle.py",
     "validate_loop_closure.py",
     "run_fast_checks.py",
     "print_takeover_entrypoint.py",
+)
+OPTIONAL_SIBLING_SCRIPTS = (
+    "print_takeover_workflow_overlay_models.py",
 )
 REQUIRED_STARTUP_PATHS = (
     "docs/loop_operating_contract.md",
@@ -82,6 +86,10 @@ def _copy_actual_scripts(repo_root: Path) -> None:
     scripts_dir.mkdir(parents=True, exist_ok=True)
     for script_name in ACTUAL_SCRIPTS:
         shutil.copy2(SCRIPT_ROOT / script_name, scripts_dir / script_name)
+    for script_name in OPTIONAL_SIBLING_SCRIPTS:
+        source = SCRIPT_ROOT / script_name
+        if source.exists():
+            shutil.copy2(source, scripts_dir / script_name)
 
 
 def _write_exit_zero_stub(path: Path) -> None:
