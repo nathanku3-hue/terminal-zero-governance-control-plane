@@ -19,6 +19,7 @@ try:
         persist_advisory_sections,
     )
     from loop_cycle_context import build_loop_cycle_context
+    from loop_cycle_runtime import build_loop_cycle_runtime
 except ModuleNotFoundError:
     from scripts.loop_cycle_artifacts import (
         REPO_ROOT_CONVENIENCE_SPECS,
@@ -26,6 +27,7 @@ except ModuleNotFoundError:
         persist_advisory_sections,
     )
     from scripts.loop_cycle_context import build_loop_cycle_context
+    from scripts.loop_cycle_runtime import build_loop_cycle_runtime
 
 DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
 
@@ -144,52 +146,6 @@ def _skip_step(step_name: str, message: str) -> dict[str, Any]:
         "stderr": "",
         "message": message,
     }
-
-
-def _write_lessons_stubs(context_dir: Path, generated_at_utc: str) -> dict[str, Path]:
-    worker_path = context_dir / "lessons_worker_latest.md"
-    auditor_path = context_dir / "lessons_auditor_latest.md"
-
-    worker_stub = "\n".join(
-        [
-            "# Worker Lessons Stub",
-            "",
-            f"- GeneratedAtUTC: {generated_at_utc}",
-            "- Cycle: latest loop run",
-            "",
-            "## Prompt",
-            "1. What delivery decision had the highest impact this cycle?",
-            "2. What caused avoidable rework and how will you prevent it next cycle?",
-            "3. Which evidence artifact was missing or weak and needs automation?",
-            "4. What should be stopped, started, and continued next cycle?",
-            "",
-            "## Notes",
-            "- Fill with concrete examples and artifact paths.",
-            "",
-        ]
-    )
-    auditor_stub = "\n".join(
-        [
-            "# Auditor Lessons Stub",
-            "",
-            f"- GeneratedAtUTC: {generated_at_utc}",
-            "- Cycle: latest loop run",
-            "",
-            "## Prompt",
-            "1. Which gate caught the highest-risk issue this cycle?",
-            "2. Which check produced noise or false positives and why?",
-            "3. What additional guardrail or threshold change is needed?",
-            "4. Which unresolved risk needs explicit CEO/PM follow-up next cycle?",
-            "",
-            "## Notes",
-            "- Include rule IDs, artifact paths, and concrete follow-up actions.",
-            "",
-        ]
-    )
-
-    _atomic_write_text(worker_path, worker_stub)
-    _atomic_write_text(auditor_path, auditor_stub)
-    return {"worker": worker_path, "auditor": auditor_path}
 
 
 def _parse_iso8601_utc(value: str) -> datetime | None:
@@ -379,40 +335,31 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
-    generated_at = _utc_now()
-    generated_at_utc = _utc_iso(generated_at)
-
     # Build immutable context from args
     ctx = build_loop_cycle_context(args)
 
+    # Build mutable runtime state
+    runtime = build_loop_cycle_runtime(ctx)
+
     ctx.context_dir.mkdir(parents=True, exist_ok=True)
     ctx.logs_dir.mkdir(parents=True, exist_ok=True)
-    lessons_paths = _write_lessons_stubs(context_dir=ctx.context_dir, generated_at_utc=generated_at_utc)
-    steps: list[dict[str, Any]] = []
-    exec_memory_cycle_ready = False
-    temp_summary_path = ctx.context_dir / "loop_cycle_summary_current.json"
 
     def build_summary_payload(
         *,
         disagreement_sla: dict[str, Any],
-        next_round_handoff_artifacts: dict[str, Any] | None = None,
-        expert_request_artifacts: dict[str, Any] | None = None,
-        pm_ceo_research_brief_artifacts: dict[str, Any] | None = None,
-        board_decision_brief_artifacts: dict[str, Any] | None = None,
-        repo_root_convenience: dict[str, Path] | None = None,
     ) -> dict[str, Any]:
         status_counts = {
-            "pass_count": sum(1 for step in steps if step["status"] == "PASS"),
-            "hold_count": sum(1 for step in steps if step["status"] == "HOLD"),
-            "fail_count": sum(1 for step in steps if step["status"] == "FAIL"),
-            "error_count": sum(1 for step in steps if step["status"] == "ERROR"),
-            "skip_count": sum(1 for step in steps if step["status"] == "SKIP"),
-            "total_steps": len(steps),
+            "pass_count": sum(1 for step in runtime.steps if step["status"] == "PASS"),
+            "hold_count": sum(1 for step in runtime.steps if step["status"] == "HOLD"),
+            "fail_count": sum(1 for step in runtime.steps if step["status"] == "FAIL"),
+            "error_count": sum(1 for step in runtime.steps if step["status"] == "ERROR"),
+            "skip_count": sum(1 for step in runtime.steps if step["status"] == "SKIP"),
+            "total_steps": len(runtime.steps),
         }
 
         fail_exit_codes = [
             step["exit_code"]
-            for step in steps
+            for step in runtime.steps
             if step["status"] == "FAIL" and isinstance(step.get("exit_code"), int)
         ]
         has_error = status_counts["error_count"] > 0
@@ -432,11 +379,11 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             final_exit_code = 0
             final_result = "PASS"
 
-        repo_root_convenience = repo_root_convenience or {}
+        repo_root_convenience = runtime.repo_root_convenience or {}
 
         return {
             "schema_version": "1.0.0",
-            "generated_at_utc": generated_at_utc,
+            "generated_at_utc": runtime.generated_at_utc,
             "repo_root": str(ctx.repo_root),
             "context_dir": str(ctx.context_dir),
             "scripts_dir": str(ctx.script_dir),
@@ -444,11 +391,11 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "allow_hold": ctx.allow_hold,
             "freshness_hours": ctx.freshness_hours,
             "step_summary": status_counts,
-            "steps": steps,
+            "steps": runtime.steps,
             "disagreement_ledger_sla": disagreement_sla,
             "lessons": {
-                "worker": str(lessons_paths["worker"]),
-                "auditor": str(lessons_paths["auditor"]),
+                "worker": str(runtime.lessons_paths["worker"]),
+                "auditor": str(runtime.lessons_paths["auditor"]),
             },
             "artifacts": {
                 "weekly_report_json": str(ctx.weekly_report_json),
@@ -464,7 +411,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "exec_memory_current_json": str(ctx.exec_memory_current_json),
                 "exec_memory_current_md": str(ctx.exec_memory_current_md),
                 "exec_memory_build_status_json": str(ctx.exec_memory_build_status_json),
-                "exec_memory_latest_promoted": exec_memory_cycle_ready,
+                "exec_memory_latest_promoted": runtime.exec_memory_cycle_ready,
                 "next_round_handoff_json": str(ctx.next_round_handoff_json),
                 "next_round_handoff_md": str(ctx.next_round_handoff_md),
                 "expert_request_json": str(ctx.expert_request_json),
@@ -482,42 +429,42 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             },
             "next_round_handoff": (
                 {
-                    "status": next_round_handoff_artifacts["status"],
-                    "json": str(next_round_handoff_artifacts["json"]),
-                    "md": str(next_round_handoff_artifacts["md"]),
+                    "status": runtime.next_round_handoff_artifacts["status"],
+                    "json": str(runtime.next_round_handoff_artifacts["json"]),
+                    "md": str(runtime.next_round_handoff_artifacts["md"]),
                 }
-                if next_round_handoff_artifacts is not None
+                if runtime.next_round_handoff_artifacts is not None
                 else None
             ),
             "expert_request": (
                 {
-                    "status": expert_request_artifacts["status"],
-                    "json": str(expert_request_artifacts["json"]),
-                    "md": str(expert_request_artifacts["md"]),
-                    "target_expert": str(expert_request_artifacts["payload"].get("target_expert", "")).strip(),
+                    "status": runtime.expert_request_artifacts["status"],
+                    "json": str(runtime.expert_request_artifacts["json"]),
+                    "md": str(runtime.expert_request_artifacts["md"]),
+                    "target_expert": str(runtime.expert_request_artifacts["payload"].get("target_expert", "")).strip(),
                 }
-                if expert_request_artifacts is not None
+                if runtime.expert_request_artifacts is not None
                 else None
             ),
             "pm_ceo_research_brief": (
                 {
-                    "status": pm_ceo_research_brief_artifacts["status"],
-                    "json": str(pm_ceo_research_brief_artifacts["json"]),
-                    "md": str(pm_ceo_research_brief_artifacts["md"]),
-                    "delegated_to": str(pm_ceo_research_brief_artifacts["payload"].get("delegated_to", "")).strip(),
+                    "status": runtime.pm_ceo_research_brief_artifacts["status"],
+                    "json": str(runtime.pm_ceo_research_brief_artifacts["json"]),
+                    "md": str(runtime.pm_ceo_research_brief_artifacts["md"]),
+                    "delegated_to": str(runtime.pm_ceo_research_brief_artifacts["payload"].get("delegated_to", "")).strip(),
                 }
-                if pm_ceo_research_brief_artifacts is not None
+                if runtime.pm_ceo_research_brief_artifacts is not None
                 else None
             ),
             "board_decision_brief": (
                 {
-                    "status": board_decision_brief_artifacts["status"],
-                    "json": str(board_decision_brief_artifacts["json"]),
-                    "md": str(board_decision_brief_artifacts["md"]),
-                    "decision_topic": str(board_decision_brief_artifacts["payload"].get("decision_topic", "")).strip(),
-                    "recommended_option": str(board_decision_brief_artifacts["payload"].get("recommended_option", "")).strip(),
+                    "status": runtime.board_decision_brief_artifacts["status"],
+                    "json": str(runtime.board_decision_brief_artifacts["json"]),
+                    "md": str(runtime.board_decision_brief_artifacts["md"]),
+                    "decision_topic": str(runtime.board_decision_brief_artifacts["payload"].get("decision_topic", "")).strip(),
+                    "recommended_option": str(runtime.board_decision_brief_artifacts["payload"].get("recommended_option", "")).strip(),
                 }
-                if board_decision_brief_artifacts is not None
+                if runtime.board_decision_brief_artifacts is not None
                 else None
             ),
             "repo_root_convenience": {
@@ -530,14 +477,14 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
 
     def run_python_step(step_name: str, script_path: Path, script_args: list[str]) -> None:
         if not script_path.exists():
-            steps.append(
+            runtime.steps.append(
                 {
                     "name": step_name,
                     "status": "ERROR",
                     "exit_code": None,
                     "command": [],
-                    "started_utc": generated_at_utc,
-                    "ended_utc": generated_at_utc,
+                    "started_utc": runtime.generated_at_utc,
+                    "ended_utc": runtime.generated_at_utc,
                     "duration_seconds": 0.0,
                     "stdout": "",
                     "stderr": "",
@@ -546,10 +493,10 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
             return
         command = [ctx.python_exe, str(script_path)] + script_args
-        steps.append(_run_command(step_name=step_name, command=command, cwd=ctx.repo_root))
+        runtime.steps.append(_run_command(step_name=step_name, command=command, cwd=ctx.repo_root))
 
     def _step_by_name(step_name: str) -> dict[str, Any] | None:
-        return next((step for step in steps if step.get("name") == step_name), None)
+        return next((step for step in runtime.steps if step.get("name") == step_name), None)
 
     def _remove_if_exists(path: Path) -> None:
         try:
@@ -610,16 +557,16 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             disagreement_sla=_scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
         )
         try:
-            _atomic_write_text(temp_summary_path, json.dumps(temp_summary_dict, indent=2))
+            _atomic_write_text(runtime.temp_summary_path, json.dumps(temp_summary_dict, indent=2))
         except OSError as exc:
-            steps.append(
+            runtime.steps.append(
                 {
                     "name": "write_temp_summary",
                     "status": "ERROR",
                     "exit_code": None,
                     "command": [],
-                    "started_utc": generated_at_utc,
-                    "ended_utc": generated_at_utc,
+                    "started_utc": runtime.generated_at_utc,
+                    "ended_utc": runtime.generated_at_utc,
                     "duration_seconds": 0.0,
                     "stdout": "",
                     "stderr": str(exc),
@@ -630,17 +577,17 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         return True
 
     if ctx.skip_phase_end:
-        steps.append(_skip_step("phase_end_handover", "Skipped by --skip-phase-end."))
+        runtime.steps.append(_skip_step("phase_end_handover", "Skipped by --skip-phase-end."))
     else:
         if not ctx.phase_end_script.exists():
-            steps.append(
+            runtime.steps.append(
                 {
                     "name": "phase_end_handover",
                     "status": "ERROR",
                     "exit_code": None,
                     "command": [],
-                    "started_utc": generated_at_utc,
-                    "ended_utc": generated_at_utc,
+                    "started_utc": runtime.generated_at_utc,
+                    "ended_utc": runtime.generated_at_utc,
                     "duration_seconds": 0.0,
                     "stdout": "",
                     "stderr": "",
@@ -660,7 +607,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "-AuditMode",
                 str(ctx.phase_end_audit_mode),
             ]
-            steps.append(
+            runtime.steps.append(
                 _run_command(
                     step_name="phase_end_handover",
                     command=phase_end_command,
@@ -732,7 +679,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "refresh_ceo_weekly_summary",
                 f"Script not found: {ctx.weekly_summary_gen_script}",
@@ -743,7 +690,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     _remove_if_exists(ctx.exec_memory_current_md)
     _remove_if_exists(ctx.exec_memory_build_status_json)
     if not ctx.memory_packet_script.exists():
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "build_exec_memory_packet",
                 f"Script not found: {ctx.memory_packet_script}",
@@ -755,7 +702,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             script_path=ctx.memory_packet_script,
             script_args=[
                 "--loop-summary-json",
-                str(temp_summary_path),
+                str(runtime.temp_summary_path),
                 "--output-json",
                 str(ctx.exec_memory_current_json),
                 "--output-md",
@@ -769,20 +716,20 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
         exec_memory_build_status = _load_exec_memory_build_status(ctx.exec_memory_build_status_json)
-        exec_memory_cycle_ready = _promote_exec_memory_outputs(
+        runtime.exec_memory_cycle_ready = _promote_exec_memory_outputs(
             _step_by_name("build_exec_memory_packet"),
             exec_memory_build_status,
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "build_exec_memory_packet",
-                f"Current-cycle summary snapshot unavailable: {temp_summary_path}",
+                f"Current-cycle summary snapshot unavailable: {runtime.temp_summary_path}",
             )
         )
 
     if ctx.compaction_trigger_script.exists():
-        if exec_memory_cycle_ready:
+        if runtime.exec_memory_cycle_ready:
             run_python_step(
                 step_name="evaluate_context_compaction_trigger",
                 script_path=ctx.compaction_trigger_script,
@@ -808,7 +755,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 ],
             )
         else:
-            steps.append(
+            runtime.steps.append(
                 _skip_step(
                     "evaluate_context_compaction_trigger",
                     (
@@ -818,7 +765,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 )
             )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "evaluate_context_compaction_trigger",
                 f"Script not found: {ctx.compaction_trigger_script}",
@@ -839,7 +786,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "validate_ceo_go_signal_truth",
                 f"Script not found: {ctx.go_truth_script}",
@@ -860,21 +807,21 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
     elif not ctx.weekly_summary_md.exists():
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "validate_ceo_weekly_summary_truth",
                 f"Weekly summary not found: {ctx.weekly_summary_md}",
             )
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "validate_ceo_weekly_summary_truth",
                 f"Script not found: {ctx.weekly_truth_script}",
             )
         )
 
-    if exec_memory_cycle_ready and ctx.memory_truth_script.exists():
+    if runtime.exec_memory_cycle_ready and ctx.memory_truth_script.exists():
         run_python_step(
             step_name="validate_exec_memory_truth",
             script_path=ctx.memory_truth_script,
@@ -885,8 +832,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 str(ctx.repo_root),
             ],
         )
-    elif not exec_memory_cycle_ready:
-        steps.append(
+    elif not runtime.exec_memory_cycle_ready:
+        runtime.steps.append(
             _skip_step(
                 "validate_exec_memory_truth",
                 (
@@ -896,7 +843,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "validate_exec_memory_truth",
                 f"Script not found: {ctx.memory_truth_script}",
@@ -940,7 +887,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "validate_review_checklist",
                 f"Review checklist not found: {ctx.review_checklist_md}",
@@ -957,7 +904,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
     else:
-        steps.append(
+        runtime.steps.append(
             _skip_step(
                 "validate_interface_contracts",
                 f"Interface contract manifest not found: {ctx.interface_contract_manifest_json}",
@@ -1021,54 +968,49 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "--round-contract-md",
             str(ctx.context_dir / "round_contract_latest.md"),
             "--loop-summary-json",
-            str(temp_summary_path),
+            str(runtime.temp_summary_path),
             "--closure-json",
             str(ctx.closure_output_json),
         ],
     )
 
-    if temp_summary_path.exists():
+    if runtime.temp_summary_path.exists():
         try:
-            temp_summary_path.unlink()
+            runtime.temp_summary_path.unlink()
         except OSError:
             pass
 
     _apply_hold_semantics(
-        steps=steps,
+        steps=runtime.steps,
         allow_hold=ctx.allow_hold,
         closure_output_json=ctx.closure_output_json,
     )
 
-    if exec_memory_cycle_ready:
+    if runtime.exec_memory_cycle_ready:
         advisory_artifacts = persist_advisory_sections(
             context_dir=ctx.context_dir,
             exec_memory_json=ctx.exec_memory_latest_json,
         )
-        next_round_handoff_artifacts = advisory_artifacts["next_round_handoff"]
-        expert_request_artifacts = advisory_artifacts["expert_request"]
-        pm_ceo_research_brief_artifacts = advisory_artifacts["pm_ceo_research_brief"]
-        board_decision_brief_artifacts = advisory_artifacts["board_decision_brief"]
-        repo_root_convenience = mirror_repo_root_convenience(
+        runtime.next_round_handoff_artifacts = advisory_artifacts["next_round_handoff"]
+        runtime.expert_request_artifacts = advisory_artifacts["expert_request"]
+        runtime.pm_ceo_research_brief_artifacts = advisory_artifacts["pm_ceo_research_brief"]
+        runtime.board_decision_brief_artifacts = advisory_artifacts["board_decision_brief"]
+        runtime.repo_root_convenience = mirror_repo_root_convenience(
             repo_root=ctx.repo_root,
             context_dir=ctx.context_dir,
             advisory_artifacts=advisory_artifacts,
         )
     else:
-        next_round_handoff_artifacts = None
-        expert_request_artifacts = None
-        pm_ceo_research_brief_artifacts = None
-        board_decision_brief_artifacts = None
-        repo_root_convenience = {}
+        runtime.next_round_handoff_artifacts = None
+        runtime.expert_request_artifacts = None
+        runtime.pm_ceo_research_brief_artifacts = None
+        runtime.board_decision_brief_artifacts = None
+        runtime.repo_root_convenience = {}
 
     disagreement_sla = _scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
 
     payload = build_summary_payload(
         disagreement_sla=disagreement_sla,
-        next_round_handoff_artifacts=next_round_handoff_artifacts,
-        expert_request_artifacts=expert_request_artifacts,
-        pm_ceo_research_brief_artifacts=pm_ceo_research_brief_artifacts,
-        board_decision_brief_artifacts=board_decision_brief_artifacts,
-        repo_root_convenience=repo_root_convenience,
     )
     final_result = str(payload["final_result"])
     final_exit_code = int(payload["final_exit_code"])
@@ -1076,7 +1018,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     md_lines: list[str] = [
         "# Loop Cycle Summary",
         "",
-        f"- GeneratedAtUTC: {generated_at_utc}",
+        f"- GeneratedAtUTC: {runtime.generated_at_utc}",
         f"- FinalResult: {final_result}",
         f"- FinalExitCode: {final_exit_code}",
         f"- SkipPhaseEnd: {bool(ctx.skip_phase_end)}",
@@ -1084,7 +1026,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         "| Step | Status | Exit | Message |",
         "|---|---|---:|---|",
     ]
-    for step in steps:
+    for step in runtime.steps:
         exit_value = step["exit_code"]
         exit_text = "N/A" if exit_value is None else str(exit_value)
         message = str(step.get("message", "")).replace("|", "\\|")
@@ -1130,60 +1072,60 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         [
             "## Lesson Stubs",
             "",
-            f"- Worker: {lessons_paths['worker']}",
-            f"- Auditor: {lessons_paths['auditor']}",
+            f"- Worker: {runtime.lessons_paths['worker']}",
+            f"- Auditor: {runtime.lessons_paths['auditor']}",
             "",
         ]
     )
-    if next_round_handoff_artifacts is not None:
+    if runtime.next_round_handoff_artifacts is not None:
         md_lines.extend(
             [
                 "## Next Round Handoff",
                 "",
-                f"- Status: {next_round_handoff_artifacts['status']}",
-                f"- JSON: {next_round_handoff_artifacts['json']}",
-                f"- Markdown: {next_round_handoff_artifacts['md']}",
+                f"- Status: {runtime.next_round_handoff_artifacts['status']}",
+                f"- JSON: {runtime.next_round_handoff_artifacts['json']}",
+                f"- Markdown: {runtime.next_round_handoff_artifacts['md']}",
                 "",
             ]
         )
-    if expert_request_artifacts is not None:
+    if runtime.expert_request_artifacts is not None:
         md_lines.extend(
             [
                 "## Expert Request",
                 "",
-                f"- Status: {expert_request_artifacts['status']}",
-                f"- TargetExpert: {expert_request_artifacts['payload'].get('target_expert', '')}",
-                f"- JSON: {expert_request_artifacts['json']}",
-                f"- Markdown: {expert_request_artifacts['md']}",
+                f"- Status: {runtime.expert_request_artifacts['status']}",
+                f"- TargetExpert: {runtime.expert_request_artifacts['payload'].get('target_expert', '')}",
+                f"- JSON: {runtime.expert_request_artifacts['json']}",
+                f"- Markdown: {runtime.expert_request_artifacts['md']}",
                 "",
             ]
         )
-    if pm_ceo_research_brief_artifacts is not None:
+    if runtime.pm_ceo_research_brief_artifacts is not None:
         md_lines.extend(
             [
                 "## PM/CEO Research Brief",
                 "",
-                f"- Status: {pm_ceo_research_brief_artifacts['status']}",
-                f"- DelegatedTo: {pm_ceo_research_brief_artifacts['payload'].get('delegated_to', '')}",
-                f"- JSON: {pm_ceo_research_brief_artifacts['json']}",
-                f"- Markdown: {pm_ceo_research_brief_artifacts['md']}",
+                f"- Status: {runtime.pm_ceo_research_brief_artifacts['status']}",
+                f"- DelegatedTo: {runtime.pm_ceo_research_brief_artifacts['payload'].get('delegated_to', '')}",
+                f"- JSON: {runtime.pm_ceo_research_brief_artifacts['json']}",
+                f"- Markdown: {runtime.pm_ceo_research_brief_artifacts['md']}",
                 "",
             ]
         )
-    if board_decision_brief_artifacts is not None:
+    if runtime.board_decision_brief_artifacts is not None:
         md_lines.extend(
             [
                 "## Board Decision Brief",
                 "",
-                f"- Status: {board_decision_brief_artifacts['status']}",
-                f"- DecisionTopic: {board_decision_brief_artifacts['payload'].get('decision_topic', '')}",
-                f"- RecommendedOption: {board_decision_brief_artifacts['payload'].get('recommended_option', '')}",
-                f"- JSON: {board_decision_brief_artifacts['json']}",
-                f"- Markdown: {board_decision_brief_artifacts['md']}",
+                f"- Status: {runtime.board_decision_brief_artifacts['status']}",
+                f"- DecisionTopic: {runtime.board_decision_brief_artifacts['payload'].get('decision_topic', '')}",
+                f"- RecommendedOption: {runtime.board_decision_brief_artifacts['payload'].get('recommended_option', '')}",
+                f"- JSON: {runtime.board_decision_brief_artifacts['json']}",
+                f"- Markdown: {runtime.board_decision_brief_artifacts['md']}",
                 "",
             ]
         )
-    if repo_root_convenience:
+    if runtime.repo_root_convenience:
         md_lines.extend(
             [
                 "## Repo-Root Convenience Files",
@@ -1192,11 +1134,11 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ]
         )
         for section_key, _, title in REPO_ROOT_CONVENIENCE_SPECS:
-            mirror_path = repo_root_convenience.get(section_key)
+            mirror_path = runtime.repo_root_convenience.get(section_key)
             if mirror_path is None:
                 continue
             md_lines.append(f"- {title}: {mirror_path}")
-        takeover_path = repo_root_convenience.get("takeover")
+        takeover_path = runtime.repo_root_convenience.get("takeover")
         if takeover_path is not None:
             md_lines.append(f"- Takeover Index: {takeover_path}")
         md_lines.append("")
