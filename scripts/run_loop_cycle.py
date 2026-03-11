@@ -32,6 +32,22 @@ except ModuleNotFoundError:
 DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
 
 
+class ExecMemoryStageResult:
+    """Result bundle from exec-memory stage execution."""
+
+    def __init__(
+        self,
+        cycle_ready: bool,
+        build_status: dict[str, Any] | None,
+        promotion_result: str,
+        advisory_note: str,
+    ):
+        self.cycle_ready = cycle_ready
+        self.build_status = build_status
+        self.promotion_result = promotion_result
+        self.advisory_note = advisory_note
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -553,6 +569,95 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             return False
         return True
 
+    def _execute_exec_memory_stage() -> ExecMemoryStageResult:
+        """Execute exec-memory stage and return explicit result bundle."""
+        # Pre-build cleanup: Remove stale current-cycle artifacts
+        _remove_if_exists(ctx.exec_memory_current_json)
+        _remove_if_exists(ctx.exec_memory_current_md)
+        _remove_if_exists(ctx.exec_memory_build_status_json)
+
+        # Script existence check: Return early with cycle_ready=False if missing
+        if not ctx.memory_packet_script.exists():
+            runtime.steps.append(
+                _skip_step(
+                    "build_exec_memory_packet",
+                    f"Script not found: {ctx.memory_packet_script}",
+                )
+            )
+            return ExecMemoryStageResult(
+                cycle_ready=False,
+                build_status=None,
+                promotion_result="script_missing",
+                advisory_note=f"Script not found: {ctx.memory_packet_script}",
+            )
+
+        # Temp summary check: Return early if snapshot unavailable
+        if not _write_temp_summary_snapshot():
+            runtime.steps.append(
+                _skip_step(
+                    "build_exec_memory_packet",
+                    f"Current-cycle summary snapshot unavailable: {runtime.temp_summary_path}",
+                )
+            )
+            return ExecMemoryStageResult(
+                cycle_ready=False,
+                build_status=None,
+                promotion_result="snapshot_unavailable",
+                advisory_note=f"Current-cycle summary snapshot unavailable: {runtime.temp_summary_path}",
+            )
+
+        # Execute build: Call run_python_step for build_exec_memory_packet
+        run_python_step(
+            step_name="build_exec_memory_packet",
+            script_path=ctx.memory_packet_script,
+            script_args=[
+                "--loop-summary-json",
+                str(runtime.temp_summary_path),
+                "--output-json",
+                str(ctx.exec_memory_current_json),
+                "--output-md",
+                str(ctx.exec_memory_current_md),
+                "--status-json",
+                str(ctx.exec_memory_build_status_json),
+                "--pm-budget-tokens",
+                str(ctx.pm_budget_tokens),
+                "--ceo-budget-tokens",
+                str(ctx.ceo_budget_tokens),
+            ],
+        )
+
+        # Load build status: Parse exec_memory_build_status_json
+        exec_memory_build_status = _load_exec_memory_build_status(ctx.exec_memory_build_status_json)
+
+        # Promote outputs: Call _promote_exec_memory_outputs
+        cycle_ready = _promote_exec_memory_outputs(
+            _step_by_name("build_exec_memory_packet"),
+            exec_memory_build_status,
+        )
+
+        # Determine promotion result
+        if cycle_ready:
+            promotion_result = "promoted"
+            advisory_note = "Exec memory outputs promoted successfully."
+        elif exec_memory_build_status is None:
+            promotion_result = "build_failed"
+            advisory_note = "Exec memory build status missing or invalid."
+        elif not bool(exec_memory_build_status.get("authoritative_latest_written")):
+            promotion_result = "not_authoritative"
+            reason = str(exec_memory_build_status.get("reason", "")).strip() or "not_authoritative"
+            advisory_note = f"Exec memory build did not produce authoritative outputs ({reason})."
+        else:
+            promotion_result = "build_failed"
+            advisory_note = "Exec memory build failed or outputs missing."
+
+        # Return ExecMemoryStageResult with explicit bundle
+        return ExecMemoryStageResult(
+            cycle_ready=cycle_ready,
+            build_status=exec_memory_build_status,
+            promotion_result=promotion_result,
+            advisory_note=advisory_note,
+        )
+
     def _write_temp_summary_snapshot() -> bool:
         temp_summary_dict = build_summary_payload(
             disagreement_sla=_scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
@@ -687,47 +792,9 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
 
-    _remove_if_exists(ctx.exec_memory_current_json)
-    _remove_if_exists(ctx.exec_memory_current_md)
-    _remove_if_exists(ctx.exec_memory_build_status_json)
-    if not ctx.memory_packet_script.exists():
-        runtime.steps.append(
-            _skip_step(
-                "build_exec_memory_packet",
-                f"Script not found: {ctx.memory_packet_script}",
-            )
-        )
-    elif _write_temp_summary_snapshot():
-        run_python_step(
-            step_name="build_exec_memory_packet",
-            script_path=ctx.memory_packet_script,
-            script_args=[
-                "--loop-summary-json",
-                str(runtime.temp_summary_path),
-                "--output-json",
-                str(ctx.exec_memory_current_json),
-                "--output-md",
-                str(ctx.exec_memory_current_md),
-                "--status-json",
-                str(ctx.exec_memory_build_status_json),
-                "--pm-budget-tokens",
-                str(ctx.pm_budget_tokens),
-                "--ceo-budget-tokens",
-                str(ctx.ceo_budget_tokens),
-            ],
-        )
-        exec_memory_build_status = _load_exec_memory_build_status(ctx.exec_memory_build_status_json)
-        runtime.exec_memory_cycle_ready = _promote_exec_memory_outputs(
-            _step_by_name("build_exec_memory_packet"),
-            exec_memory_build_status,
-        )
-    else:
-        runtime.steps.append(
-            _skip_step(
-                "build_exec_memory_packet",
-                f"Current-cycle summary snapshot unavailable: {runtime.temp_summary_path}",
-            )
-        )
+    exec_memory_result = _execute_exec_memory_stage()
+    runtime.exec_memory_cycle_ready = exec_memory_result.cycle_ready
+
 
     if ctx.compaction_trigger_script.exists():
         if runtime.exec_memory_cycle_ready:

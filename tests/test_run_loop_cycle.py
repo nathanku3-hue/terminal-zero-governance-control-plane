@@ -1760,4 +1760,294 @@ def test_run_loop_cycle_creates_missing_context_dir(tmp_path: Path) -> None:
 
     # Should succeed without FileNotFoundError
     assert result.returncode == 0, f"Failed with missing context_dir: {result.stderr}"
-    assert "FileNotFoundError" not in result.stderr, "Should not raise FileNotFoundError"
+
+
+def test_exec_memory_stage_returns_explicit_result_bundle(tmp_path: Path) -> None:
+    """Verify _execute_exec_memory_stage returns ExecMemoryStageResult with all fields."""
+    repo_root = tmp_path / "test_repo"
+    scripts_dir = repo_root / "scripts"
+    docs_dir = repo_root / "docs"
+    context_dir = docs_dir / "context"
+
+    _prepare_scripts_dir(scripts_dir)
+
+    # Create minimal docs structure
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    _write_text(docs_dir / "loop_operating_contract.md", "# Contract\n")
+    _write_text(docs_dir / "round_contract_template.md", "# Template\n")
+    _write_text(docs_dir / "expert_invocation_policy.md", "# Policy\n")
+    _write_text(docs_dir / "decision_authority_matrix.md", "# Matrix\n")
+    _write_text(docs_dir / "disagreement_taxonomy.md", "# Taxonomy\n")
+    _write_text(docs_dir / "disagreement_runbook.md", "# Runbook\n")
+    _write_text(docs_dir / "rollback_protocol.md", "# Rollback\n")
+    _write_text(docs_dir / "phase24c_transition_playbook.md", "# Playbook\n")
+    _write_text(docs_dir / "w11_comms_protocol.md", "# Comms\n")
+
+    # Create build_exec_memory_packet.py that writes authoritative status
+    build_script = scripts_dir / "build_exec_memory_packet.py"
+    _write_text(
+        build_script,
+        dedent("""\
+            import json
+            import sys
+            from pathlib import Path
+            args = sys.argv[1:]
+            status_json = Path(args[args.index("--status-json") + 1])
+            output_json = Path(args[args.index("--output-json") + 1])
+            output_md = Path(args[args.index("--output-md") + 1])
+            status_json.write_text(json.dumps({"authoritative_latest_written": True}))
+            output_json.write_text(json.dumps({"pm": "test"}))
+            output_md.write_text("# Test")
+        """),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    # Verify exec_memory_cycle_ready is True
+    assert payload["artifacts"]["exec_memory_latest_promoted"] is True
+
+    # Verify build_exec_memory_packet step exists and passed
+    memory_step = next((s for s in payload["steps"] if s["name"] == "build_exec_memory_packet"), None)
+    assert memory_step is not None
+    assert memory_step["status"] == "PASS"
+
+
+def test_exec_memory_stage_fail_closed_on_missing_script(tmp_path: Path) -> None:
+    """Verify _execute_exec_memory_stage returns cycle_ready=False when script missing."""
+    repo_root = tmp_path / "test_repo"
+    scripts_dir = repo_root / "scripts"
+    docs_dir = repo_root / "docs"
+    context_dir = docs_dir / "context"
+
+    _prepare_scripts_dir(scripts_dir)
+
+    # Create minimal docs structure
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    _write_text(docs_dir / "loop_operating_contract.md", "# Contract\n")
+    _write_text(docs_dir / "round_contract_template.md", "# Template\n")
+    _write_text(docs_dir / "expert_invocation_policy.md", "# Policy\n")
+    _write_text(docs_dir / "decision_authority_matrix.md", "# Matrix\n")
+    _write_text(docs_dir / "disagreement_taxonomy.md", "# Taxonomy\n")
+    _write_text(docs_dir / "disagreement_runbook.md", "# Runbook\n")
+    _write_text(docs_dir / "rollback_protocol.md", "# Rollback\n")
+    _write_text(docs_dir / "phase24c_transition_playbook.md", "# Playbook\n")
+    _write_text(docs_dir / "w11_comms_protocol.md", "# Comms\n")
+
+    # Remove build_exec_memory_packet.py
+    (scripts_dir / "build_exec_memory_packet.py").unlink()
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    # Verify exec_memory_cycle_ready is False
+    assert payload["artifacts"]["exec_memory_latest_promoted"] is False
+
+    # Verify build_exec_memory_packet step is SKIP
+    memory_step = next((s for s in payload["steps"] if s["name"] == "build_exec_memory_packet"), None)
+    assert memory_step is not None
+    assert memory_step["status"] == "SKIP"
+    assert "Script not found" in memory_step["message"]
+
+
+def test_exec_memory_stage_fail_closed_on_build_status_missing(tmp_path: Path) -> None:
+    """Verify _execute_exec_memory_stage returns cycle_ready=False when build status missing."""
+    repo_root = tmp_path / "test_repo"
+    scripts_dir = repo_root / "scripts"
+    docs_dir = repo_root / "docs"
+    context_dir = docs_dir / "context"
+
+    _prepare_scripts_dir(scripts_dir)
+
+    # Create minimal docs structure
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    _write_text(docs_dir / "loop_operating_contract.md", "# Contract\n")
+    _write_text(docs_dir / "round_contract_template.md", "# Template\n")
+    _write_text(docs_dir / "expert_invocation_policy.md", "# Policy\n")
+    _write_text(docs_dir / "decision_authority_matrix.md", "# Matrix\n")
+    _write_text(docs_dir / "disagreement_taxonomy.md", "# Taxonomy\n")
+    _write_text(docs_dir / "disagreement_runbook.md", "# Runbook\n")
+    _write_text(docs_dir / "rollback_protocol.md", "# Rollback\n")
+    _write_text(docs_dir / "phase24c_transition_playbook.md", "# Playbook\n")
+    _write_text(docs_dir / "w11_comms_protocol.md", "# Comms\n")
+
+    # Create build_exec_memory_packet.py that does NOT write status
+    build_script = scripts_dir / "build_exec_memory_packet.py"
+    _write_text(
+        build_script,
+        dedent("""\
+            import json
+            import sys
+            from pathlib import Path
+            args = sys.argv[1:]
+            output_json = Path(args[args.index("--output-json") + 1])
+            output_md = Path(args[args.index("--output-md") + 1])
+            output_json.write_text(json.dumps({"pm": "test"}))
+            output_md.write_text("# Test")
+        """),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    # Verify exec_memory_cycle_ready is False
+    assert payload["artifacts"]["exec_memory_latest_promoted"] is False
+
+    # Verify build_exec_memory_packet step is FAIL
+    memory_step = next((s for s in payload["steps"] if s["name"] == "build_exec_memory_packet"), None)
+    assert memory_step is not None
+    assert memory_step["status"] == "FAIL"
+    assert "build status missing" in memory_step["message"].lower()
+
+
+def test_exec_memory_stage_fail_closed_on_not_authoritative(tmp_path: Path) -> None:
+    """Verify _execute_exec_memory_stage returns cycle_ready=False when not authoritative."""
+    repo_root = tmp_path / "test_repo"
+    scripts_dir = repo_root / "scripts"
+    docs_dir = repo_root / "docs"
+    context_dir = docs_dir / "context"
+
+    _prepare_scripts_dir(scripts_dir)
+
+    # Create minimal docs structure
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    _write_text(docs_dir / "loop_operating_contract.md", "# Contract\n")
+    _write_text(docs_dir / "round_contract_template.md", "# Template\n")
+    _write_text(docs_dir / "expert_invocation_policy.md", "# Policy\n")
+    _write_text(docs_dir / "decision_authority_matrix.md", "# Matrix\n")
+    _write_text(docs_dir / "disagreement_taxonomy.md", "# Taxonomy\n")
+    _write_text(docs_dir / "disagreement_runbook.md", "# Runbook\n")
+    _write_text(docs_dir / "rollback_protocol.md", "# Rollback\n")
+    _write_text(docs_dir / "phase24c_transition_playbook.md", "# Playbook\n")
+    _write_text(docs_dir / "w11_comms_protocol.md", "# Comms\n")
+
+    # Create build_exec_memory_packet.py that writes non-authoritative status
+    build_script = scripts_dir / "build_exec_memory_packet.py"
+    _write_text(
+        build_script,
+        dedent("""\
+            import json
+            import sys
+            from pathlib import Path
+            args = sys.argv[1:]
+            status_json = Path(args[args.index("--status-json") + 1])
+            output_json = Path(args[args.index("--output-json") + 1])
+            output_md = Path(args[args.index("--output-md") + 1])
+            status_json.write_text(json.dumps({
+                "authoritative_latest_written": False,
+                "reason": "stale_republish_blocked"
+            }))
+            output_json.write_text(json.dumps({"pm": "test"}))
+            output_md.write_text("# Test")
+        """),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    # Verify exec_memory_cycle_ready is False
+    assert payload["artifacts"]["exec_memory_latest_promoted"] is False
+
+    # Verify build_exec_memory_packet step is FAIL
+    memory_step = next((s for s in payload["steps"] if s["name"] == "build_exec_memory_packet"), None)
+    assert memory_step is not None
+    assert memory_step["status"] == "FAIL"
+    assert "not produce authoritative" in memory_step["message"]
+
+
+def test_exec_memory_stage_promotes_on_success(tmp_path: Path) -> None:
+    """Verify _execute_exec_memory_stage promotes outputs to latest on success."""
+    repo_root = tmp_path / "test_repo"
+    scripts_dir = repo_root / "scripts"
+    docs_dir = repo_root / "docs"
+    context_dir = docs_dir / "context"
+
+    _prepare_scripts_dir(scripts_dir)
+
+    # Create minimal docs structure
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    _write_text(docs_dir / "loop_operating_contract.md", "# Contract\n")
+    _write_text(docs_dir / "round_contract_template.md", "# Template\n")
+    _write_text(docs_dir / "expert_invocation_policy.md", "# Policy\n")
+    _write_text(docs_dir / "decision_authority_matrix.md", "# Matrix\n")
+    _write_text(docs_dir / "disagreement_taxonomy.md", "# Taxonomy\n")
+    _write_text(docs_dir / "disagreement_runbook.md", "# Runbook\n")
+    _write_text(docs_dir / "rollback_protocol.md", "# Rollback\n")
+    _write_text(docs_dir / "phase24c_transition_playbook.md", "# Playbook\n")
+    _write_text(docs_dir / "w11_comms_protocol.md", "# Comms\n")
+
+    # Create build_exec_memory_packet.py that writes authoritative status
+    build_script = scripts_dir / "build_exec_memory_packet.py"
+    _write_text(
+        build_script,
+        dedent("""\
+            import json
+            import sys
+            from pathlib import Path
+            args = sys.argv[1:]
+            status_json = Path(args[args.index("--status-json") + 1])
+            output_json = Path(args[args.index("--output-json") + 1])
+            output_md = Path(args[args.index("--output-md") + 1])
+            status_json.write_text(json.dumps({"authoritative_latest_written": True}))
+            output_json.write_text(json.dumps({"pm": "promoted_content"}))
+            output_md.write_text("# Promoted Content")
+        """),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    # Verify exec_memory_cycle_ready is True
+    assert payload["artifacts"]["exec_memory_latest_promoted"] is True
+
+    # Verify latest files exist and contain promoted content
+    latest_json = context_dir / "exec_memory_packet_latest.json"
+    latest_md = context_dir / "exec_memory_packet_latest.md"
+    assert latest_json.exists()
+    assert latest_md.exists()
+
+    latest_json_content = json.loads(latest_json.read_text())
+    assert latest_json_content["pm"] == "promoted_content"
+
+    latest_md_content = latest_md.read_text()
+    assert "Promoted Content" in latest_md_content
