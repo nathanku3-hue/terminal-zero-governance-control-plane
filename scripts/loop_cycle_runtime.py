@@ -7,7 +7,10 @@ from datetime import timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.loop_cycle_context import LoopCycleContext
+try:
+    from loop_cycle_context import LoopCycleContext
+except ModuleNotFoundError:
+    from scripts.loop_cycle_context import LoopCycleContext
 
 
 def _utc_now() -> datetime:

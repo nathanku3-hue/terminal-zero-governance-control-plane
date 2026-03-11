@@ -338,11 +338,12 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     # Build immutable context from args
     ctx = build_loop_cycle_context(args)
 
-    # Build mutable runtime state
-    runtime = build_loop_cycle_runtime(ctx)
-
+    # Create directories before building runtime (runtime writes lesson stubs immediately)
     ctx.context_dir.mkdir(parents=True, exist_ok=True)
     ctx.logs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build mutable runtime state
+    runtime = build_loop_cycle_runtime(ctx)
 
     def build_summary_payload(
         *,

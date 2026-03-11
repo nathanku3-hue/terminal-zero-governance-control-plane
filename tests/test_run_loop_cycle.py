@@ -1690,3 +1690,74 @@ def test_run_loop_cycle_with_real_phase_end_handover_contract(
     summary_text = summary_files[0].read_text(encoding="utf-8")
     assert "Result: PASS" in summary_text
     assert "G06_worker_reply_gate" in summary_text
+
+
+def test_run_loop_cycle_file_mode_help_works(tmp_path: Path) -> None:
+    """Verify that python scripts/run_loop_cycle.py --help succeeds in file mode."""
+    import sys
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parents[1]
+    script_path = repo_root / "scripts" / "run_loop_cycle.py"
+
+    result = subprocess.run(
+        [sys.executable, str(script_path), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, f"File-mode help failed: {result.stderr}"
+    assert "--repo-root" in result.stdout, "Help output missing expected arguments"
+
+
+def test_run_loop_cycle_creates_missing_context_dir(tmp_path: Path) -> None:
+    """Verify that missing context_dir is created without FileNotFoundError."""
+    import sys
+    import subprocess
+
+    repo_root = tmp_path / "test_repo"
+    repo_root.mkdir()
+
+    # Copy necessary scripts
+    source_scripts = Path(__file__).resolve().parents[1] / "scripts"
+    scripts_dir = repo_root / "scripts"
+    scripts_dir.mkdir()
+
+    for script_name in [
+        "run_loop_cycle.py",
+        "loop_cycle_context.py",
+        "loop_cycle_runtime.py",
+        "loop_cycle_artifacts.py",
+    ]:
+        shutil.copy2(source_scripts / script_name, scripts_dir / script_name)
+
+    # Create minimal required docs (but NOT context dir)
+    docs_dir = repo_root / "docs"
+    docs_dir.mkdir()
+    _write_text(docs_dir / "loop_operating_contract.md", "# Contract\n")
+    _write_text(docs_dir / "round_contract_template.md", "# Template\n")
+    _write_text(docs_dir / "expert_invocation_policy.md", "# Policy\n")
+    _write_text(docs_dir / "decision_authority_matrix.md", "# Matrix\n")
+    _write_text(docs_dir / "disagreement_taxonomy.md", "# Taxonomy\n")
+    _write_text(docs_dir / "disagreement_runbook.md", "# Runbook\n")
+    _write_text(docs_dir / "rollback_protocol.md", "# Rollback\n")
+    _write_text(docs_dir / "phase24c_transition_playbook.md", "# Playbook\n")
+    _write_text(docs_dir / "w11_comms_protocol.md", "# Comms\n")
+
+    # Verify context dir does NOT exist
+    context_dir = docs_dir / "context"
+    assert not context_dir.exists(), "Context dir should not exist yet"
+
+    # Run with --help to trigger context initialization
+    script_path = scripts_dir / "run_loop_cycle.py"
+    result = subprocess.run(
+        [sys.executable, str(script_path), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    # Should succeed without FileNotFoundError
+    assert result.returncode == 0, f"Failed with missing context_dir: {result.stderr}"
+    assert "FileNotFoundError" not in result.stderr, "Should not raise FileNotFoundError"
