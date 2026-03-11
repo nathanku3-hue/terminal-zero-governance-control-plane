@@ -18,12 +18,14 @@ try:
         mirror_repo_root_convenience,
         persist_advisory_sections,
     )
+    from loop_cycle_context import build_loop_cycle_context
 except ModuleNotFoundError:
     from scripts.loop_cycle_artifacts import (
         REPO_ROOT_CONVENIENCE_SPECS,
         mirror_repo_root_convenience,
         persist_advisory_sections,
     )
+    from scripts.loop_cycle_context import build_loop_cycle_context
 
 DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
 
@@ -379,180 +381,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     generated_at = _utc_now()
     generated_at_utc = _utc_iso(generated_at)
-    repo_root = args.repo_root.resolve()
-    context_dir = _resolve_path(repo_root=repo_root, candidate=args.context_dir)
-    script_dir = (
-        _resolve_path(repo_root=repo_root, candidate=args.scripts_dir)
-        if args.scripts_dir is not None
-        else Path(__file__).resolve().parent
-    )
 
-    logs_dir = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.logs_dir,
-        default_path=context_dir / "phase_end_logs",
-    )
-    weekly_report_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.weekly_report_json,
-        default_path=context_dir / "auditor_calibration_report.json",
-    )
-    weekly_report_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.weekly_report_md,
-        default_path=context_dir / "auditor_calibration_report.md",
-    )
-    dossier_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.dossier_json,
-        default_path=context_dir / "auditor_promotion_dossier.json",
-    )
-    dossier_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.dossier_md,
-        default_path=context_dir / "auditor_promotion_dossier.md",
-    )
-    go_signal_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.go_signal_md,
-        default_path=context_dir / "ceo_go_signal.md",
-    )
-    weekly_summary_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.weekly_summary_md,
-        default_path=context_dir / "ceo_weekly_summary_latest.md",
-    )
-    review_checklist_md = context_dir / "pr_review_checklist_latest.md"
-    interface_contract_manifest_json = context_dir / "interface_contract_manifest_latest.json"
-    fp_ledger_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.fp_ledger_json,
-        default_path=context_dir / "auditor_fp_ledger.json",
-    )
-    disagreement_ledger_jsonl = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.disagreement_ledger_jsonl,
-        default_path=context_dir / "disagreement_ledger.jsonl",
-    )
+    # Build immutable context from args
+    ctx = build_loop_cycle_context(args)
 
-    output_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.output_json,
-        default_path=context_dir / "loop_cycle_summary_latest.json",
-    )
-    output_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.output_md,
-        default_path=context_dir / "loop_cycle_summary_latest.md",
-    )
-    closure_output_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.closure_output_json,
-        default_path=context_dir / "loop_closure_status_latest.json",
-    )
-    closure_output_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.closure_output_md,
-        default_path=context_dir / "loop_closure_status_latest.md",
-    )
-
-    phase_end_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.phase_end_script,
-        default_path=script_dir / "phase_end_handover.ps1",
-    )
-    auditor_script = script_dir / "auditor_calibration_report.py"
-    go_signal_script = script_dir / "generate_ceo_go_signal.py"
-    go_truth_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.go_truth_script,
-        default_path=script_dir / "validate_ceo_go_signal_truth.py",
-    )
-    weekly_truth_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.weekly_truth_script,
-        default_path=script_dir / "validate_ceo_weekly_summary_truth.py",
-    )
-    weekly_summary_gen_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.weekly_summary_gen_script,
-        default_path=script_dir / "generate_ceo_weekly_summary.py",
-    )
-    round_contract_checks_script = script_dir / "validate_round_contract_checks.py"
-    counterexample_script = script_dir / "validate_counterexample_gate.py"
-    dual_judge_script = script_dir / "validate_dual_judge_gate.py"
-    refactor_mock_policy_script = script_dir / "validate_refactor_mock_policy.py"
-    review_checklist_script = script_dir / "validate_review_checklist.py"
-    interface_contracts_script = script_dir / "validate_interface_contracts.py"
-    parallel_fanin_script = script_dir / "validate_parallel_fanin.py"
-    memory_packet_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.memory_packet_script,
-        default_path=script_dir / "build_exec_memory_packet.py",
-    )
-    compaction_trigger_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.compaction_trigger_script,
-        default_path=script_dir / "evaluate_context_compaction_trigger.py",
-    )
-    memory_truth_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.memory_truth_script,
-        default_path=script_dir / "validate_exec_memory_truth.py",
-    )
-    exec_memory_latest_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.exec_memory_json,
-        default_path=context_dir / "exec_memory_packet_latest.json",
-    )
-    exec_memory_latest_md = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.exec_memory_md,
-        default_path=context_dir / "exec_memory_packet_latest.md",
-    )
-    exec_memory_current_json = exec_memory_latest_json.with_name(
-        f"{exec_memory_latest_json.stem}_current{exec_memory_latest_json.suffix}"
-    )
-    exec_memory_current_md = exec_memory_latest_md.with_name(
-        f"{exec_memory_latest_md.stem}_current{exec_memory_latest_md.suffix}"
-    )
-    exec_memory_build_status_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.exec_memory_build_status_json,
-        default_path=context_dir / "exec_memory_packet_build_status_current.json",
-    )
-    next_round_handoff_json = context_dir / "next_round_handoff_latest.json"
-    next_round_handoff_md = context_dir / "next_round_handoff_latest.md"
-    expert_request_json = context_dir / "expert_request_latest.json"
-    expert_request_md = context_dir / "expert_request_latest.md"
-    pm_ceo_research_brief_json = context_dir / "pm_ceo_research_brief_latest.json"
-    pm_ceo_research_brief_md = context_dir / "pm_ceo_research_brief_latest.md"
-    board_decision_brief_json = context_dir / "board_decision_brief_latest.json"
-    board_decision_brief_md = context_dir / "board_decision_brief_latest.md"
-    compaction_state_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.compaction_state_json,
-        default_path=context_dir / "context_compaction_state_latest.json",
-    )
-    compaction_status_json = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.compaction_status_json,
-        default_path=context_dir / "context_compaction_status_latest.json",
-    )
-    closure_script = _resolve_with_default(
-        repo_root=repo_root,
-        value=args.closure_script,
-        default_path=script_dir / "validate_loop_closure.py",
-    )
-
-    context_dir.mkdir(parents=True, exist_ok=True)
-    logs_dir.mkdir(parents=True, exist_ok=True)
-    lessons_paths = _write_lessons_stubs(context_dir=context_dir, generated_at_utc=generated_at_utc)
-
-    repo_id = args.repo_id.strip() or repo_root.name or "repo"
+    ctx.context_dir.mkdir(parents=True, exist_ok=True)
+    ctx.logs_dir.mkdir(parents=True, exist_ok=True)
+    lessons_paths = _write_lessons_stubs(context_dir=ctx.context_dir, generated_at_utc=generated_at_utc)
     steps: list[dict[str, Any]] = []
     exec_memory_cycle_ready = False
-    temp_summary_path = context_dir / "loop_cycle_summary_current.json"
+    temp_summary_path = ctx.context_dir / "loop_cycle_summary_current.json"
 
     def build_summary_payload(
         *,
@@ -599,12 +437,12 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         return {
             "schema_version": "1.0.0",
             "generated_at_utc": generated_at_utc,
-            "repo_root": str(repo_root),
-            "context_dir": str(context_dir),
-            "scripts_dir": str(script_dir),
-            "skip_phase_end": bool(args.skip_phase_end),
-            "allow_hold": bool(args.allow_hold),
-            "freshness_hours": args.freshness_hours,
+            "repo_root": str(ctx.repo_root),
+            "context_dir": str(ctx.context_dir),
+            "scripts_dir": str(ctx.script_dir),
+            "skip_phase_end": ctx.skip_phase_end,
+            "allow_hold": ctx.allow_hold,
+            "freshness_hours": ctx.freshness_hours,
             "step_summary": status_counts,
             "steps": steps,
             "disagreement_ledger_sla": disagreement_sla,
@@ -613,34 +451,34 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "auditor": str(lessons_paths["auditor"]),
             },
             "artifacts": {
-                "weekly_report_json": str(weekly_report_json),
-                "weekly_report_md": str(weekly_report_md),
-                "dossier_json": str(dossier_json),
-                "dossier_md": str(dossier_md),
-                "go_signal_md": str(go_signal_md),
-                "weekly_summary_md": str(weekly_summary_md),
-                "review_checklist_md": str(review_checklist_md),
-                "interface_contract_manifest_json": str(interface_contract_manifest_json),
-                "exec_memory_json": str(exec_memory_latest_json),
-                "exec_memory_md": str(exec_memory_latest_md),
-                "exec_memory_current_json": str(exec_memory_current_json),
-                "exec_memory_current_md": str(exec_memory_current_md),
-                "exec_memory_build_status_json": str(exec_memory_build_status_json),
+                "weekly_report_json": str(ctx.weekly_report_json),
+                "weekly_report_md": str(ctx.weekly_report_md),
+                "dossier_json": str(ctx.dossier_json),
+                "dossier_md": str(ctx.dossier_md),
+                "go_signal_md": str(ctx.go_signal_md),
+                "weekly_summary_md": str(ctx.weekly_summary_md),
+                "review_checklist_md": str(ctx.review_checklist_md),
+                "interface_contract_manifest_json": str(ctx.interface_contract_manifest_json),
+                "exec_memory_json": str(ctx.exec_memory_latest_json),
+                "exec_memory_md": str(ctx.exec_memory_latest_md),
+                "exec_memory_current_json": str(ctx.exec_memory_current_json),
+                "exec_memory_current_md": str(ctx.exec_memory_current_md),
+                "exec_memory_build_status_json": str(ctx.exec_memory_build_status_json),
                 "exec_memory_latest_promoted": exec_memory_cycle_ready,
-                "next_round_handoff_json": str(next_round_handoff_json),
-                "next_round_handoff_md": str(next_round_handoff_md),
-                "expert_request_json": str(expert_request_json),
-                "expert_request_md": str(expert_request_md),
-                "pm_ceo_research_brief_json": str(pm_ceo_research_brief_json),
-                "pm_ceo_research_brief_md": str(pm_ceo_research_brief_md),
-                "board_decision_brief_json": str(board_decision_brief_json),
-                "board_decision_brief_md": str(board_decision_brief_md),
-                "compaction_state_json": str(compaction_state_json),
-                "compaction_status_json": str(compaction_status_json),
-                "closure_output_json": str(closure_output_json),
-                "closure_output_md": str(closure_output_md),
-                "summary_output_json": str(output_json),
-                "summary_output_md": str(output_md),
+                "next_round_handoff_json": str(ctx.next_round_handoff_json),
+                "next_round_handoff_md": str(ctx.next_round_handoff_md),
+                "expert_request_json": str(ctx.expert_request_json),
+                "expert_request_md": str(ctx.expert_request_md),
+                "pm_ceo_research_brief_json": str(ctx.pm_ceo_research_brief_json),
+                "pm_ceo_research_brief_md": str(ctx.pm_ceo_research_brief_md),
+                "board_decision_brief_json": str(ctx.board_decision_brief_json),
+                "board_decision_brief_md": str(ctx.board_decision_brief_md),
+                "compaction_state_json": str(ctx.compaction_state_json),
+                "compaction_status_json": str(ctx.compaction_status_json),
+                "closure_output_json": str(ctx.closure_output_json),
+                "closure_output_md": str(ctx.closure_output_md),
+                "summary_output_json": str(ctx.output_json),
+                "summary_output_md": str(ctx.output_md),
             },
             "next_round_handoff": (
                 {
@@ -707,8 +545,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 }
             )
             return
-        command = [args.python_exe, str(script_path)] + script_args
-        steps.append(_run_command(step_name=step_name, command=command, cwd=repo_root))
+        command = [ctx.python_exe, str(script_path)] + script_args
+        steps.append(_run_command(step_name=step_name, command=command, cwd=ctx.repo_root))
 
     def _step_by_name(step_name: str) -> dict[str, Any] | None:
         return next((step for step in steps if step.get("name") == step_name), None)
@@ -744,7 +582,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             return False
         if memory_step.get("status") not in {"PASS", "FAIL"}:
             return False
-        if not exec_memory_current_json.exists() or not exec_memory_current_md.exists():
+        if not ctx.exec_memory_current_json.exists() or not ctx.exec_memory_current_md.exists():
             memory_step["status"] = "FAIL"
             memory_step["exit_code"] = 2
             memory_step["message"] = (
@@ -753,12 +591,12 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             return False
         try:
             _atomic_write_text(
-                exec_memory_latest_json,
-                exec_memory_current_json.read_text(encoding="utf-8-sig"),
+                ctx.exec_memory_latest_json,
+                ctx.exec_memory_current_json.read_text(encoding="utf-8-sig"),
             )
             _atomic_write_text(
-                exec_memory_latest_md,
-                exec_memory_current_md.read_text(encoding="utf-8-sig"),
+                ctx.exec_memory_latest_md,
+                ctx.exec_memory_current_md.read_text(encoding="utf-8-sig"),
             )
         except OSError as exc:
             memory_step["status"] = "FAIL"
@@ -769,7 +607,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
 
     def _write_temp_summary_snapshot() -> bool:
         temp_summary_dict = build_summary_payload(
-            disagreement_sla=_scan_disagreement_sla(path=disagreement_ledger_jsonl, now_utc=_utc_now())
+            disagreement_sla=_scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
         )
         try:
             _atomic_write_text(temp_summary_path, json.dumps(temp_summary_dict, indent=2))
@@ -791,10 +629,10 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             return False
         return True
 
-    if args.skip_phase_end:
+    if ctx.skip_phase_end:
         steps.append(_skip_step("phase_end_handover", "Skipped by --skip-phase-end."))
     else:
-        if not phase_end_script.exists():
+        if not ctx.phase_end_script.exists():
             steps.append(
                 {
                     "name": "phase_end_handover",
@@ -806,7 +644,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                     "duration_seconds": 0.0,
                     "stdout": "",
                     "stderr": "",
-                    "message": f"Missing phase-end script: {phase_end_script}",
+                    "message": f"Missing phase-end script: {ctx.phase_end_script}",
                 }
             )
         else:
@@ -816,121 +654,121 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "-ExecutionPolicy",
                 "Bypass",
                 "-File",
-                str(phase_end_script),
+                str(ctx.phase_end_script),
                 "-RepoRoot",
-                str(repo_root),
+                str(ctx.repo_root),
                 "-AuditMode",
-                str(args.phase_end_audit_mode),
+                str(ctx.phase_end_audit_mode),
             ]
             steps.append(
                 _run_command(
                     step_name="phase_end_handover",
                     command=phase_end_command,
-                    cwd=repo_root,
+                    cwd=ctx.repo_root,
                 )
             )
 
     run_python_step(
         step_name="refresh_weekly_calibration",
-        script_path=auditor_script,
+        script_path=ctx.auditor_script,
         script_args=[
             "--logs-dir",
-            str(logs_dir),
+            str(ctx.logs_dir),
             "--repo-id",
-            repo_id,
+            ctx.repo_id,
             "--ledger",
-            str(fp_ledger_json),
+            str(ctx.fp_ledger_json),
             "--output-json",
-            str(weekly_report_json),
+            str(ctx.weekly_report_json),
             "--output-md",
-            str(weekly_report_md),
+            str(ctx.weekly_report_md),
             "--mode",
             "weekly",
         ],
     )
     run_python_step(
         step_name="refresh_dossier",
-        script_path=auditor_script,
+        script_path=ctx.auditor_script,
         script_args=[
             "--logs-dir",
-            str(logs_dir),
+            str(ctx.logs_dir),
             "--repo-id",
-            repo_id,
+            ctx.repo_id,
             "--ledger",
-            str(fp_ledger_json),
+            str(ctx.fp_ledger_json),
             "--output-json",
-            str(dossier_json),
+            str(ctx.dossier_json),
             "--output-md",
-            str(dossier_md),
+            str(ctx.dossier_md),
             "--mode",
             "dossier",
         ],
     )
     run_python_step(
         step_name="generate_ceo_go_signal",
-        script_path=go_signal_script,
+        script_path=ctx.go_signal_script,
         script_args=[
             "--calibration-json",
-            str(weekly_report_json),
+            str(ctx.weekly_report_json),
             "--dossier-json",
-            str(dossier_json),
+            str(ctx.dossier_json),
             "--output",
-            str(go_signal_md),
+            str(ctx.go_signal_md),
         ],
     )
-    if weekly_summary_gen_script.exists():
+    if ctx.weekly_summary_gen_script.exists():
         run_python_step(
             step_name="refresh_ceo_weekly_summary",
-            script_path=weekly_summary_gen_script,
+            script_path=ctx.weekly_summary_gen_script,
             script_args=[
                 "--dossier-json",
-                str(dossier_json),
+                str(ctx.dossier_json),
                 "--calibration-json",
-                str(weekly_report_json),
+                str(ctx.weekly_report_json),
                 "--go-signal-md",
-                str(go_signal_md),
+                str(ctx.go_signal_md),
                 "--output",
-                str(weekly_summary_md),
+                str(ctx.weekly_summary_md),
             ],
         )
     else:
         steps.append(
             _skip_step(
                 "refresh_ceo_weekly_summary",
-                f"Script not found: {weekly_summary_gen_script}",
+                f"Script not found: {ctx.weekly_summary_gen_script}",
             )
         )
 
-    _remove_if_exists(exec_memory_current_json)
-    _remove_if_exists(exec_memory_current_md)
-    _remove_if_exists(exec_memory_build_status_json)
-    if not memory_packet_script.exists():
+    _remove_if_exists(ctx.exec_memory_current_json)
+    _remove_if_exists(ctx.exec_memory_current_md)
+    _remove_if_exists(ctx.exec_memory_build_status_json)
+    if not ctx.memory_packet_script.exists():
         steps.append(
             _skip_step(
                 "build_exec_memory_packet",
-                f"Script not found: {memory_packet_script}",
+                f"Script not found: {ctx.memory_packet_script}",
             )
         )
     elif _write_temp_summary_snapshot():
         run_python_step(
             step_name="build_exec_memory_packet",
-            script_path=memory_packet_script,
+            script_path=ctx.memory_packet_script,
             script_args=[
                 "--loop-summary-json",
                 str(temp_summary_path),
                 "--output-json",
-                str(exec_memory_current_json),
+                str(ctx.exec_memory_current_json),
                 "--output-md",
-                str(exec_memory_current_md),
+                str(ctx.exec_memory_current_md),
                 "--status-json",
-                str(exec_memory_build_status_json),
+                str(ctx.exec_memory_build_status_json),
                 "--pm-budget-tokens",
-                str(args.pm_budget_tokens),
+                str(ctx.pm_budget_tokens),
                 "--ceo-budget-tokens",
-                str(args.ceo_budget_tokens),
+                str(ctx.ceo_budget_tokens),
             ],
         )
-        exec_memory_build_status = _load_exec_memory_build_status(exec_memory_build_status_json)
+        exec_memory_build_status = _load_exec_memory_build_status(ctx.exec_memory_build_status_json)
         exec_memory_cycle_ready = _promote_exec_memory_outputs(
             _step_by_name("build_exec_memory_packet"),
             exec_memory_build_status,
@@ -943,30 +781,30 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
 
-    if compaction_trigger_script.exists():
+    if ctx.compaction_trigger_script.exists():
         if exec_memory_cycle_ready:
             run_python_step(
                 step_name="evaluate_context_compaction_trigger",
-                script_path=compaction_trigger_script,
+                script_path=ctx.compaction_trigger_script,
                 script_args=[
                     "--memory-json",
-                    str(exec_memory_current_json),
+                    str(ctx.exec_memory_current_json),
                     "--dossier-json",
-                    str(dossier_json),
+                    str(ctx.dossier_json),
                     "--go-signal-md",
-                    str(go_signal_md),
+                    str(ctx.go_signal_md),
                     "--state-json",
-                    str(compaction_state_json),
+                    str(ctx.compaction_state_json),
                     "--output-json",
-                    str(compaction_status_json),
+                    str(ctx.compaction_status_json),
                     "--pm-warn",
-                    str(args.compaction_pm_warn),
+                    str(ctx.compaction_pm_warn),
                     "--ceo-warn",
-                    str(args.compaction_ceo_warn),
+                    str(ctx.compaction_ceo_warn),
                     "--force",
-                    str(args.compaction_force),
+                    str(ctx.compaction_force),
                     "--max-age-hours",
-                    str(args.compaction_max_age_hours),
+                    str(ctx.compaction_max_age_hours),
                 ],
             )
         else:
@@ -975,7 +813,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                     "evaluate_context_compaction_trigger",
                     (
                         "Current-cycle exec memory packet unavailable: "
-                        f"{exec_memory_current_json}"
+                        f"{ctx.exec_memory_current_json}"
                     ),
                 )
             )
@@ -983,68 +821,68 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         steps.append(
             _skip_step(
                 "evaluate_context_compaction_trigger",
-                f"Script not found: {compaction_trigger_script}",
+                f"Script not found: {ctx.compaction_trigger_script}",
             )
         )
 
-    if go_truth_script.exists():
+    if ctx.go_truth_script.exists():
         run_python_step(
             step_name="validate_ceo_go_signal_truth",
-            script_path=go_truth_script,
+            script_path=ctx.go_truth_script,
             script_args=[
                 "--dossier-json",
-                str(dossier_json),
+                str(ctx.dossier_json),
                 "--calibration-json",
-                str(weekly_report_json),
+                str(ctx.weekly_report_json),
                 "--go-signal-md",
-                str(go_signal_md),
+                str(ctx.go_signal_md),
             ],
         )
     else:
         steps.append(
             _skip_step(
                 "validate_ceo_go_signal_truth",
-                f"Script not found: {go_truth_script}",
+                f"Script not found: {ctx.go_truth_script}",
             )
         )
 
-    if weekly_summary_md.exists() and weekly_truth_script.exists():
+    if ctx.weekly_summary_md.exists() and ctx.weekly_truth_script.exists():
         run_python_step(
             step_name="validate_ceo_weekly_summary_truth",
-            script_path=weekly_truth_script,
+            script_path=ctx.weekly_truth_script,
             script_args=[
                 "--dossier-json",
-                str(dossier_json),
+                str(ctx.dossier_json),
                 "--calibration-json",
-                str(weekly_report_json),
+                str(ctx.weekly_report_json),
                 "--weekly-md",
-                str(weekly_summary_md),
+                str(ctx.weekly_summary_md),
             ],
         )
-    elif not weekly_summary_md.exists():
+    elif not ctx.weekly_summary_md.exists():
         steps.append(
             _skip_step(
                 "validate_ceo_weekly_summary_truth",
-                f"Weekly summary not found: {weekly_summary_md}",
+                f"Weekly summary not found: {ctx.weekly_summary_md}",
             )
         )
     else:
         steps.append(
             _skip_step(
                 "validate_ceo_weekly_summary_truth",
-                f"Script not found: {weekly_truth_script}",
+                f"Script not found: {ctx.weekly_truth_script}",
             )
         )
 
-    if exec_memory_cycle_ready and memory_truth_script.exists():
+    if exec_memory_cycle_ready and ctx.memory_truth_script.exists():
         run_python_step(
             step_name="validate_exec_memory_truth",
-            script_path=memory_truth_script,
+            script_path=ctx.memory_truth_script,
             script_args=[
                 "--memory-json",
-                str(exec_memory_current_json),
+                str(ctx.exec_memory_current_json),
                 "--repo-root",
-                str(repo_root),
+                str(ctx.repo_root),
             ],
         )
     elif not exec_memory_cycle_ready:
@@ -1053,7 +891,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "validate_exec_memory_truth",
                 (
                     "Current-cycle exec memory packet not available: "
-                    f"{exec_memory_current_json}"
+                    f"{ctx.exec_memory_current_json}"
                 ),
             )
         )
@@ -1061,116 +899,116 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         steps.append(
             _skip_step(
                 "validate_exec_memory_truth",
-                f"Script not found: {memory_truth_script}",
+                f"Script not found: {ctx.memory_truth_script}",
             )
         )
 
     run_python_step(
         step_name="validate_counterexample_gate",
-        script_path=counterexample_script,
+        script_path=ctx.counterexample_script,
         script_args=[
             "--round-contract-md",
-            str(context_dir / "round_contract_latest.md"),
+            str(ctx.context_dir / "round_contract_latest.md"),
         ],
     )
 
     run_python_step(
         step_name="validate_dual_judge_gate",
-        script_path=dual_judge_script,
+        script_path=ctx.dual_judge_script,
         script_args=[
             "--round-contract-md",
-            str(context_dir / "round_contract_latest.md"),
+            str(ctx.context_dir / "round_contract_latest.md"),
         ],
     )
 
     run_python_step(
         step_name="validate_refactor_mock_policy",
-        script_path=refactor_mock_policy_script,
+        script_path=ctx.refactor_mock_policy_script,
         script_args=[
             "--round-contract-md",
-            str(context_dir / "round_contract_latest.md"),
+            str(ctx.context_dir / "round_contract_latest.md"),
         ],
     )
 
-    if review_checklist_md.exists():
+    if ctx.review_checklist_md.exists():
         run_python_step(
             step_name="validate_review_checklist",
-            script_path=review_checklist_script,
+            script_path=ctx.review_checklist_script,
             script_args=[
                 "--input",
-                str(review_checklist_md),
+                str(ctx.review_checklist_md),
             ],
         )
     else:
         steps.append(
             _skip_step(
                 "validate_review_checklist",
-                f"Review checklist not found: {review_checklist_md}",
+                f"Review checklist not found: {ctx.review_checklist_md}",
             )
         )
 
-    if interface_contract_manifest_json.exists():
+    if ctx.interface_contract_manifest_json.exists():
         run_python_step(
             step_name="validate_interface_contracts",
-            script_path=interface_contracts_script,
+            script_path=ctx.interface_contracts_script,
             script_args=[
                 "--manifest-json",
-                str(interface_contract_manifest_json),
+                str(ctx.interface_contract_manifest_json),
             ],
         )
     else:
         steps.append(
             _skip_step(
                 "validate_interface_contracts",
-                f"Interface contract manifest not found: {interface_contract_manifest_json}",
+                f"Interface contract manifest not found: {ctx.interface_contract_manifest_json}",
             )
         )
 
     run_python_step(
         step_name="validate_parallel_fanin",
-        script_path=parallel_fanin_script,
+        script_path=ctx.parallel_fanin_script,
         script_args=[
             "--context-dir",
-            str(context_dir),
+            str(ctx.context_dir),
         ],
     )
 
     run_python_step(
         step_name="validate_loop_closure",
-        script_path=closure_script,
+        script_path=ctx.closure_script,
         script_args=[
             "--repo-root",
-            str(repo_root),
+            str(ctx.repo_root),
             "--context-dir",
-            str(context_dir),
+            str(ctx.context_dir),
             "--dossier-json",
-            str(dossier_json),
+            str(ctx.dossier_json),
             "--calibration-json",
-            str(weekly_report_json),
+            str(ctx.weekly_report_json),
             "--go-signal-md",
-            str(go_signal_md),
+            str(ctx.go_signal_md),
             "--weekly-summary-md",
-            str(weekly_summary_md),
+            str(ctx.weekly_summary_md),
             "--go-truth-script",
-            str(go_truth_script),
+            str(ctx.go_truth_script),
             "--weekly-truth-script",
-            str(weekly_truth_script),
+            str(ctx.weekly_truth_script),
             "--memory-json",
-            str(exec_memory_current_json),
+            str(ctx.exec_memory_current_json),
             "--memory-truth-script",
-            str(memory_truth_script),
+            str(ctx.memory_truth_script),
             "--refactor-mock-policy-script",
-            str(refactor_mock_policy_script),
+            str(ctx.refactor_mock_policy_script),
             "--review-checklist-script",
-            str(review_checklist_script),
+            str(ctx.review_checklist_script),
             "--interface-contracts-script",
-            str(interface_contracts_script),
+            str(ctx.interface_contracts_script),
             "--freshness-hours",
-            str(args.freshness_hours),
+            str(ctx.freshness_hours),
             "--output-json",
-            str(closure_output_json),
+            str(ctx.closure_output_json),
             "--output-md",
-            str(closure_output_md),
+            str(ctx.closure_output_md),
         ],
     )
 
@@ -1178,14 +1016,14 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
 
     run_python_step(
         step_name="validate_round_contract_checks",
-        script_path=round_contract_checks_script,
+        script_path=ctx.round_contract_checks_script,
         script_args=[
             "--round-contract-md",
-            str(context_dir / "round_contract_latest.md"),
+            str(ctx.context_dir / "round_contract_latest.md"),
             "--loop-summary-json",
             str(temp_summary_path),
             "--closure-json",
-            str(closure_output_json),
+            str(ctx.closure_output_json),
         ],
     )
 
@@ -1197,22 +1035,22 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
 
     _apply_hold_semantics(
         steps=steps,
-        allow_hold=bool(args.allow_hold),
-        closure_output_json=closure_output_json,
+        allow_hold=ctx.allow_hold,
+        closure_output_json=ctx.closure_output_json,
     )
 
     if exec_memory_cycle_ready:
         advisory_artifacts = persist_advisory_sections(
-            context_dir=context_dir,
-            exec_memory_json=exec_memory_latest_json,
+            context_dir=ctx.context_dir,
+            exec_memory_json=ctx.exec_memory_latest_json,
         )
         next_round_handoff_artifacts = advisory_artifacts["next_round_handoff"]
         expert_request_artifacts = advisory_artifacts["expert_request"]
         pm_ceo_research_brief_artifacts = advisory_artifacts["pm_ceo_research_brief"]
         board_decision_brief_artifacts = advisory_artifacts["board_decision_brief"]
         repo_root_convenience = mirror_repo_root_convenience(
-            repo_root=repo_root,
-            context_dir=context_dir,
+            repo_root=ctx.repo_root,
+            context_dir=ctx.context_dir,
             advisory_artifacts=advisory_artifacts,
         )
     else:
@@ -1222,7 +1060,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         board_decision_brief_artifacts = None
         repo_root_convenience = {}
 
-    disagreement_sla = _scan_disagreement_sla(path=disagreement_ledger_jsonl, now_utc=_utc_now())
+    disagreement_sla = _scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
 
     payload = build_summary_payload(
         disagreement_sla=disagreement_sla,
@@ -1241,7 +1079,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         f"- GeneratedAtUTC: {generated_at_utc}",
         f"- FinalResult: {final_result}",
         f"- FinalExitCode: {final_exit_code}",
-        f"- SkipPhaseEnd: {bool(args.skip_phase_end)}",
+        f"- SkipPhaseEnd: {bool(ctx.skip_phase_end)}",
         "",
         "| Step | Status | Exit | Message |",
         "|---|---|---:|---|",
@@ -1350,7 +1188,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             [
                 "## Repo-Root Convenience Files",
                 "",
-                f"- SourceOfTruth: {context_dir}",
+                f"- SourceOfTruth: {ctx.context_dir}",
             ]
         )
         for section_key, _, title in REPO_ROOT_CONVENIENCE_SPECS:
@@ -1365,8 +1203,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     markdown = "\n".join(md_lines)
 
     try:
-        _atomic_write_text(output_json, json.dumps(payload, indent=2) + "\n")
-        _atomic_write_text(output_md, markdown)
+        _atomic_write_text(ctx.output_json, json.dumps(payload, indent=2) + "\n")
+        _atomic_write_text(ctx.output_md, markdown)
     except OSError:
         payload["final_result"] = "ERROR"
         payload["final_exit_code"] = 2

@@ -12,6 +12,7 @@ SCRIPT_ROOT = REPO_ROOT / "scripts"
 ACTUAL_SCRIPTS = (
     "startup_codex_helper.py",
     "loop_cycle_artifacts.py",
+    "loop_cycle_context.py",
     "run_loop_cycle.py",
     "validate_loop_closure.py",
     "run_fast_checks.py",
