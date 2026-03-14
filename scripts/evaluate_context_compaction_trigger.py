@@ -19,6 +19,7 @@ if __name__ == "__main__":
 
 from scripts.utils.memory_tiers import bind_memory_tier_paths
 from scripts.utils.memory_tiers import build_memory_tier_snapshot
+from scripts.utils.compaction_retention import evaluate_compaction_guardrails
 
 
 CRITERIA_ORDER = [
@@ -252,6 +253,21 @@ def main(argv: list[str] | None = None) -> int:
                 reasons.append("stale_since_last_compaction")
 
         should_compact = len(reasons) > 0
+        guardrail_eval = evaluate_compaction_guardrails(memory)
+        retention_plan = guardrail_eval["retention_plan"]
+        policy_snapshot = guardrail_eval["policy_snapshot"]
+        guardrail_violations = (
+            list(guardrail_eval["guardrail_violations"])
+            if should_compact
+            else []
+        )
+        can_compact = should_compact and not guardrail_violations
+        if not should_compact:
+            decision_mode = "no_action"
+        elif can_compact:
+            decision_mode = "recommend_compact"
+        else:
+            decision_mode = "blocked_guardrail"
 
         next_state: dict[str, Any] = {
             "schema_version": "1.0.0",
@@ -268,7 +284,12 @@ def main(argv: list[str] | None = None) -> int:
         payload: dict[str, Any] = {
             "generated_at_utc": generated_at_utc,
             "should_compact": should_compact,
+            "can_compact": can_compact,
+            "decision_mode": decision_mode,
             "reasons": reasons,
+            "guardrail_violations": guardrail_violations,
+            "policy_snapshot": policy_snapshot,
+            "retention_plan": retention_plan,
             "ratios": {
                 "pm_ratio": round(pm_ratio, 6),
                 "ceo_ratio": round(ceo_ratio, 6),

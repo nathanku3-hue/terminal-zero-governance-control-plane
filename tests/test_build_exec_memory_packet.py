@@ -584,6 +584,41 @@ def test_memory_tier_contract_uses_shared_mapping(tmp_path: Path) -> None:
     assert output_bindings["board_decision_brief"]["tier"] == "warm"
 
 
+def test_compaction_retention_contract_protects_handoff_surfaces(tmp_path: Path) -> None:
+    result, json_path, _ = _run_script(
+        tmp_path,
+        loop_summary=_make_loop_summary(),
+        dossier=_make_dossier(),
+        calibration=_make_calibration(),
+        go_signal=_make_go_signal(),
+        decision_log=_make_decision_log(),
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    packet = json.loads(json_path.read_text(encoding="utf-8"))
+    contract = packet["compaction_retention_contract"]
+
+    assert contract["source_of_truth"] == "scripts/utils/compaction_retention.py"
+    assert contract["documentation"] == "docs/compaction_behavior_contract.md"
+
+    required_always = {row["packet_section"] for row in contract["required_always"]}
+    required_if_present = {row["packet_section"] for row in contract["required_if_present"]}
+    cold_manual = {row["surface"] for row in contract["cold_manual_fallback"]}
+
+    assert required_always == {
+        "next_round_handoff",
+        "expert_request",
+        "pm_ceo_research_brief",
+        "board_decision_brief",
+    }
+    assert required_if_present == {"replanning", "automation_uncertainty_status"}
+    assert cold_manual == {"auditor_fp_ledger"}
+
+    for protected_section in required_always:
+        assert protected_section in packet
+        assert packet[protected_section] is not None
+
+
 def test_token_budget_tracking(tmp_path: Path) -> None:
     result, json_path, md_path = _run_script(
         tmp_path,

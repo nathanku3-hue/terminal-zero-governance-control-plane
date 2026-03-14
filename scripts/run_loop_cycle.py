@@ -13,6 +13,34 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from utils.path_validator import validate_artifact_path
+except ModuleNotFoundError:
+    try:
+        from scripts.utils.path_validator import validate_artifact_path
+    except ModuleNotFoundError:
+        def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
+            path = str(path).strip()
+            if not path:
+                return False, "Empty path"
+            if path.startswith("/") or (len(path) >= 2 and path[1] == ":"):
+                return False, f"Absolute path not allowed: {path}"
+            path_parts = path.replace("\\", "/").split("/")
+            if ".." in path_parts:
+                return False, f"Parent directory escape (..) not allowed: {path}"
+            if path_parts[0] == repo_root.resolve().name:
+                return False, (
+                    f"Path must not start with repo root name '{repo_root.resolve().name}'"
+                )
+            try:
+                artifact_path = (repo_root / path).resolve()
+                artifact_path.relative_to(repo_root.resolve())
+            except ValueError:
+                return False, f"Path escapes repository root: {path}"
+            except Exception as exc:  # pragma: no cover - defensive fallback
+                return False, f"Path resolution error: {path} ({exc})"
+            return True, ""
+
+try:
     from loop_cycle_artifacts import (
         REPO_ROOT_CONVENIENCE_SPECS,
         mirror_repo_root_convenience,
@@ -30,6 +58,7 @@ except ModuleNotFoundError:
     from scripts.loop_cycle_runtime import build_loop_cycle_runtime
 
 DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
+APPROVED_CONTEXT_RELATIVE = Path("docs/context")
 
 
 class ExecMemoryStageResult:
@@ -102,6 +131,110 @@ def _find_weekly_summary(context_dir: Path, explicit: Path | None, repo_root: Pa
         return default_latest
     candidates.sort(reverse=True)
     return candidates[0][2]
+
+
+def _coerce_string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    result: list[str] = []
+    for item in value:
+        text = str(item).strip()
+        if text:
+            result.append(text)
+    return result
+
+
+def _empty_compaction_summary(
+    *,
+    status: str,
+    step_status: str | None,
+    source_json: Path,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "step_status": step_status,
+        "source_json": str(source_json),
+        "generated_at_utc": None,
+        "should_compact": None,
+        "can_compact": None,
+        "decision_mode": None,
+        "reasons": [],
+        "guardrail_violations": [],
+    }
+
+
+def _load_compaction_status_summary(
+    *,
+    step: dict[str, Any] | None,
+    status_json: Path,
+) -> dict[str, Any]:
+    step_status = None
+    if step is not None:
+        step_status_text = str(step.get("status", "")).strip().upper()
+        step_status = step_status_text or None
+
+    if step is None:
+        return _empty_compaction_summary(
+            status="skipped",
+            step_status=step_status,
+            source_json=status_json,
+        )
+    if step_status != "PASS":
+        non_pass_status = {
+            "SKIP": "skipped",
+            "FAIL": "failed",
+            "ERROR": "error",
+            "HOLD": "held",
+        }.get(step_status or "", "skipped")
+        return _empty_compaction_summary(
+            status=non_pass_status,
+            step_status=step_status,
+            source_json=status_json,
+        )
+
+    if not status_json.exists():
+        return _empty_compaction_summary(
+            status="missing",
+            step_status=step_status,
+            source_json=status_json,
+        )
+
+    try:
+        payload = json.loads(status_json.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        return _empty_compaction_summary(
+            status="invalid",
+            step_status=step_status,
+            source_json=status_json,
+        )
+
+    if not isinstance(payload, dict):
+        return _empty_compaction_summary(
+            status="invalid",
+            step_status=step_status,
+            source_json=status_json,
+        )
+
+    should_compact = payload.get("should_compact")
+    can_compact = payload.get("can_compact")
+    decision_mode = payload.get("decision_mode")
+    generated_at_utc = payload.get("generated_at_utc")
+
+    return {
+        "status": "available",
+        "step_status": step_status,
+        "source_json": str(status_json),
+        "generated_at_utc": generated_at_utc if isinstance(generated_at_utc, str) else None,
+        "should_compact": should_compact if isinstance(should_compact, bool) else None,
+        "can_compact": can_compact if isinstance(can_compact, bool) else None,
+        "decision_mode": (
+            str(decision_mode).strip()
+            if isinstance(decision_mode, str) and str(decision_mode).strip()
+            else None
+        ),
+        "reasons": _coerce_string_list(payload.get("reasons")),
+        "guardrail_violations": _coerce_string_list(payload.get("guardrail_violations")),
+    }
 
 
 def _run_command(step_name: str, command: list[str], cwd: Path) -> dict[str, Any]:
@@ -185,6 +318,124 @@ def _parse_bool(value: str) -> bool:
     if normalized in {"0", "false", "no", "n", "off"}:
         return False
     raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
+
+
+def _error_result(message: str) -> tuple[int, dict[str, Any], str]:
+    generated_at_utc = _utc_iso(_utc_now())
+    payload = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": generated_at_utc,
+        "steps": [],
+        "final_result": "ERROR",
+        "final_exit_code": 2,
+        "message": message,
+    }
+    markdown = "\n".join(
+        [
+            "# Loop Cycle Summary",
+            "",
+            f"- GeneratedAtUTC: {generated_at_utc}",
+            "- FinalResult: ERROR",
+            "- FinalExitCode: 2",
+            f"- Message: {message}",
+            "",
+        ]
+    )
+    return 2, payload, markdown
+
+
+def _first_relative_path_component(candidate: Path) -> str:
+    for part in candidate.as_posix().split("/"):
+        if part and part != ".":
+            return part
+    return ""
+
+
+def _validate_repo_root_argument(repo_root_arg: Path) -> str | None:
+    if not repo_root_arg.is_absolute():
+        first_component = _first_relative_path_component(repo_root_arg)
+        cwd_name = Path.cwd().resolve().name
+        if first_component and first_component == cwd_name:
+            return (
+                f"Relative --repo-root must not start with the current repo root name "
+                f"'{cwd_name}'."
+            )
+        is_valid, error = validate_artifact_path(repo_root_arg.as_posix(), Path.cwd().resolve())
+        if not is_valid:
+            return f"Invalid --repo-root path: {error}"
+
+    resolved_repo_root = repo_root_arg.resolve()
+    if resolved_repo_root.parent.name == resolved_repo_root.name:
+        return (
+            "Repo root must not be nested under a same-name directory "
+            f"({resolved_repo_root})."
+        )
+    return None
+
+
+def _validate_exact_path(actual: Path, expected: Path, label: str) -> str | None:
+    if actual.resolve() != expected.resolve():
+        return f"{label} must be written to canonical path {expected} (got {actual})."
+    return None
+
+
+def _validate_run_cycle_writer_boundaries(ctx: Any) -> str | None:
+    expected_context_dir = (ctx.repo_root / APPROVED_CONTEXT_RELATIVE).resolve()
+    checks = [
+        (ctx.context_dir, expected_context_dir, "--context-dir"),
+        (ctx.output_json, expected_context_dir / "loop_cycle_summary_latest.json", "--output-json"),
+        (ctx.output_md, expected_context_dir / "loop_cycle_summary_latest.md", "--output-md"),
+        (
+            ctx.closure_output_json,
+            expected_context_dir / "loop_closure_status_latest.json",
+            "--closure-output-json",
+        ),
+        (
+            ctx.closure_output_md,
+            expected_context_dir / "loop_closure_status_latest.md",
+            "--closure-output-md",
+        ),
+        (
+            ctx.exec_memory_latest_json,
+            expected_context_dir / "exec_memory_packet_latest.json",
+            "--exec-memory-json",
+        ),
+        (
+            ctx.exec_memory_latest_md,
+            expected_context_dir / "exec_memory_packet_latest.md",
+            "--exec-memory-md",
+        ),
+        (
+            ctx.exec_memory_current_json,
+            expected_context_dir / "exec_memory_packet_latest_current.json",
+            "exec-memory current JSON staging output",
+        ),
+        (
+            ctx.exec_memory_current_md,
+            expected_context_dir / "exec_memory_packet_latest_current.md",
+            "exec-memory current Markdown staging output",
+        ),
+        (
+            ctx.exec_memory_build_status_json,
+            expected_context_dir / "exec_memory_packet_build_status_current.json",
+            "exec-memory build-status output",
+        ),
+        (
+            ctx.compaction_state_json,
+            expected_context_dir / "context_compaction_state_latest.json",
+            "--compaction-state-json",
+        ),
+        (
+            ctx.compaction_status_json,
+            expected_context_dir / "context_compaction_status_latest.json",
+            "--compaction-status-json",
+        ),
+    ]
+    for actual, expected, label in checks:
+        error = _validate_exact_path(actual, expected, label)
+        if error is not None:
+            return error
+    return None
 
 
 def _load_closure_result(path: Path) -> str:
@@ -351,8 +602,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
+    repo_root_error = _validate_repo_root_argument(args.repo_root)
+    if repo_root_error is not None:
+        return _error_result(repo_root_error)
+
     # Build immutable context from args
     ctx = build_loop_cycle_context(args)
+
+    writer_boundary_error = _validate_run_cycle_writer_boundaries(ctx)
+    if writer_boundary_error is not None:
+        return _error_result(writer_boundary_error)
 
     # Create directories before building runtime (runtime writes lesson stubs immediately)
     ctx.context_dir.mkdir(parents=True, exist_ok=True)
@@ -397,6 +656,18 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             final_result = "PASS"
 
         repo_root_convenience = runtime.repo_root_convenience or {}
+        compaction_step = next(
+            (
+                step
+                for step in runtime.steps
+                if step.get("name") == "evaluate_context_compaction_trigger"
+            ),
+            None,
+        )
+        compaction = _load_compaction_status_summary(
+            step=compaction_step,
+            status_json=ctx.compaction_status_json,
+        )
 
         return {
             "schema_version": "1.0.0",
@@ -444,6 +715,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "summary_output_json": str(ctx.output_json),
                 "summary_output_md": str(ctx.output_md),
             },
+            "compaction": compaction,
             "next_round_handoff": (
                 {
                     "status": runtime.next_round_handoff_artifacts["status"],
@@ -482,6 +754,15 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                     "recommended_option": str(runtime.board_decision_brief_artifacts["payload"].get("recommended_option", "")).strip(),
                 }
                 if runtime.board_decision_brief_artifacts is not None
+                else None
+            ),
+            "skill_activation": (
+                {
+                    "status": runtime.skill_activation_artifacts["status"],
+                    "skill_count": len(runtime.skill_activation_artifacts["payload"].get("skills", [])),
+                    "warnings": runtime.skill_activation_artifacts["payload"].get("warnings", []),
+                }
+                if runtime.skill_activation_artifacts is not None
                 else None
             ),
             "repo_root_convenience": {
@@ -529,6 +810,34 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     ) -> bool:
         if memory_step is None:
             return False
+        for actual, expected, label in (
+            (
+                ctx.exec_memory_current_json,
+                ctx.context_dir / "exec_memory_packet_latest_current.json",
+                "exec-memory current JSON staging output",
+            ),
+            (
+                ctx.exec_memory_current_md,
+                ctx.context_dir / "exec_memory_packet_latest_current.md",
+                "exec-memory current Markdown staging output",
+            ),
+            (
+                ctx.exec_memory_latest_json,
+                ctx.context_dir / "exec_memory_packet_latest.json",
+                "exec-memory latest JSON output",
+            ),
+            (
+                ctx.exec_memory_latest_md,
+                ctx.context_dir / "exec_memory_packet_latest.md",
+                "exec-memory latest Markdown output",
+            ),
+        ):
+            error = _validate_exact_path(actual, expected, label)
+            if error is not None:
+                memory_step["status"] = "FAIL"
+                memory_step["exit_code"] = 2
+                memory_step["message"] = error
+                return False
         if build_status is None:
             memory_step["status"] = "FAIL"
             memory_step["exit_code"] = 2
@@ -662,6 +971,27 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         temp_summary_dict = build_summary_payload(
             disagreement_sla=_scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
         )
+        temp_summary_error = _validate_exact_path(
+            runtime.temp_summary_path,
+            ctx.context_dir / "loop_cycle_summary_current.json",
+            "loop-cycle current summary snapshot",
+        )
+        if temp_summary_error is not None:
+            runtime.steps.append(
+                {
+                    "name": "write_temp_summary",
+                    "status": "ERROR",
+                    "exit_code": None,
+                    "command": [],
+                    "started_utc": runtime.generated_at_utc,
+                    "ended_utc": runtime.generated_at_utc,
+                    "duration_seconds": 0.0,
+                    "stdout": "",
+                    "stderr": temp_summary_error,
+                    "message": temp_summary_error,
+                }
+            )
+            return False
         try:
             _atomic_write_text(runtime.temp_summary_path, json.dumps(temp_summary_dict, indent=2))
         except OSError as exc:
@@ -677,6 +1007,30 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                     "stdout": "",
                     "stderr": str(exc),
                     "message": f"Failed to write temp summary: {exc}",
+                }
+            )
+            return False
+        return True
+
+    def _write_round_contract_summary_snapshot() -> bool:
+        round_contract_summary = build_summary_payload(
+            disagreement_sla=_scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
+        )
+        try:
+            _atomic_write_text(ctx.output_json, json.dumps(round_contract_summary, indent=2) + "\n")
+        except OSError as exc:
+            runtime.steps.append(
+                {
+                    "name": "write_round_contract_summary",
+                    "status": "ERROR",
+                    "exit_code": None,
+                    "command": [],
+                    "started_utc": runtime.generated_at_utc,
+                    "ended_utc": runtime.generated_at_utc,
+                    "duration_seconds": 0.0,
+                    "stdout": "",
+                    "stderr": str(exc),
+                    "message": f"Failed to write round-contract summary: {exc}",
                 }
             )
             return False
@@ -1027,26 +1381,26 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         ],
     )
 
-    _write_temp_summary_snapshot()
-
-    run_python_step(
-        step_name="validate_round_contract_checks",
-        script_path=ctx.round_contract_checks_script,
-        script_args=[
-            "--round-contract-md",
-            str(ctx.context_dir / "round_contract_latest.md"),
-            "--loop-summary-json",
-            str(runtime.temp_summary_path),
-            "--closure-json",
-            str(ctx.closure_output_json),
-        ],
-    )
-
-    if runtime.temp_summary_path.exists():
-        try:
-            runtime.temp_summary_path.unlink()
-        except OSError:
-            pass
+    if _write_round_contract_summary_snapshot():
+        run_python_step(
+            step_name="validate_round_contract_checks",
+            script_path=ctx.round_contract_checks_script,
+            script_args=[
+                "--round-contract-md",
+                str(ctx.context_dir / "round_contract_latest.md"),
+                "--loop-summary-json",
+                str(ctx.output_json),
+                "--closure-json",
+                str(ctx.closure_output_json),
+            ],
+        )
+    else:
+        runtime.steps.append(
+            _skip_step(
+                "validate_round_contract_checks",
+                f"Round-contract summary snapshot unavailable: {ctx.output_json}",
+            )
+        )
 
     _apply_hold_semantics(
         steps=runtime.steps,
@@ -1063,6 +1417,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         runtime.expert_request_artifacts = advisory_artifacts["expert_request"]
         runtime.pm_ceo_research_brief_artifacts = advisory_artifacts["pm_ceo_research_brief"]
         runtime.board_decision_brief_artifacts = advisory_artifacts["board_decision_brief"]
+        runtime.skill_activation_artifacts = advisory_artifacts["skill_activation"]
         runtime.repo_root_convenience = mirror_repo_root_convenience(
             repo_root=ctx.repo_root,
             context_dir=ctx.context_dir,
@@ -1073,6 +1428,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         runtime.expert_request_artifacts = None
         runtime.pm_ceo_research_brief_artifacts = None
         runtime.board_decision_brief_artifacts = None
+        runtime.skill_activation_artifacts = None
         runtime.repo_root_convenience = {}
 
     disagreement_sla = _scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
@@ -1190,6 +1546,18 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 f"- RecommendedOption: {runtime.board_decision_brief_artifacts['payload'].get('recommended_option', '')}",
                 f"- JSON: {runtime.board_decision_brief_artifacts['json']}",
                 f"- Markdown: {runtime.board_decision_brief_artifacts['md']}",
+                "",
+            ]
+        )
+    if runtime.skill_activation_artifacts is not None:
+        skill_count = len(runtime.skill_activation_artifacts['payload'].get('skills', []))
+        md_lines.extend(
+            [
+                "## Skill Activation",
+                "",
+                f"- Status: {runtime.skill_activation_artifacts['status']}",
+                f"- ActiveSkills: {skill_count}",
+                f"- JSON: {runtime.skill_activation_artifacts['json']}",
                 "",
             ]
         )

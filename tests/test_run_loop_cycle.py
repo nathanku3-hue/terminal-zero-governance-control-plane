@@ -380,6 +380,9 @@ def _fake_run_factory(
     pm_ceo_research_brief: dict[str, object] | None = None,
     board_decision_brief: dict[str, object] | None = None,
     round_contract_observations: list[dict[str, object]] | None = None,
+    compaction_status_payload: dict[str, object] | None = None,
+    compaction_status_raw: str | None = None,
+    compaction_exit_code: int = 0,
 ) -> callable:
     def _fake_run(
         command: list[str],
@@ -477,7 +480,21 @@ def _fake_run_factory(
                             closure_json_path.read_text(encoding="utf-8")
                         )
             if round_contract_observations is not None:
-                round_contract_observations.append(observation)
+                    round_contract_observations.append(observation)
+        if any("evaluate_context_compaction_trigger.py" in token for token in command):
+            exit_code = compaction_exit_code
+            if "--output-json" in command:
+                output_index = command.index("--output-json")
+                if output_index + 1 < len(command):
+                    output_json = Path(command[output_index + 1])
+                    output_json.parent.mkdir(parents=True, exist_ok=True)
+                    if compaction_status_raw is not None:
+                        output_json.write_text(compaction_status_raw, encoding="utf-8")
+                    elif compaction_status_payload is not None:
+                        output_json.write_text(
+                            json.dumps(compaction_status_payload),
+                            encoding="utf-8",
+                        )
         return subprocess.CompletedProcess(command, exit_code, stdout="ok\n", stderr=stderr)
 
     return _fake_run
@@ -549,6 +566,17 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert exit_code == 0
     assert payload["final_result"] == "PASS"
     assert payload["disagreement_ledger_sla"]["overdue_unresolved_count"] == 1
+    assert payload["compaction"] == {
+        "status": "missing",
+        "step_status": "PASS",
+        "source_json": str(context / "context_compaction_status_latest.json"),
+        "generated_at_utc": None,
+        "should_compact": None,
+        "can_compact": None,
+        "decision_mode": None,
+        "reasons": [],
+        "guardrail_violations": [],
+    }
 
     step_names = [step["name"] for step in payload["steps"]]
     assert step_names == [
@@ -655,6 +683,9 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert calls.index(closure_command) < calls.index(round_contract_command)
 
     assert len(round_contract_observations) == 1
+    assert round_contract_observations[0]["loop_summary_path"].endswith(
+        "loop_cycle_summary_latest.json"
+    )
     temp_summary_payload = round_contract_observations[0]["loop_summary"]
     assert isinstance(temp_summary_payload, dict)
     assert temp_summary_payload["repo_root"] == str(repo_root)
@@ -670,6 +701,9 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert temp_summary_payload["expert_request"] is None
     assert temp_summary_payload["pm_ceo_research_brief"] is None
     assert temp_summary_payload["board_decision_brief"] is None
+    assert temp_summary_payload["compaction"]["status"] == "missing"
+    assert temp_summary_payload["compaction"]["reasons"] == []
+    assert temp_summary_payload["compaction"]["guardrail_violations"] == []
     assert temp_summary_payload["repo_root_convenience"] == {}
     assert round_contract_observations[0]["closure_exists"] is True
 
@@ -679,7 +713,119 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert len(calls) == 15
 
     temp_summary = context / "loop_cycle_summary_current.json"
-    assert not temp_summary.exists(), "Temp summary should be cleaned up"
+    assert temp_summary.exists(), "Current-cycle summary snapshot should persist for truth validation"
+    temp_summary_current = json.loads(temp_summary.read_text(encoding="utf-8"))
+    assert temp_summary_current["step_summary"]["total_steps"] == 5
+
+
+def test_run_loop_cycle_compaction_summary_is_deterministic_when_invalid(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo_root = tmp_path
+    context = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=True)
+    _write_text(context / "ceo_weekly_summary_latest.md", "# Weekly Summary\n")
+    _write_text(context / "phase_end_logs" / ".keep", "")
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(
+            calls,
+            closure_exit_code=0,
+            compaction_status_raw="{invalid json",
+        ),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    assert payload["final_result"] == "PASS"
+    assert payload["compaction"] == {
+        "status": "invalid",
+        "step_status": "PASS",
+        "source_json": str(context / "context_compaction_status_latest.json"),
+        "generated_at_utc": None,
+        "should_compact": None,
+        "can_compact": None,
+        "decision_mode": None,
+        "reasons": [],
+        "guardrail_violations": [],
+    }
+    compaction_step = next(
+        step for step in payload["steps"] if step["name"] == "evaluate_context_compaction_trigger"
+    )
+    assert compaction_step["status"] == "PASS"
+    assert any(
+        any("evaluate_context_compaction_trigger.py" in token for token in command)
+        for command in calls
+    )
+
+
+def test_run_loop_cycle_compaction_summary_reports_failed_step(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo_root = tmp_path
+    context = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=True)
+    _write_text(context / "ceo_weekly_summary_latest.md", "# Weekly Summary\n")
+    _write_text(context / "phase_end_logs" / ".keep", "")
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(
+            calls,
+            closure_exit_code=0,
+            compaction_exit_code=1,
+        ),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 1
+    assert payload["final_result"] == "FAIL"
+    assert payload["compaction"] == {
+        "status": "failed",
+        "step_status": "FAIL",
+        "source_json": str(context / "context_compaction_status_latest.json"),
+        "generated_at_utc": None,
+        "should_compact": None,
+        "can_compact": None,
+        "decision_mode": None,
+        "reasons": [],
+        "guardrail_violations": [],
+    }
+    compaction_step = next(
+        step for step in payload["steps"] if step["name"] == "evaluate_context_compaction_trigger"
+    )
+    assert compaction_step["status"] == "FAIL"
+    assert any(
+        any("evaluate_context_compaction_trigger.py" in token for token in command)
+        for command in calls
+    )
 
 
 def test_run_loop_cycle_persists_next_round_handoff_artifacts(
@@ -979,6 +1125,7 @@ def test_run_loop_cycle_delegates_advisory_publication_without_payload_shape_dri
                 "recommended_option": "hold escalation until dossier evidence is refreshed",
             },
         },
+        "skill_activation": None,
     }
     mirrored_paths = {
         "next_round_handoff": root_convenience["next_round_handoff"],
@@ -1238,6 +1385,17 @@ def test_run_loop_cycle_does_not_republish_stale_exec_memory_without_authoritati
     assert payload["board_decision_brief"] is None
     assert payload["repo_root_convenience"] == {}
     assert payload["artifacts"]["exec_memory_latest_promoted"] is False
+    assert payload["compaction"] == {
+        "status": "skipped",
+        "step_status": "SKIP",
+        "source_json": str(context / "context_compaction_status_latest.json"),
+        "generated_at_utc": None,
+        "should_compact": None,
+        "can_compact": None,
+        "decision_mode": None,
+        "reasons": [],
+        "guardrail_violations": [],
+    }
 
     build_step = next(step for step in payload["steps"] if step["name"] == "build_exec_memory_packet")
     compaction_step = next(
@@ -1385,6 +1543,17 @@ def test_run_loop_cycle_does_not_republish_stale_exec_memory_when_current_build_
     assert payload["pm_ceo_research_brief"] is None
     assert payload["board_decision_brief"] is None
     assert payload["repo_root_convenience"] == {}
+    assert payload["compaction"] == {
+        "status": "skipped",
+        "step_status": "SKIP",
+        "source_json": str(context / "context_compaction_status_latest.json"),
+        "generated_at_utc": None,
+        "should_compact": None,
+        "can_compact": None,
+        "decision_mode": None,
+        "reasons": [],
+        "guardrail_violations": [],
+    }
     assert not (context / "next_round_handoff_latest.json").exists()
     assert not (context / "next_round_handoff_latest.md").exists()
 
@@ -2051,3 +2220,47 @@ def test_exec_memory_stage_promotes_on_success(tmp_path: Path) -> None:
 
     latest_md_content = latest_md.read_text()
     assert "Promoted Content" in latest_md_content
+
+
+def test_run_loop_cycle_rejects_noncanonical_loop_summary_output_override(tmp_path: Path) -> None:
+    repo_root = tmp_path / "test_repo"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir)
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+            "--output-json",
+            "docs/context/custom_loop_cycle_summary.json",
+        ]
+    )
+    exit_code, payload, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 2
+    assert payload["final_result"] == "ERROR"
+    assert "--output-json must be written to canonical path" in payload["message"]
+    assert "FinalResult: ERROR" in markdown
+    assert not (repo_root / "docs" / "context" / "custom_loop_cycle_summary.json").exists()
+
+
+def test_run_loop_cycle_rejects_nested_same_name_repo_root(tmp_path: Path) -> None:
+    outer_repo_root = tmp_path / "quant_current_scope"
+    nested_repo_root = outer_repo_root / outer_repo_root.name
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(nested_repo_root),
+            "--skip-phase-end",
+        ]
+    )
+    exit_code, payload, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 2
+    assert payload["final_result"] == "ERROR"
+    assert "same-name directory" in payload["message"]
+    assert "FinalExitCode: 2" in markdown

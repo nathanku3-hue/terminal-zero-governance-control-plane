@@ -17,6 +17,7 @@ if __name__ == "__main__":
         sys.path.insert(0, str(_project_root))
 
 from scripts.utils.json_utils import safe_load_json_object
+from scripts.utils.compaction_retention import build_compaction_policy_snapshot
 from scripts.utils.memory_tiers import bind_memory_tier_paths
 from scripts.utils.memory_tiers import build_memory_tier_snapshot
 from scripts.utils.skill_resolver import resolve_active_skills
@@ -1940,6 +1941,7 @@ def main() -> int:
         family_ids=BUILD_PACKET_MEMORY_FAMILIES,
         cold_fallback_ids=BUILD_PACKET_COLD_FALLBACK_FAMILIES,
     )
+    compaction_retention_contract = build_compaction_policy_snapshot()
     memory_tier_bindings = {
         "inputs": bind_memory_tier_paths(
             {
@@ -2045,6 +2047,7 @@ def main() -> int:
             "ceo_budget_ok": ceo_budget_ok,
         },
         "memory_tier_contract": memory_tier_contract,
+        "compaction_retention_contract": compaction_retention_contract,
         "memory_tier_bindings": memory_tier_bindings,
         "hierarchical_summary": {
             "working_summary": working_summary,
