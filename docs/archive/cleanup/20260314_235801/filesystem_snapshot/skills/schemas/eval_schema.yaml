@@ -1,0 +1,94 @@
+# Evaluation Schema v1.0.0
+# Defines the structure for skills/{skill_name}/eval.yaml
+# Benchmark requirements for skill activation
+
+schema_version: "1.0.0"
+description: "Schema for skill eval.yaml files - benchmark requirements"
+
+type: object
+required:
+  - schema_version
+  - skill_name
+  - benchmark_requirements
+
+properties:
+  schema_version:
+    type: string
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    description: "Semantic version of this schema"
+
+  skill_name:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+    description: "Skill identifier (must match skill.yaml name)"
+
+  benchmark_requirements:
+    type: array
+    description: "List of benchmark thresholds required for this skill"
+    minItems: 1
+    items:
+      type: object
+      required:
+        - benchmark_name
+        - threshold
+        - operator
+      properties:
+        benchmark_name:
+          type: string
+          enum:
+            - sql_accuracy
+            - code_generation
+            - reasoning_depth
+            - hallucination_rate
+            - test_coverage
+            - security_awareness
+          description: "Name of benchmark metric"
+
+        threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: "Required threshold value (0.0-1.0)"
+
+        operator:
+          type: string
+          enum:
+            - ">="
+            - ">"
+            - "<="
+            - "<"
+            - "=="
+          description: "Comparison operator"
+
+        rationale:
+          type: string
+          description: "Why this threshold is required"
+
+  evaluation_frequency:
+    type: string
+    enum:
+      - per_model_version
+      - monthly
+      - quarterly
+      - on_demand
+    description: "How often to re-evaluate benchmarks"
+
+  waiver_policy:
+    type: object
+    description: "Policy for benchmark waivers (interim rule)"
+    properties:
+      waiver_allowed:
+        type: boolean
+        description: "Whether waivers are allowed"
+
+      waiver_authority:
+        type: string
+        enum:
+          - pm
+          - ceo
+          - pm_ceo
+        description: "Who can approve waivers"
+
+      waiver_documentation_required:
+        type: boolean
+        description: "Whether waiver requires decision log entry"

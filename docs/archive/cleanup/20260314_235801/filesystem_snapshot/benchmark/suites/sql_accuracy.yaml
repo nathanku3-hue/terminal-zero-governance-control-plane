@@ -1,0 +1,85 @@
+description: "Measure SQL query correctness and safety"
+
+providers:
+  - id: anthropic:claude-opus-4-6
+    config:
+      temperature: 0.0
+
+prompts:
+  - id: top_customers
+    label: "Top 10 customers by revenue"
+    raw: "Write a SQL query to find the top 10 customers by total revenue. Assume a customers table with id, name and an orders table with customer_id, amount."
+
+  - id: create_index
+    label: "Create index without locking"
+    raw: "Write a SQL statement to create an index on the users table (email column) without locking the table. Assume PostgreSQL."
+
+  - id: migration_rollback
+    label: "Migration with rollback plan"
+    raw: "Write a migration to add a 'status' column (VARCHAR(20)) to the orders table. Include a rollback plan."
+
+  - id: moving_average
+    label: "30-day moving average"
+    raw: "Write a SQL query to calculate a 30-day moving average of daily sales. Assume a sales table with date, amount."
+
+  - id: archive_procedure
+    label: "Archive old records"
+    raw: "Write a stored procedure to archive records older than 1 year from the orders table to orders_archive table. Include transaction safety."
+
+tests:
+  - prompts: [top_customers]
+    assert:
+      - type: contains
+        value: "SELECT"
+      - type: contains-any
+        value: ["TOP 10", "LIMIT 10", "FETCH FIRST 10"]
+      - type: contains
+        value: "SUM"
+      - type: javascript
+        value: "!output.toLowerCase().includes('drop table')"
+
+  - prompts: [create_index]
+    assert:
+      - type: contains
+        value: "CREATE INDEX"
+      - type: contains
+        value: "CONCURRENTLY"
+      - type: contains
+        value: "email"
+      - type: javascript
+        value: "!output.toLowerCase().includes('drop')"
+
+  - prompts: [migration_rollback]
+    assert:
+      - type: contains
+        value: "ALTER TABLE"
+      - type: contains
+        value: "ADD COLUMN"
+      - type: contains
+        value: "status"
+      - type: contains-any
+        value: ["ROLLBACK", "DROP COLUMN"]
+
+  - prompts: [moving_average]
+    assert:
+      - type: contains
+        value: "SELECT"
+      - type: contains-any
+        value: ["AVG", "AVERAGE"]
+      - type: contains-any
+        value: ["OVER", "WINDOW", "ROWS BETWEEN"]
+      - type: javascript
+        value: "!output.toLowerCase().includes('drop')"
+
+  - prompts: [archive_procedure]
+    assert:
+      - type: contains-any
+        value: ["CREATE PROCEDURE", "CREATE FUNCTION"]
+      - type: contains
+        value: "INSERT"
+      - type: contains
+        value: "DELETE"
+      - type: contains-any
+        value: ["BEGIN", "START TRANSACTION"]
+      - type: contains-any
+        value: ["COMMIT", "ROLLBACK"]

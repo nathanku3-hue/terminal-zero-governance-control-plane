@@ -1,0 +1,74 @@
+# Guardrails: safe-db-migration v1.0.0
+# Conforms to skills/schemas/guardrails_schema.yaml
+
+schema_version: "1.0.0"
+skill_name: safe-db-migration
+
+gates:
+  pre_execution:
+    - gate_id: backup_verified
+      description: "Recent backup exists and is restorable"
+      required: true
+      validation_method: "Query backup system for recent backup (<24h) and verify restore test passed"
+
+    - gate_id: rollback_plan_approved
+      description: "Rollback script reviewed and approved"
+      required: true
+      validation_method: "Rollback script exists, tested in staging, and approved by auditor"
+
+    - gate_id: test_coverage_adequate
+      description: "Test coverage for affected code paths ≥80%"
+      required: true
+      validation_method: "Run test coverage analysis on affected application code"
+
+    - gate_id: staging_validation_passed
+      description: "Migration successfully executed in staging environment"
+      required: true
+      validation_method: "Staging migration log shows success with no errors"
+
+    - gate_id: auditor_review_required
+      description: "Auditor has reviewed migration plan and scripts"
+      required: true
+      validation_method: "Auditor sign-off recorded in decision log"
+
+    - gate_id: ceo_go_signal_required
+      description: "CEO GO signal obtained for production execution"
+      required: true
+      validation_method: "CEO GO signal document exists with Recommended Action: GO"
+
+  during_execution:
+    - gate_id: lock_duration_monitoring
+      description: "Monitor table lock duration to prevent service disruption"
+      required: true
+      monitoring_interval: "Real-time during execution"
+
+    - gate_id: error_rate_monitoring
+      description: "Monitor application error rate during migration"
+      required: true
+      monitoring_interval: "Real-time during execution"
+
+    - gate_id: performance_degradation_check
+      description: "Monitor query performance degradation"
+      required: true
+      monitoring_interval: "Real-time during execution"
+
+  post_execution:
+    - gate_id: data_integrity_verified
+      description: "Post-migration data integrity checks passed"
+      required: true
+      validation_method: "Run integrity validation queries and compare row counts"
+
+    - gate_id: application_health_check
+      description: "Application health checks passed after migration"
+      required: true
+      validation_method: "Run application smoke tests and verify no errors"
+
+    - gate_id: performance_baseline_maintained
+      description: "Query performance within acceptable range of baseline"
+      required: true
+      validation_method: "Compare post-migration query times to pre-migration baseline"
+
+failure_handling:
+  rollback_required: true
+  escalation_path: pm_ceo
+  max_retry_attempts: 0

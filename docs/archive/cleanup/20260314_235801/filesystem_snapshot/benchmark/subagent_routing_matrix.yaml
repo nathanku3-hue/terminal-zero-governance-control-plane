@@ -1,0 +1,85 @@
+# Subagent Routing Matrix
+# Phase 5A.2: Role-to-artifact mapping for context isolation
+# All paths are repo-root-relative under E:\code\SOP\quant_current_scope
+# Token estimator: len(text) // 4 (from build_exec_memory_packet.py:246)
+
+roles:
+  startup_deputy:
+    description: "Initializes new execution rounds from seed contracts"
+    required_artifacts:
+      - docs/context/init_execution_card_latest.md
+      - docs/context/round_contract_seed_latest.md
+      - docs/loop_operating_contract.md
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - full chat history
+      - calibration history
+      - phase-end artifacts
+    max_context_tokens: 8000
+
+  execution_deputy:
+    description: "Executes mid-round work based on handoff instructions"
+    required_artifacts:
+      - docs/context/next_round_handoff_latest.md
+      - docs/loop_operating_contract.md
+      - docs/runbook_ops.md
+    optional_artifacts:
+      - docs/context/skill_activation_latest.json
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - CEO digest
+      - board decision brief
+    max_context_tokens: 12000
+
+  specialist_deputy:
+    description: "Handles domain-specific expert requests"
+    required_artifacts:
+      - docs/context/expert_request_latest.md
+    optional_artifacts:
+      - docs/context/milestone_expert_roster_latest.json
+      - docs/context/skill_activation_latest.json
+    conditional_artifacts:
+      high_semantic_risk_work:
+        - docs/context/domain_falsification_pack_latest.md
+    excluded_artifacts:
+      - full repo context
+      - unrelated dossiers
+    max_context_tokens: 10000
+
+  pm_research_deputy:
+    description: "Conducts PM/CEO research and strategic analysis"
+    required_artifacts:
+      - docs/context/pm_ceo_research_brief_latest.md
+      - docs/context/ceo_go_signal.md
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - technical implementation details
+      - audit trails
+    max_context_tokens: 8000
+
+  board_decision_deputy:
+    description: "Supports board-level decision making and loop closure"
+    required_artifacts:
+      - docs/context/board_decision_brief_latest.md
+      - docs/context/loop_closure_status_latest.json
+      - docs/context/ceo_go_signal.md
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - worker execution logs
+      - lint/test output
+    max_context_tokens: 6000
+
+  auditor_deputy:
+    description: "Reviews governance compliance and quality metrics"
+    required_artifacts:
+      - docs/context/auditor_calibration_report.json
+      - docs/context/auditor_promotion_dossier.json
+      - docs/context/loop_cycle_summary_latest.json
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - advisory artifacts (next_round_handoff, expert_request)
+    max_context_tokens: 10000

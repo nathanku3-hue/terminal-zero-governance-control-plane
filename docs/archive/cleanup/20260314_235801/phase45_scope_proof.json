@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_worksheet": "inventory/keep_review_decision_worksheet.csv",
+  "approved_rows_considered": 70,
+  "approved_action_breakdown": {
+    "defer_no_apply_track_or_drop": 37,
+    "defer_no_apply_commit_or_revert": 15,
+    "defer_no_apply_generated_policy": 11,
+    "defer_no_apply_benchmark_policy": 7
+  },
+  "generation_rule": "Actionable apply set includes only rows whose approved_action does not start with 'defer_no_apply'.",
+  "actionable_rows_generated": 0,
+  "apply_set_path": "phase45_apply_set_from_approved_rows.csv",
+  "rollback_mapping_path": "phase45_rollback_mapping_from_approved_rows.csv",
+  "generated_paths_outside_approved_set": [],
+  "zero_extra_assertion": true,
+  "apply_blocked": true,
+  "apply_blocked_reason": "All approved rows are defer_no_apply outcomes."
+}

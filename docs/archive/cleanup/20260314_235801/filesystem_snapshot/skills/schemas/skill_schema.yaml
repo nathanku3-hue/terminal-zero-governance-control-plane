@@ -1,0 +1,109 @@
+# Skill Definition Schema v1.0.0
+# Defines the structure for skills/{skill_name}/skill.yaml
+# Core skill metadata and execution steps
+
+schema_version: "1.0.0"
+description: "Schema for individual skill.yaml files"
+
+type: object
+required:
+  - schema_version
+  - name
+  - version
+  - category
+  - description
+  - author
+  - steps
+
+properties:
+  schema_version:
+    type: string
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    description: "Semantic version of this schema"
+
+  name:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+    description: "Unique skill identifier (kebab-case)"
+
+  version:
+    type: string
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    description: "Semantic version (major.minor.patch)"
+
+  category:
+    type: string
+    enum:
+      - database
+      - frontend
+      - backend
+      - infrastructure
+      - testing
+      - security
+      - devops
+      - data
+    description: "Skill category"
+
+  description:
+    type: string
+    minLength: 10
+    description: "Detailed description of skill purpose and usage"
+
+  author:
+    type: string
+    description: "Skill author"
+
+  when_to_use:
+    type: array
+    description: "List of scenarios when this skill applies"
+    items:
+      type: string
+
+  steps:
+    type: array
+    description: "Declarative execution steps (no executable code)"
+    minItems: 1
+    items:
+      type: object
+      required:
+        - step_id
+        - description
+        - action
+      properties:
+        step_id:
+          type: string
+          pattern: "^[a-z0-9_]+$"
+          description: "Unique step identifier"
+
+        description:
+          type: string
+          description: "Human-readable step description"
+
+        action:
+          type: string
+          enum:
+            - analyze
+            - generate
+            - validate
+            - review
+            - execute
+            - rollback
+          description: "Step action type (declarative only)"
+
+        inputs:
+          type: array
+          description: "Required inputs for this step"
+          items:
+            type: string
+
+        outputs:
+          type: array
+          description: "Expected outputs from this step"
+          items:
+            type: string
+
+        validation_criteria:
+          type: array
+          description: "Success criteria for this step"
+          items:
+            type: string

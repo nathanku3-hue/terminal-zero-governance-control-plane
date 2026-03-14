@@ -1,0 +1,1073 @@
+{
+  "evalId": "eval-yFz-2026-03-12T09:12:51",
+  "results": {
+    "version": 3,
+    "timestamp": "2026-03-12T09:12:51.792Z",
+    "prompts": [
+      {
+        "id": "e54fa20bda329ec8d7fd08d5ed6d322fd7e5812a3d66d9bdbd817b4f27743dcf",
+        "raw": "Write a SQL query to find the top 10 customers by total revenue. Assume a customers table with id, name and an orders table with customer_id, amount.",
+        "label": "Top 10 customers by revenue",
+        "provider": "anthropic:claude-opus-4-6",
+        "metrics": {
+          "score": 1,
+          "testPassCount": 1,
+          "testFailCount": 0,
+          "testErrorCount": 0,
+          "assertPassCount": 4,
+          "assertFailCount": 0,
+          "totalLatencyMs": 9668,
+          "tokenUsage": {
+            "prompt": 37,
+            "completion": 249,
+            "cached": 0,
+            "total": 286,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0.006410000000000001
+        }
+      },
+      {
+        "id": "08dee31efed1742a5e43252626406ec46bcbe74dc6e6c6ee90217b75176e8489",
+        "raw": "Write a SQL statement to create an index on the users table (email column) without locking the table. Assume PostgreSQL.",
+        "label": "Create index without locking",
+        "provider": "anthropic:claude-opus-4-6",
+        "metrics": {
+          "score": 0.75,
+          "testPassCount": 0,
+          "testFailCount": 1,
+          "testErrorCount": 0,
+          "assertPassCount": 3,
+          "assertFailCount": 1,
+          "totalLatencyMs": 5220,
+          "tokenUsage": {
+            "prompt": 28,
+            "completion": 146,
+            "cached": 0,
+            "total": 174,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0.00379
+        }
+      },
+      {
+        "id": "6ab2a255ecbce7c55d342a6a19cf856ac2af659c608a99ccd547626db175da0e",
+        "raw": "Write a migration to add a 'status' column (VARCHAR(20)) to the orders table. Include a rollback plan.",
+        "label": "Migration with rollback plan",
+        "provider": "anthropic:claude-opus-4-6",
+        "metrics": {
+          "score": 1,
+          "testPassCount": 1,
+          "testFailCount": 0,
+          "testErrorCount": 0,
+          "assertPassCount": 4,
+          "assertFailCount": 0,
+          "totalLatencyMs": 19433,
+          "tokenUsage": {
+            "prompt": 29,
+            "completion": 735,
+            "cached": 0,
+            "total": 764,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0.018520000000000002
+        }
+      },
+      {
+        "id": "7a74cff6491547ec622151552455ac533f46192613c1d31aa1c138ab53d13755",
+        "raw": "Write a SQL query to calculate a 30-day moving average of daily sales. Assume a sales table with date, amount.",
+        "label": "30-day moving average",
+        "provider": "anthropic:claude-opus-4-6",
+        "metrics": {
+          "score": 1,
+          "testPassCount": 1,
+          "testFailCount": 0,
+          "testErrorCount": 0,
+          "assertPassCount": 4,
+          "assertFailCount": 0,
+          "totalLatencyMs": 8484,
+          "tokenUsage": {
+            "prompt": 29,
+            "completion": 267,
+            "cached": 0,
+            "total": 296,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0.0068200000000000005
+        }
+      },
+      {
+        "id": "a3599f1c7173f062cb8d1f0c451c32c66deb8a13c788edbd3c186284413ffcc0",
+        "raw": "Write a stored procedure to archive records older than 1 year from the orders table to orders_archive table. Include transaction safety.",
+        "label": "Archive old records",
+        "provider": "anthropic:claude-opus-4-6",
+        "metrics": {
+          "score": 0.8,
+          "testPassCount": 0,
+          "testFailCount": 1,
+          "testErrorCount": 0,
+          "assertPassCount": 4,
+          "assertFailCount": 1,
+          "totalLatencyMs": 13674,
+          "tokenUsage": {
+            "prompt": 29,
+            "completion": 870,
+            "cached": 0,
+            "total": 899,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0.021895
+        }
+      }
+    ],
+    "results": [
+      {
+        "cost": 0.006410000000000001,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "SELECT"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "TOP 10",
+                  "LIMIT 10",
+                  "FETCH FIRST 10"
+                ]
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "SUM"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "!output.toLowerCase().includes('drop table')"
+              }
+            }
+          ]
+        },
+        "id": "446d4ba6-c0da-42a8-a50b-c59fd2056478",
+        "latencyMs": 9668,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a SQL query to find the top 10 customers by total revenue. Assume a customers table with id, name and an orders table with customer_id, amount.",
+          "label": "Top 10 customers by revenue",
+          "config": {}
+        },
+        "promptId": "e54fa20bda329ec8d7fd08d5ed6d322fd7e5812a3d66d9bdbd817b4f27743dcf",
+        "promptIdx": 0,
+        "provider": {
+          "id": "anthropic:claude-opus-4-6",
+          "label": ""
+        },
+        "response": {
+          "output": "Here's a SQL query to find the top 10 customers by total revenue:\n\n```sql\nSELECT \n    c.id,\n    c.name,\n    SUM(o.amount) AS total_revenue\nFROM \n    customers c\n    INNER JOIN orders o ON c.id = o.customer_id\nGROUP BY \n    c.id, c.name\nORDER BY \n    total_revenue DESC\nLIMIT 10;\n```\n\nThis query:\n- Joins the customers and orders tables on the customer ID\n- Groups by customer to aggregate their orders\n- Sums the order amounts to calculate total revenue per customer\n- Orders by total revenue in descending order\n- Limits the results to the top 10\n\nIf you want to include customers with no orders (showing 0 revenue), use a LEFT JOIN instead:\n\n```sql\nSELECT \n    c.id,\n    c.name,\n    COALESCE(SUM(o.amount), 0) AS total_revenue\nFROM \n    customers c\n    LEFT JOIN orders o ON c.id = o.customer_id\nGROUP BY \n    c.id, c.name\nORDER BY \n    total_revenue DESC\nLIMIT 10;\n```",
+          "tokenUsage": {
+            "total": 286,
+            "prompt": 37,
+            "completion": 249
+          },
+          "finishReason": "stop",
+          "cost": 0.006410000000000001
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "prompts": [
+            "top_customers"
+          ],
+          "assert": [
+            {
+              "type": "contains",
+              "value": "SELECT"
+            },
+            {
+              "type": "contains-any",
+              "value": [
+                "TOP 10",
+                "LIMIT 10",
+                "FETCH FIRST 10"
+              ]
+            },
+            {
+              "type": "contains",
+              "value": "SUM"
+            },
+            {
+              "type": "javascript",
+              "value": "!output.toLowerCase().includes('drop table')"
+            }
+          ],
+          "vars": {},
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 0,
+        "vars": {},
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0.00379,
+        "error": "Custom function returned false\n!output.toLowerCase().includes('drop')",
+        "gradingResult": {
+          "pass": false,
+          "score": 0.75,
+          "reason": "Custom function returned false\n!output.toLowerCase().includes('drop')",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "CREATE INDEX"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "CONCURRENTLY"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "email"
+              }
+            },
+            {
+              "pass": false,
+              "score": 0,
+              "reason": "Custom function returned false\n!output.toLowerCase().includes('drop')",
+              "assertion": {
+                "type": "javascript",
+                "value": "!output.toLowerCase().includes('drop')"
+              }
+            }
+          ]
+        },
+        "id": "192fbc10-54ef-40f2-b2dc-9e22e4461a87",
+        "latencyMs": 5220,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a SQL statement to create an index on the users table (email column) without locking the table. Assume PostgreSQL.",
+          "label": "Create index without locking",
+          "config": {}
+        },
+        "promptId": "08dee31efed1742a5e43252626406ec46bcbe74dc6e6c6ee90217b75176e8489",
+        "promptIdx": 1,
+        "provider": {
+          "id": "anthropic:claude-opus-4-6",
+          "label": ""
+        },
+        "response": {
+          "output": "```sql\nCREATE INDEX CONCURRENTLY idx_users_email ON users(email);\n```\n\nThis uses PostgreSQL's `CONCURRENTLY` option, which allows the index to be built without blocking writes to the table. A few things to note:\n\n- The index creation will take longer than a standard `CREATE INDEX`\n- It requires more total work and takes more time to complete\n- It cannot be run inside a transaction block\n- If the build fails, it leaves behind an \"invalid\" index that should be dropped before retrying\n\nIf you need a unique index instead:\n\n```sql\nCREATE UNIQUE INDEX CONCURRENTLY idx_users_email ON users(email);\n```",
+          "tokenUsage": {
+            "total": 174,
+            "prompt": 28,
+            "completion": 146
+          },
+          "finishReason": "stop",
+          "cost": 0.00379
+        },
+        "score": 0.75,
+        "success": false,
+        "testCase": {
+          "prompts": [
+            "create_index"
+          ],
+          "assert": [
+            {
+              "type": "contains",
+              "value": "CREATE INDEX"
+            },
+            {
+              "type": "contains",
+              "value": "CONCURRENTLY"
+            },
+            {
+              "type": "contains",
+              "value": "email"
+            },
+            {
+              "type": "javascript",
+              "value": "!output.toLowerCase().includes('drop')"
+            }
+          ],
+          "vars": {},
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 1,
+        "vars": {},
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 1
+      },
+      {
+        "cost": 0.018520000000000002,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "ALTER TABLE"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "ADD COLUMN"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "status"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "ROLLBACK",
+                  "DROP COLUMN"
+                ]
+              }
+            }
+          ]
+        },
+        "id": "bd7a591f-2e6f-41d3-b5a9-4bc3d9ad3f59",
+        "latencyMs": 19433,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a migration to add a 'status' column (VARCHAR(20)) to the orders table. Include a rollback plan.",
+          "label": "Migration with rollback plan",
+          "config": {}
+        },
+        "promptId": "6ab2a255ecbce7c55d342a6a19cf856ac2af659c608a99ccd547626db175da0e",
+        "promptIdx": 2,
+        "provider": {
+          "id": "anthropic:claude-opus-4-6",
+          "label": ""
+        },
+        "response": {
+          "output": "I'll create a database migration with both up and down methods for adding a status column to the orders table.\n\nFirst, let me check what migration framework you're using:\n\n```bash\nls -la | grep -E \"(migrations|db|database)\" && find . -maxdepth 3 -name \"*migration*\" -o -name \"migrate*\" 2>/dev/null | head -20\n```\n\nSince I don't have context about your specific setup, I'll provide migrations for the most common frameworks:\n\n## SQL Migration (Framework Agnostic)\n\n**Up Migration:**\n```sql\n-- migrations/001_add_status_to_orders.up.sql\nALTER TABLE orders \nADD COLUMN status VARCHAR(20);\n\n-- Optional: Set default value for existing rows\nUPDATE orders \nSET status = 'pending' \nWHERE status IS NULL;\n```\n\n**Down Migration (Rollback):**\n```sql\n-- migrations/001_add_status_to_orders.down.sql\nALTER TABLE orders \nDROP COLUMN status;\n```\n\n## Node.js (Knex.js)\n\n```javascript\n// migrations/20240101000000_add_status_to_orders.js\nexports.up = function(knex) {\n  return knex.schema.table('orders', function(table) {\n    table.string('status', 20);\n  });\n};\n\nexports.down = function(knex) {\n  return knex.schema.table('orders', function(table) {\n    table.dropColumn('status');\n  });\n};\n```\n\n## Ruby on Rails (ActiveRecord)\n\n```ruby\n# db/migrate/20240101000000_add_status_to_orders.rb\nclass AddStatusToOrders < ActiveRecord::Migration[7.0]\n  def up\n    add_column :orders, :status, :string, limit: 20\n  end\n\n  def down\n    remove_column :orders, :status\n  end\nend\n```\n\n## Python (Django)\n\n```python\n# orders/migrations/0002_add_status_to_orders.py\nfrom django.db import migrations, models\n\nclass Migration(migrations.Migration):\n    dependencies = [\n        ('orders', '0001_initial'),\n    ]\n\n    operations = [\n        migrations.AddField(\n            model_name='order',\n            name='status',\n            field=models.CharField(max_length=20, null=True),\n        ),\n    ]\n```\n\n## Python (Alembic)\n\n```python\n# alembic/versions/001_add_status_to_orders.py\nfrom alembic import op\nimport sqlalchemy as sa\n\nrevision = '001'\ndown_revision = None\n\ndef upgrade():\n    op.add_column('orders', sa.Column('status', sa.String(20)))\n\ndef downgrade():\n    op.drop_column('orders', 'status')\n```\n\n**Rollback Instructions:**\n\nFor most frameworks:\n- Knex: `npx knex migrate:rollback`\n- Rails: `rails db:rollback`\n- Django: `python manage.py migrate orders 0001` (previous migration number)\n- Alembic: `alembic downgrade -1`\n- Raw SQL: Execute the down migration file\n\nLet me know which framework you're using and I can provide a more specific implementation!",
+          "tokenUsage": {
+            "total": 764,
+            "prompt": 29,
+            "completion": 735
+          },
+          "finishReason": "stop",
+          "cost": 0.018520000000000002
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "prompts": [
+            "migration_rollback"
+          ],
+          "assert": [
+            {
+              "type": "contains",
+              "value": "ALTER TABLE"
+            },
+            {
+              "type": "contains",
+              "value": "ADD COLUMN"
+            },
+            {
+              "type": "contains",
+              "value": "status"
+            },
+            {
+              "type": "contains-any",
+              "value": [
+                "ROLLBACK",
+                "DROP COLUMN"
+              ]
+            }
+          ],
+          "vars": {},
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 2,
+        "vars": {},
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0.0068200000000000005,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "SELECT"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "AVG",
+                  "AVERAGE"
+                ]
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "OVER",
+                  "WINDOW",
+                  "ROWS BETWEEN"
+                ]
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "!output.toLowerCase().includes('drop')"
+              }
+            }
+          ]
+        },
+        "id": "67707792-4865-4b1a-ac44-836eda9d16dd",
+        "latencyMs": 8484,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a SQL query to calculate a 30-day moving average of daily sales. Assume a sales table with date, amount.",
+          "label": "30-day moving average",
+          "config": {}
+        },
+        "promptId": "7a74cff6491547ec622151552455ac533f46192613c1d31aa1c138ab53d13755",
+        "promptIdx": 3,
+        "provider": {
+          "id": "anthropic:claude-opus-4-6",
+          "label": ""
+        },
+        "response": {
+          "output": "Here's a SQL query to calculate a 30-day moving average of daily sales:\n\n```sql\nSELECT \n    date,\n    amount,\n    AVG(amount) OVER (\n        ORDER BY date \n        ROWS BETWEEN 29 PRECEDING AND CURRENT ROW\n    ) AS moving_avg_30_day\nFROM sales\nORDER BY date;\n```\n\nThis uses a window function to calculate the average of the current row plus the previous 29 rows, giving you a 30-day moving average.\n\nIf your sales table has multiple transactions per day and you need to aggregate them first:\n\n```sql\nWITH daily_sales AS (\n    SELECT \n        date,\n        SUM(amount) AS daily_total\n    FROM sales\n    GROUP BY date\n)\nSELECT \n    date,\n    daily_total,\n    AVG(daily_total) OVER (\n        ORDER BY date \n        ROWS BETWEEN 29 PRECEDING AND CURRENT ROW\n    ) AS moving_avg_30_day\nFROM daily_sales\nORDER BY date;\n```\n\nThe `ROWS BETWEEN 29 PRECEDING AND CURRENT ROW` ensures you're always looking at exactly 30 days of data (including the current day). For the first 29 days, it'll calculate the average based on whatever data is available.",
+          "tokenUsage": {
+            "total": 296,
+            "prompt": 29,
+            "completion": 267
+          },
+          "finishReason": "stop",
+          "cost": 0.0068200000000000005
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "prompts": [
+            "moving_average"
+          ],
+          "assert": [
+            {
+              "type": "contains",
+              "value": "SELECT"
+            },
+            {
+              "type": "contains-any",
+              "value": [
+                "AVG",
+                "AVERAGE"
+              ]
+            },
+            {
+              "type": "contains-any",
+              "value": [
+                "OVER",
+                "WINDOW",
+                "ROWS BETWEEN"
+              ]
+            },
+            {
+              "type": "javascript",
+              "value": "!output.toLowerCase().includes('drop')"
+            }
+          ],
+          "vars": {},
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 3,
+        "vars": {},
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0.021895,
+        "error": "Expected output to contain one of \"CREATE PROCEDURE, CREATE FUNCTION\"",
+        "gradingResult": {
+          "pass": false,
+          "score": 0.8,
+          "reason": "Expected output to contain one of \"CREATE PROCEDURE, CREATE FUNCTION\"",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": false,
+              "score": 0,
+              "reason": "Expected output to contain one of \"CREATE PROCEDURE, CREATE FUNCTION\"",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "CREATE PROCEDURE",
+                  "CREATE FUNCTION"
+                ]
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "INSERT"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains",
+                "value": "DELETE"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "BEGIN",
+                  "START TRANSACTION"
+                ]
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "contains-any",
+                "value": [
+                  "COMMIT",
+                  "ROLLBACK"
+                ]
+              }
+            }
+          ]
+        },
+        "id": "4866d8ae-d9ff-42c8-9d03-d4bae1c75ff3",
+        "latencyMs": 13674,
+        "namedScores": {},
+        "prompt": {
+          "raw": "Write a stored procedure to archive records older than 1 year from the orders table to orders_archive table. Include transaction safety.",
+          "label": "Archive old records",
+          "config": {}
+        },
+        "promptId": "a3599f1c7173f062cb8d1f0c451c32c66deb8a13c788edbd3c186284413ffcc0",
+        "promptIdx": 4,
+        "provider": {
+          "id": "anthropic:claude-opus-4-6",
+          "label": ""
+        },
+        "response": {
+          "output": "I'll create a stored procedure that safely archives old orders with proper transaction handling and error management.\n\n```sql\nCREATE OR REPLACE PROCEDURE archive_old_orders()\nLANGUAGE plpgsql\nAS $$\nDECLARE\n    v_cutoff_date DATE;\n    v_archived_count INTEGER := 0;\n    v_batch_size INTEGER := 1000;\n    v_rows_affected INTEGER;\nBEGIN\n    -- Calculate cutoff date (1 year ago from today)\n    v_cutoff_date := CURRENT_DATE - INTERVAL '1 year';\n    \n    -- Log start of archival process\n    RAISE NOTICE 'Starting archival process for orders older than %', v_cutoff_date;\n    \n    -- Process in batches to avoid long-running transactions\n    LOOP\n        -- Start a savepoint for this batch\n        SAVEPOINT batch_savepoint;\n        \n        BEGIN\n            -- Insert batch into archive table\n            WITH archived_rows AS (\n                INSERT INTO orders_archive\n                SELECT *\n                FROM orders\n                WHERE order_date < v_cutoff_date\n                LIMIT v_batch_size\n                RETURNING order_id\n            )\n            -- Delete the archived rows from source table\n            DELETE FROM orders\n            WHERE order_id IN (SELECT order_id FROM archived_rows);\n            \n            -- Get number of rows affected\n            GET DIAGNOSTICS v_rows_affected = ROW_COUNT;\n            \n            -- Update total count\n            v_archived_count := v_archived_count + v_rows_affected;\n            \n            -- Exit loop if no more rows to process\n            EXIT WHEN v_rows_affected = 0;\n            \n            -- Commit this batch\n            RELEASE SAVEPOINT batch_savepoint;\n            \n            -- Log progress\n            RAISE NOTICE 'Archived % rows (total: %)', v_rows_affected, v_archived_count;\n            \n            -- Small delay to reduce load (optional)\n            PERFORM pg_sleep(0.1);\n            \n        EXCEPTION\n            WHEN OTHERS THEN\n                -- Rollback this batch on error\n                ROLLBACK TO SAVEPOINT batch_savepoint;\n                RAISE WARNING 'Error archiving batch: % - %', SQLERRM, SQLSTATE;\n                -- Re-raise to abort entire procedure\n                RAISE;\n        END;\n    END LOOP;\n    \n    -- Final summary\n    RAISE NOTICE 'Archival complete. Total records archived: %', v_archived_count;\n    \nEXCEPTION\n    WHEN OTHERS THEN\n        -- Log error and re-raise\n        RAISE EXCEPTION 'Archival procedure failed: % - %', SQLERRM, SQLSTATE;\nEND;\n$$;\n\n-- Create the archive table if it doesn't exist\nCREATE TABLE IF NOT EXISTS orders_archive (\n    LIKE orders INCLUDING ALL\n);\n\n-- Add archival metadata columns\nALTER TABLE orders_archive \nADD COLUMN IF NOT EXISTS archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;\n\n-- Create index on archive table for better query performance\nCREATE INDEX IF NOT EXISTS idx_orders_archive_order_date \nON orders_archive(order_date);\n\nCREATE INDEX IF NOT EXISTS idx_orders_archive_archived_at \nON orders_archive(archived_at);\n```\n\n**Usage:**\n\n```sql\n-- Execute the archival procedure\nCALL archive_old_orders();\n\n-- Check archived records\nSELECT COUNT(*) FROM orders_archive;\n\n-- Verify source table\nSELECT COUNT(*) FROM orders WHERE order_date < CURRENT_DATE - INTERVAL '1 year';\n```\n\n**Key features:**\n\n- **Batch processing** - Handles large datasets without locking tables for extended periods\n- **Transaction safety** - Uses savepoints to rollback individual batches on failure\n- **Error handling** - Comprehensive exception handling with detailed logging\n- **Progress tracking** - NOTICE messages show archival progress\n- **Performance** - Processes 1000 records per batch with optional delays\n- **Metadata** - Tracks when records were archived\n- **Idempotent** - Safe to run multiple times\n\nThe procedure archives in batches to maintain database responsiveness and includes proper rollback mechanisms if anything goes wrong.",
+          "tokenUsage": {
+            "total": 899,
+            "prompt": 29,
+            "completion": 870
+          },
+          "finishReason": "stop",
+          "cost": 0.021895
+        },
+        "score": 0.8,
+        "success": false,
+        "testCase": {
+          "prompts": [
+            "archive_procedure"
+          ],
+          "assert": [
+            {
+              "type": "contains-any",
+              "value": [
+                "CREATE PROCEDURE",
+                "CREATE FUNCTION"
+              ]
+            },
+            {
+              "type": "contains",
+              "value": "INSERT"
+            },
+            {
+              "type": "contains",
+              "value": "DELETE"
+            },
+            {
+              "type": "contains-any",
+              "value": [
+                "BEGIN",
+                "START TRANSACTION"
+              ]
+            },
+            {
+              "type": "contains-any",
+              "value": [
+                "COMMIT",
+                "ROLLBACK"
+              ]
+            }
+          ],
+          "vars": {},
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 4,
+        "vars": {},
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 1
+      }
+    ],
+    "stats": {
+      "successes": 3,
+      "failures": 2,
+      "errors": 0,
+      "tokenUsage": {
+        "prompt": 152,
+        "completion": 2267,
+        "cached": 0,
+        "total": 2419,
+        "numRequests": 5,
+        "completionDetails": {
+          "reasoning": 0,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0
+        },
+        "assertions": {
+          "total": 0,
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "numRequests": 0,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0
+          }
+        }
+      },
+      "durationMs": 19457,
+      "evaluationDurationMs": 19457
+    }
+  },
+  "config": {
+    "tags": {},
+    "description": "Measure SQL query correctness and safety",
+    "prompts": [
+      {
+        "id": "top_customers",
+        "label": "Top 10 customers by revenue",
+        "raw": "Write a SQL query to find the top 10 customers by total revenue. Assume a customers table with id, name and an orders table with customer_id, amount."
+      },
+      {
+        "id": "create_index",
+        "label": "Create index without locking",
+        "raw": "Write a SQL statement to create an index on the users table (email column) without locking the table. Assume PostgreSQL."
+      },
+      {
+        "id": "migration_rollback",
+        "label": "Migration with rollback plan",
+        "raw": "Write a migration to add a 'status' column (VARCHAR(20)) to the orders table. Include a rollback plan."
+      },
+      {
+        "id": "moving_average",
+        "label": "30-day moving average",
+        "raw": "Write a SQL query to calculate a 30-day moving average of daily sales. Assume a sales table with date, amount."
+      },
+      {
+        "id": "archive_procedure",
+        "label": "Archive old records",
+        "raw": "Write a stored procedure to archive records older than 1 year from the orders table to orders_archive table. Include transaction safety."
+      }
+    ],
+    "providers": [
+      {
+        "id": "anthropic:claude-opus-4-6",
+        "config": {
+          "temperature": 0
+        }
+      }
+    ],
+    "tests": [
+      {
+        "prompts": [
+          "top_customers"
+        ],
+        "assert": [
+          {
+            "type": "contains",
+            "value": "SELECT"
+          },
+          {
+            "type": "contains-any",
+            "value": [
+              "TOP 10",
+              "LIMIT 10",
+              "FETCH FIRST 10"
+            ]
+          },
+          {
+            "type": "contains",
+            "value": "SUM"
+          },
+          {
+            "type": "javascript",
+            "value": "!output.toLowerCase().includes('drop table')"
+          }
+        ]
+      },
+      {
+        "prompts": [
+          "create_index"
+        ],
+        "assert": [
+          {
+            "type": "contains",
+            "value": "CREATE INDEX"
+          },
+          {
+            "type": "contains",
+            "value": "CONCURRENTLY"
+          },
+          {
+            "type": "contains",
+            "value": "email"
+          },
+          {
+            "type": "javascript",
+            "value": "!output.toLowerCase().includes('drop')"
+          }
+        ]
+      },
+      {
+        "prompts": [
+          "migration_rollback"
+        ],
+        "assert": [
+          {
+            "type": "contains",
+            "value": "ALTER TABLE"
+          },
+          {
+            "type": "contains",
+            "value": "ADD COLUMN"
+          },
+          {
+            "type": "contains",
+            "value": "status"
+          },
+          {
+            "type": "contains-any",
+            "value": [
+              "ROLLBACK",
+              "DROP COLUMN"
+            ]
+          }
+        ]
+      },
+      {
+        "prompts": [
+          "moving_average"
+        ],
+        "assert": [
+          {
+            "type": "contains",
+            "value": "SELECT"
+          },
+          {
+            "type": "contains-any",
+            "value": [
+              "AVG",
+              "AVERAGE"
+            ]
+          },
+          {
+            "type": "contains-any",
+            "value": [
+              "OVER",
+              "WINDOW",
+              "ROWS BETWEEN"
+            ]
+          },
+          {
+            "type": "javascript",
+            "value": "!output.toLowerCase().includes('drop')"
+          }
+        ]
+      },
+      {
+        "prompts": [
+          "archive_procedure"
+        ],
+        "assert": [
+          {
+            "type": "contains-any",
+            "value": [
+              "CREATE PROCEDURE",
+              "CREATE FUNCTION"
+            ]
+          },
+          {
+            "type": "contains",
+            "value": "INSERT"
+          },
+          {
+            "type": "contains",
+            "value": "DELETE"
+          },
+          {
+            "type": "contains-any",
+            "value": [
+              "BEGIN",
+              "START TRANSACTION"
+            ]
+          },
+          {
+            "type": "contains-any",
+            "value": [
+              "COMMIT",
+              "ROLLBACK"
+            ]
+          }
+        ]
+      }
+    ],
+    "scenarios": [],
+    "env": {},
+    "outputPath": [
+      "E:\\Code\\SOP\\quant_current_scope\\benchmark\\results\\sql_accuracy_run2.json"
+    ],
+    "extensions": [],
+    "metadata": {},
+    "evaluateOptions": {}
+  },
+  "shareableUrl": null,
+  "metadata": {
+    "promptfooVersion": "0.121.1",
+    "nodeVersion": "v25.2.1",
+    "platform": "win32",
+    "arch": "x64",
+    "exportedAt": "2026-03-12T09:13:11.414Z",
+    "evaluationCreatedAt": "2026-03-12T09:12:51.792Z"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "header": {
+    "schema_version": "1.0.0",
+    "generated_at_utc": "2026-03-14T15:58:03Z",
+    "mode": "dry_run_manifest_only",
+    "apply_blocked": true,
+    "guardrails": {
+      "rollback_requires_filesystem_snapshot": true,
+      "protected_prefixes": [
+        ".git/",
+        "docs/archive/cleanup/",
+        "docs/archive/phase_end_logs/"
+      ],
+      "no_apply_performed": true,
+      "no_runtime_code_changes": true
+    },
+    "retention_rules": {
+      "phase_end_logs": {
+        "path": "docs/context/phase_end_logs/**",
+        "rule": "Keep <= 30 days; archive older to docs/archive/phase_end_logs/YYYY-MM/",
+        "cutoff_utc": "2026-02-12T15:58:01Z",
+        "policy_reference": "docs/ARTIFACT_POLICY.md (intentional historical exception)"
+      }
+    },
+    "candidate_scope": {
+      "includes": [
+        "git untracked",
+        "git modified tracked",
+        "tracked docs/context/phase_end_logs/**"
+      ],
+      "excludes": [
+        ".git/",
+        "docs/archive/cleanup/",
+        "docs/archive/phase_end_logs/"
+      ]
+    },
+    "counts": {
+      "tracked_total": 509,
+      "untracked_total": 45,
+      "modified_total": 26,
+      "staged_total": 0,
+      "candidate_total": 348,
+      "snapshot_file_total": 348
+    }
+  },
+  "outputs": {
+    "cleanup_manifest_csv": "cleanup_manifest_dry_run.csv",
+    "tracked_files": "inventory/tracked_files.txt",
+    "untracked_files": "inventory/untracked_files.txt",
+    "modified_files": "inventory/modified_files.txt",
+    "staged_files": "inventory/staged_files.txt",
+    "candidate_paths": "inventory/candidate_paths.txt",
+    "filesystem_snapshot_root": "filesystem_snapshot/",
+    "git_bundle": "pre_cleanup_head.bundle"
+  }
+}

@@ -1,0 +1,7 @@
+﻿timestamp_utc=2026-03-03T07:33:36Z
+gate=G01_context_build
+command=C:\Python314\python.exe E:\Code\SOP\quant_current_scope\scripts\build_context_packet.py --repo-root E:\Code\SOP\quant_current_scope
+----- stdout_stderr -----
+----- exit -----
+exit_code=0
+ended_utc=2026-03-03T07:33:36Z

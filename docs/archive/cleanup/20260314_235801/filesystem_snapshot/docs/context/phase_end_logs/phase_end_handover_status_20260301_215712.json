@@ -1,0 +1,43 @@
+﻿{
+    "schema_version":  "1.0.0",
+    "failed_exit_code":  2,
+    "run_id":  "20260301_215712",
+    "logs_dir":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\phase_end_logs",
+    "ended_utc":  "2026-03-01T13:57:13Z",
+    "failed_gate":  "G03_worker_status_aggregate",
+    "repo_root":  "E:\\Code\\SOP\\quant_current_scope",
+    "started_utc":  "2026-03-01T13:57:12Z",
+    "result":  "BLOCK",
+    "gates":  [
+                  {
+                      "gate":  "G01_context_build",
+                      "log_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\phase_end_logs\\20260301_215712_G01_context_build.log",
+                      "command":  "C:\\Python314\\python.exe E:\\Code\\SOP\\quant_current_scope\\scripts\\build_context_packet.py --repo-root E:\\Code\\SOP\\quant_current_scope",
+                      "ended_utc":  "2026-03-01T13:57:13Z",
+                      "started_utc":  "2026-03-01T13:57:12Z",
+                      "exit_code":  0,
+                      "status":  "PASS",
+                      "message":  ""
+                  },
+                  {
+                      "gate":  "G02_context_validate",
+                      "log_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\phase_end_logs\\20260301_215712_G02_context_validate.log",
+                      "command":  "C:\\Python314\\python.exe E:\\Code\\SOP\\quant_current_scope\\scripts\\build_context_packet.py --repo-root E:\\Code\\SOP\\quant_current_scope --validate",
+                      "ended_utc":  "2026-03-01T13:57:13Z",
+                      "started_utc":  "2026-03-01T13:57:13Z",
+                      "exit_code":  0,
+                      "status":  "PASS",
+                      "message":  ""
+                  },
+                  {
+                      "gate":  "G03_worker_status_aggregate",
+                      "log_path":  "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\phase_end_logs\\20260301_215712_G03_worker_status_aggregate.log",
+                      "command":  "C:\\Python314\\python.exe E:\\Code\\SOP\\quant_current_scope\\scripts\\aggregate_worker_status.py --scan-root E:\\Code\\SOP\\quant_current_scope --output E:\\Code\\SOP\\quant_current_scope\\docs\\context\\worker_status_aggregate.json --escalation-output E:\\Code\\SOP\\quant_current_scope\\docs\\context\\escalation_events.json",
+                      "ended_utc":  "2026-03-01T13:57:13Z",
+                      "started_utc":  "2026-03-01T13:57:13Z",
+                      "exit_code":  2,
+                      "status":  "BLOCK",
+                      "message":  ""
+                  }
+              ]
+}

@@ -1,0 +1,18 @@
+# Skills Registry v1.0.0
+# Human-readable catalog of all available skills
+# Conforms to skills/schemas/registry_schema.yaml
+
+schema_version: "1.0.0"
+last_updated: "2026-03-13"
+
+skills:
+  - name: safe-db-migration
+    version: 1.0.0
+    category: database
+    description: "Execute database schema changes with rollback plan and zero data loss"
+    author: "Internal Team"
+    approval_status: active
+    approval_decision_id: D-176
+    documentation: "skills/safe_db_migration/README.md"
+    examples:
+      - "skills/safe_db_migration/examples/postgres_add_column.md"

@@ -1,0 +1,26 @@
+.gitignore
+OPERATOR_LOOP_GUIDE.md
+README.md
+docs/ARTIFACT_POLICY.md
+docs/context/auditor_calibration_report.json
+docs/context/auditor_calibration_report.md
+docs/context/auditor_findings.json
+docs/context/auditor_fp_ledger.json
+docs/context/auditor_promotion_dossier.json
+docs/context/auditor_promotion_dossier.md
+docs/context/ceo_bridge_digest.md
+docs/context/ceo_go_signal.md
+docs/context/current_context.json
+docs/context/current_context.md
+docs/context/worker_status_aggregate.json
+docs/decision log.md
+docs/handover/gemini/phase24_gemini_handover.md
+docs/runbook_ops.md
+pyproject.toml
+scripts/loop_cycle_artifacts.py
+scripts/loop_cycle_runtime.py
+scripts/print_takeover_entrypoint.py
+scripts/run_fast_checks.py
+tests/test_loop_cycle_artifacts.py
+tests/test_print_takeover_entrypoint.py
+tests/test_run_fast_checks.py

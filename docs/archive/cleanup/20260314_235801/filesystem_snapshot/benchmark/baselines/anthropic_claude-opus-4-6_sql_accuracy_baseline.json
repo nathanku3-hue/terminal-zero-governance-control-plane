@@ -1,0 +1,32 @@
+{
+  "model": "anthropic:claude-opus-4-6",
+  "suite": "sql_accuracy",
+  "baseline_score": 0.9099999999999999,
+  "baseline_runs": [
+    {
+      "run_number": 1,
+      "aggregate_score": 0.9099999999999999,
+      "passed_tests": 3,
+      "total_tests": 5,
+      "timestamp": "2026-03-12T09:12:49Z",
+      "output_file": "E:\\Code\\SOP\\quant_current_scope\\benchmark\\results\\sql_accuracy_run1.json"
+    },
+    {
+      "run_number": 2,
+      "aggregate_score": 0.9099999999999999,
+      "passed_tests": 3,
+      "total_tests": 5,
+      "timestamp": "2026-03-12T09:13:12Z",
+      "output_file": "E:\\Code\\SOP\\quant_current_scope\\benchmark\\results\\sql_accuracy_run2.json"
+    },
+    {
+      "run_number": 3,
+      "aggregate_score": 0.9099999999999999,
+      "passed_tests": 3,
+      "total_tests": 5,
+      "timestamp": "2026-03-12T09:13:40Z",
+      "output_file": "E:\\Code\\SOP\\quant_current_scope\\benchmark\\results\\sql_accuracy_run3.json"
+    }
+  ],
+  "established_at": "2026-03-12T09:13:40Z"
+}

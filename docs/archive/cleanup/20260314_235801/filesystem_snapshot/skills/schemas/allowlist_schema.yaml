@@ -1,0 +1,102 @@
+# Extension Allowlist Schema v1.0.0
+# Defines the structure for extension_allowlist.yaml
+# Global allowlist of approved skills
+
+schema_version: "1.0.0"
+description: "Schema for extension_allowlist.yaml - global skill approval registry"
+
+type: object
+required:
+  - schema_version
+  - last_updated
+  - skills
+
+properties:
+  schema_version:
+    type: string
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    description: "Semantic version of this schema"
+
+  last_updated:
+    type: string
+    format: date
+    description: "ISO date of last allowlist update (YYYY-MM-DD)"
+
+  skills:
+    type: array
+    description: "List of approved skills"
+    items:
+      type: object
+      required:
+        - skill_name
+        - version
+        - approved_by
+        - approval_decision_id
+        - approval_date
+        - status
+        - risk_level
+        - applicable_projects
+      properties:
+        skill_name:
+          type: string
+          pattern: "^[a-z0-9-]+$"
+          description: "Unique skill identifier (kebab-case)"
+
+        version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          description: "Exact semantic version (no wildcards)"
+
+        approved_by:
+          type: string
+          enum:
+            - PM
+            - CEO
+            - PM/CEO
+          description: "Approval authority"
+
+        approval_decision_id:
+          type: string
+          pattern: "^D-[0-9]+[a-z]?$"
+          description: "Reference to decision log entry (e.g., D-176)"
+
+        approval_date:
+          type: string
+          format: date
+          description: "ISO date of approval (YYYY-MM-DD)"
+
+        status:
+          type: string
+          enum:
+            - active
+            - deprecated
+            - disabled
+          description: "Current status"
+
+        risk_level:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+          description: "Risk classification (determines approval authority)"
+
+        applicable_projects:
+          type: array
+          description: "List of project names or ['all']"
+          minItems: 1
+          items:
+            type: string
+
+        deprecation_reason:
+          type: string
+          description: "Reason for deprecation (required if status=deprecated)"
+
+        removal_date:
+          type: string
+          format: date
+          description: "Planned removal date (required if status=deprecated)"
+
+        disable_reason:
+          type: string
+          description: "Reason for disabling (required if status=disabled)"

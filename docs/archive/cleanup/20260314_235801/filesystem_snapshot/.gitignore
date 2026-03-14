@@ -1,0 +1,46 @@
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+benchmark/.env
+
+# Local temp artifacts / scratch repos
+.tmp/
+.tmp_pytest/
+.ptemp/
+tmp_test/
+e2e_test/
+
+# Generated artifacts - ephemeral state files
+docs/context/*_latest.json
+docs/context/*_latest.md
+docs/context/auditor_calibration_report.json
+docs/context/auditor_calibration_report.md
+docs/context/auditor_promotion_dossier.json
+docs/context/auditor_promotion_dossier.md
+docs/context/ceo_go_signal.md
+docs/context/loop_cycle_summary_current.json
+docs/context/exec_memory_packet_latest_current.json
+docs/context/exec_memory_packet_latest_current.md
+docs/context/exec_memory_packet_build_status_current.json
+
+# Invalid nested repo-root drift quarantine
+quant_current_scope/
+
+# Generated root convenience mirrors
+NEXT_ROUND_HANDOFF_LATEST.md
+EXPERT_REQUEST_LATEST.md
+PM_CEO_RESEARCH_BRIEF_LATEST.md
+BOARD_DECISION_BRIEF_LATEST.md
+TAKEOVER_LATEST.md
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
