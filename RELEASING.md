@@ -19,7 +19,7 @@ No hosted-service, plugin-runtime, worker-fleet, or rollout-automation deploymen
   - `scripts/supervise_loop.py`
   - the supporting operator docs, tests, and artifact contracts for that flow
 - Release validation is against that current shipped `v1` surface only.
-- The Phase 5 surfaces documented in `docs/decisions/phase5_architecture.md` remain draft future-state ideas, not shipped release commitments.
+- Phase 5 future-state architecture surfaces remain draft ideas, not shipped release commitments.
 - Plugin architecture, benchmark harness productization, skills registry productization, subagent routing, worker inner-loop automation, rollout automation, adaptive guardrails, and broader memory optimization are out of scope for the current release boundary unless they are separately approved, implemented, and added to this checklist.
 
 ## Stream C Implementation Status (Non-Scope-Expanding)
@@ -34,7 +34,7 @@ No hosted-service, plugin-runtime, worker-fleet, or rollout-automation deploymen
 Before cutting the first public release:
 - Required repository docs are present and aligned: `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, and `RELEASING.md`.
 - Governance/operator docs are internally consistent with current behavior (`docs/runbook_ops.md`, `docs/loop_operating_contract.md`).
-- `docs/decisions/phase5_architecture.md` remains explicitly marked as draft future-state material and does not redefine the shipped `v1` boundary.
+- Future-state architecture notes remain explicitly marked as draft material and do not redefine the shipped `v1` boundary.
 - Validation commands pass on release candidate `HEAD` for the current shipped `v1` surface:
 
 ```powershell
