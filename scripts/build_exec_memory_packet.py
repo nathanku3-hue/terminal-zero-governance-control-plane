@@ -17,12 +17,34 @@ if __name__ == "__main__":
         sys.path.insert(0, str(_project_root))
 
 from scripts.utils.json_utils import safe_load_json_object
+from scripts.utils.memory_tiers import bind_memory_tier_paths
+from scripts.utils.memory_tiers import build_memory_tier_snapshot
+from scripts.utils.skill_resolver import resolve_active_skills
 
 
 AUTOMATION_BOUNDARY_REGISTRY_PATH = "docs/automation_boundary_registry.md"
 MILESTONE_EXPERT_ROSTER_PATH = "docs/context/milestone_expert_roster_latest.json"
 CRITICAL_INPUTS = frozenset({"loop_cycle_summary_latest.json", "ceo_go_signal.md"})
 IMPORTANT_INPUTS = frozenset({"auditor_promotion_dossier.json", "auditor_calibration_report.json"})
+BUILD_PACKET_MEMORY_FAMILIES = (
+    "loop_cycle_summary",
+    "auditor_promotion_dossier",
+    "auditor_calibration_report",
+    "ceo_go_signal",
+    "decision_log",
+    "milestone_expert_roster",
+    "project_skill_config",
+    "extension_allowlist",
+    "skill_registry",
+    "exec_memory_packet",
+    "exec_memory_build_status",
+    "next_round_handoff",
+    "expert_request",
+    "pm_ceo_research_brief",
+    "board_decision_brief",
+    "skill_activation",
+)
+BUILD_PACKET_COLD_FALLBACK_FAMILIES = ("auditor_fp_ledger",)
 
 
 def _resolve_input_category(input_name: str) -> str:
@@ -1587,6 +1609,7 @@ def _build_retrieval_namespaces(
     go_signal_path: Path,
     decision_log_path: Path,
     roster_context: dict[str, Any],
+    skill_activation: dict[str, Any] | None,
 ) -> dict[str, list[dict]]:
     """Build retrieval namespaces with source bindings."""
     namespaces: dict[str, list[dict]] = {
@@ -1596,7 +1619,7 @@ def _build_retrieval_namespaces(
         "roadmap": [],
     }
 
-    # Governance: decision log, go signal
+    # Governance: decision log, go signal, skill activation
     if decision_log_path.exists():
         namespaces["governance"].append({
             "source": str(decision_log_path.relative_to(context_dir.parent)),
@@ -1614,6 +1637,22 @@ def _build_retrieval_namespaces(
             "source": str(roster_context.get("path", MILESTONE_EXPERT_ROSTER_PATH)),
             "type": "json",
             "description": "Milestone expert roster"
+        })
+    if skill_activation and skill_activation.get("status") in {"ok", "degraded"}:
+        namespaces["governance"].append({
+            "source": ".sop_config.yaml",
+            "type": "yaml",
+            "description": "Project skill configuration"
+        })
+        namespaces["governance"].append({
+            "source": "extension_allowlist.yaml",
+            "type": "yaml",
+            "description": "Global skill allowlist"
+        })
+        namespaces["governance"].append({
+            "source": "skills/registry.yaml",
+            "type": "yaml",
+            "description": "Skills registry"
         })
 
     # Operations: loop summary
@@ -1763,6 +1802,9 @@ def main() -> int:
     status_json_path = Path(args.status_json)
     generated_at_utc = _now_utc_iso()
 
+    # Resolve repo root from decision_log_path
+    repo_root = decision_log_path.parent.parent.resolve()
+
     input_status: dict[str, list[dict[str, str]]] = {
         "critical": [],
         "important": [],
@@ -1784,6 +1826,14 @@ def main() -> int:
 
         decision_log_text = _load_text_safe(decision_log_path)
         _append_input_status(input_status, path=decision_log_path, loaded=bool(decision_log_text))
+
+        # Load skill activation inputs (fail-soft)
+        sop_config_path = repo_root / ".sop_config.yaml"
+        allowlist_path = repo_root / "extension_allowlist.yaml"
+        registry_path = repo_root / "skills" / "registry.yaml"
+        _append_input_status(input_status, path=sop_config_path, loaded=sop_config_path.exists())
+        _append_input_status(input_status, path=allowlist_path, loaded=allowlist_path.exists())
+        _append_input_status(input_status, path=registry_path, loaded=registry_path.exists())
     except Exception as e:
         print(f"ERROR: Failed to load inputs: {e}", file=sys.stderr)
         return 2
@@ -1813,6 +1863,31 @@ def main() -> int:
             print(f"ERROR: Failed to write build status: {exc}", file=sys.stderr)
         print(f"ERROR: Critical inputs failed to load: {failed_names}", file=sys.stderr)
         return 2
+
+    # Resolve active skills (fail-soft)
+    project_name = "quant_current_scope"  # Default, could be read from config
+    try:
+        sop_config_path = repo_root / ".sop_config.yaml"
+        if sop_config_path.exists():
+            import yaml
+            with sop_config_path.open("r", encoding="utf-8") as f:
+                sop_config = yaml.safe_load(f)
+                if isinstance(sop_config, dict):
+                    project_name = sop_config.get("project_name", project_name)
+    except Exception:
+        pass  # Use default project_name
+
+    skill_activation = None
+    try:
+        skill_activation = resolve_active_skills(repo_root, project_name)
+    except Exception as e:
+        print(f"WARNING: Failed to resolve active skills: {e}", file=sys.stderr)
+        skill_activation = {
+            "status": "failed",
+            "skills": [],
+            "warnings": [],
+            "errors": [str(e)],
+        }
 
     # Build hierarchical summaries
     working_summary = _build_working_summary(loop_summary)
@@ -1859,7 +1934,38 @@ def main() -> int:
         go_signal_path,
         decision_log_path,
         milestone_expert_roster,
+        skill_activation,
     )
+    memory_tier_contract = build_memory_tier_snapshot(
+        family_ids=BUILD_PACKET_MEMORY_FAMILIES,
+        cold_fallback_ids=BUILD_PACKET_COLD_FALLBACK_FAMILIES,
+    )
+    memory_tier_bindings = {
+        "inputs": bind_memory_tier_paths(
+            {
+                "loop_cycle_summary": loop_summary_path,
+                "auditor_promotion_dossier": dossier_path,
+                "auditor_calibration_report": calibration_path,
+                "ceo_go_signal": go_signal_path,
+                "decision_log": decision_log_path,
+                "milestone_expert_roster": context_dir / "milestone_expert_roster_latest.json",
+                "project_skill_config": repo_root / ".sop_config.yaml",
+                "extension_allowlist": repo_root / "extension_allowlist.yaml",
+                "skill_registry": repo_root / "skills" / "registry.yaml",
+            }
+        ),
+        "outputs": bind_memory_tier_paths(
+            {
+                "exec_memory_packet": output_json_path,
+                "exec_memory_build_status": status_json_path,
+                "next_round_handoff": context_dir / "next_round_handoff_latest.json",
+                "expert_request": context_dir / "expert_request_latest.json",
+                "pm_ceo_research_brief": context_dir / "pm_ceo_research_brief_latest.json",
+                "board_decision_brief": context_dir / "board_decision_brief_latest.json",
+                "skill_activation": context_dir / "skill_activation_latest.json",
+            }
+        ),
+    }
 
     # Token budget calculation
     pm_context = daily_pm_summary
@@ -1891,6 +1997,10 @@ def main() -> int:
         source_bindings.append(str(decision_log_path))
     if bool(milestone_expert_roster.get("present", False)):
         source_bindings.append(str(milestone_expert_roster["path"]))
+    if skill_activation and skill_activation.get("status") in {"ok", "degraded"}:
+        source_bindings.append(str(repo_root / ".sop_config.yaml"))
+        source_bindings.append(str(repo_root / "extension_allowlist.yaml"))
+        source_bindings.append(str(repo_root / "skills" / "registry.yaml"))
 
     semantic_claims = _build_semantic_claims(
         working_summary=working_summary,
@@ -1921,6 +2031,9 @@ def main() -> int:
             "go_signal": str(go_signal_path) if go_signal_path.exists() else None,
             "decision_log": str(decision_log_path) if decision_log_path.exists() else None,
             "milestone_expert_roster": milestone_expert_roster["path"],
+            "sop_config": str(repo_root / ".sop_config.yaml") if (repo_root / ".sop_config.yaml").exists() else None,
+            "extension_allowlist": str(repo_root / "extension_allowlist.yaml") if (repo_root / "extension_allowlist.yaml").exists() else None,
+            "skill_registry": str(repo_root / "skills" / "registry.yaml") if (repo_root / "skills" / "registry.yaml").exists() else None,
         },
         "input_status": input_status,
         "token_budget": {
@@ -1931,6 +2044,8 @@ def main() -> int:
             "pm_budget_ok": pm_budget_ok,
             "ceo_budget_ok": ceo_budget_ok,
         },
+        "memory_tier_contract": memory_tier_contract,
+        "memory_tier_bindings": memory_tier_bindings,
         "hierarchical_summary": {
             "working_summary": working_summary,
             "issue_summary": issue_summary,
@@ -1944,6 +2059,7 @@ def main() -> int:
         "board_decision_brief": board_decision_brief,
         "automation_uncertainty_status": automation_uncertainty_status,
         "milestone_expert_roster_status": milestone_expert_roster,
+        "skill_activation": skill_activation,
         "retrieval_namespaces": retrieval_namespaces,
         "source_bindings": source_bindings,
         "semantic_claims": semantic_claims,

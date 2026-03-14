@@ -161,3 +161,37 @@ def test_no_trigger_baseline(tmp_path: Path) -> None:
     assert payload["should_compact"] is False
     assert payload["reasons"] == []
     assert payload["state_updated"] is True
+
+
+def test_trigger_emits_shared_memory_tier_contract(tmp_path: Path) -> None:
+    _write_json(tmp_path / "memory.json", _base_memory(10, 100, 10, 100))
+    _write_json(tmp_path / "dossier.json", _base_dossier())
+    _write_go_signal(tmp_path / "go_signal.md", "HOLD")
+
+    result = _run(tmp_path)
+
+    assert result.returncode == 0
+    payload = json.loads((tmp_path / "status.json").read_text(encoding="utf-8"))
+    contract = payload["memory_tier_contract"]
+    bindings = payload["memory_tier_bindings"]
+
+    assert contract["source_of_truth"] == "scripts/utils/memory_tiers.py"
+    assert contract["documentation"] == "docs/memory_tier_contract.md"
+
+    families = {item["family"]: item for item in contract["families"]}
+    assert families["exec_memory_packet"]["tier"] == "hot"
+    assert families["auditor_promotion_dossier"]["tier"] == "warm"
+    assert families["context_compaction_state"]["tier"] == "hot"
+    assert families["context_compaction_status"]["tier"] == "hot"
+
+    cold = {item["family"]: item for item in contract["cold_manual_fallbacks"]}
+    assert cold["auditor_fp_ledger"]["tier"] == "cold"
+    assert cold["auditor_fp_ledger"]["access"] == "manual_fallback"
+
+    input_bindings = {item["family"]: item for item in bindings["inputs"]}
+    output_bindings = {item["family"]: item for item in bindings["outputs"]}
+    assert input_bindings["exec_memory_packet"]["path"] == str(tmp_path / "memory.json")
+    assert input_bindings["exec_memory_packet"]["tier"] == "hot"
+    assert input_bindings["ceo_go_signal"]["tier"] == "warm"
+    assert output_bindings["context_compaction_status"]["path"] == str(tmp_path / "status.json")
+    assert output_bindings["context_compaction_status"]["tier"] == "hot"

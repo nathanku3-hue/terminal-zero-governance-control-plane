@@ -547,6 +547,43 @@ def test_retrieval_namespaces_structure(tmp_path: Path) -> None:
     assert len(ns["risk"]) > 0
 
 
+def test_memory_tier_contract_uses_shared_mapping(tmp_path: Path) -> None:
+    result, json_path, _ = _run_script(
+        tmp_path,
+        loop_summary=_make_loop_summary(),
+        dossier=_make_dossier(),
+        calibration=_make_calibration(),
+        go_signal=_make_go_signal(),
+        decision_log=_make_decision_log(),
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    packet = json.loads(json_path.read_text(encoding="utf-8"))
+    contract = packet["memory_tier_contract"]
+    bindings = packet["memory_tier_bindings"]
+
+    assert contract["source_of_truth"] == "scripts/utils/memory_tiers.py"
+    assert contract["documentation"] == "docs/memory_tier_contract.md"
+
+    families = {item["family"]: item for item in contract["families"]}
+    assert families["loop_cycle_summary"]["tier"] == "hot"
+    assert families["exec_memory_packet"]["tier"] == "hot"
+    assert families["next_round_handoff"]["tier"] == "warm"
+    assert families["skill_activation"]["tier"] == "warm"
+
+    cold = {item["family"]: item for item in contract["cold_manual_fallbacks"]}
+    assert cold["auditor_fp_ledger"]["tier"] == "cold"
+    assert cold["auditor_fp_ledger"]["access"] == "manual_fallback"
+
+    input_bindings = {item["family"]: item for item in bindings["inputs"]}
+    output_bindings = {item["family"]: item for item in bindings["outputs"]}
+    assert input_bindings["loop_cycle_summary"]["tier"] == "hot"
+    assert input_bindings["auditor_promotion_dossier"]["tier"] == "warm"
+    assert input_bindings["decision_log"]["tier"] == "warm"
+    assert output_bindings["exec_memory_packet"]["tier"] == "hot"
+    assert output_bindings["board_decision_brief"]["tier"] == "warm"
+
+
 def test_token_budget_tracking(tmp_path: Path) -> None:
     result, json_path, md_path = _run_script(
         tmp_path,
@@ -1364,3 +1401,73 @@ def test_all_inputs_loaded_success(tmp_path: Path) -> None:
 
     optional_loaded = [item for item in input_status["optional"] if item["status"] == "loaded"]
     assert any(item["file"] == "decision log.md" for item in optional_loaded)
+
+
+def test_skill_activation_section_present(tmp_path):
+    """Test that skill_activation section is present in exec memory packet."""
+    context_dir = tmp_path / "docs" / "context"
+    context_dir.mkdir(parents=True)
+
+    loop_summary_path = context_dir / "loop_cycle_summary_latest.json"
+    _write_json(loop_summary_path, _make_loop_summary())
+
+    go_signal_path = context_dir / "ceo_go_signal.md"
+    _write_text(go_signal_path, "# CEO Go Signal\n\nApproved for Phase 4.\n")
+
+    decision_log_path = tmp_path / "docs" / "decision log.md"
+    _write_text(decision_log_path, "# Decision Log\n\n## D-001\n\nApproved.\n")
+
+    # Create skill governance files
+    sop_config_path = tmp_path / ".sop_config.yaml"
+    _write_text(sop_config_path, "project_name: test_project\nactive_skills:\n  - test-skill\n")
+
+    allowlist_path = tmp_path / "extension_allowlist.yaml"
+    _write_text(
+        allowlist_path,
+        "skills:\n  - skill_name: test-skill\n    version: 1.0.0\n    status: active\n    applicable_projects:\n      - all\n"
+    )
+
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    registry_path = skills_dir / "registry.yaml"
+    _write_text(
+        registry_path,
+        "skills:\n  - name: test-skill\n    version: 1.0.0\n    category: testing\n"
+    )
+
+    output_json = context_dir / "exec_memory_packet_latest.json"
+    output_md = context_dir / "exec_memory_packet_latest.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--context-dir",
+            str(context_dir),
+            "--loop-summary-json",
+            str(loop_summary_path),
+            "--go-signal-md",
+            str(go_signal_path),
+            "--decision-log-md",
+            str(decision_log_path),
+            "--output-json",
+            str(output_json),
+            "--output-md",
+            str(output_md),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    assert output_json.exists()
+
+    packet = json.loads(output_json.read_text(encoding="utf-8"))
+    assert "skill_activation" in packet
+
+    skill_activation = packet["skill_activation"]
+    assert "status" in skill_activation
+    assert "skills" in skill_activation
+    assert "warnings" in skill_activation
+    assert "errors" in skill_activation
+    assert isinstance(skill_activation["skills"], list)

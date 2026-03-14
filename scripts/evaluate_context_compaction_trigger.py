@@ -11,6 +11,16 @@ from datetime import timezone
 from pathlib import Path
 from typing import Any
 
+if __name__ == "__main__":
+    _script_dir = Path(__file__).resolve().parent
+    _project_root = _script_dir.parent
+    if str(_project_root) not in sys.path:
+        sys.path.insert(0, str(_project_root))
+
+from scripts.utils.memory_tiers import bind_memory_tier_paths
+from scripts.utils.memory_tiers import build_memory_tier_snapshot
+
+
 CRITERIA_ORDER = [
     ("C0", "c0_infra_health"),
     ("C1", "c1_24b_close"),
@@ -24,6 +34,14 @@ ACTION_PATTERN = re.compile(
     r"^\s*-?\s*Recommended Action\s*:\s*(GO|HOLD|REFRAME)\s*$",
     re.IGNORECASE,
 )
+COMPACTION_MEMORY_FAMILIES = (
+    "exec_memory_packet",
+    "auditor_promotion_dossier",
+    "ceo_go_signal",
+    "context_compaction_state",
+    "context_compaction_status",
+)
+COMPACTION_COLD_FALLBACK_FAMILIES = ("auditor_fp_ledger",)
 
 
 def _utc_now() -> datetime:
@@ -254,6 +272,26 @@ def main(argv: list[str] | None = None) -> int:
             "ratios": {
                 "pm_ratio": round(pm_ratio, 6),
                 "ceo_ratio": round(ceo_ratio, 6),
+            },
+            "memory_tier_contract": build_memory_tier_snapshot(
+                family_ids=COMPACTION_MEMORY_FAMILIES,
+                cold_fallback_ids=COMPACTION_COLD_FALLBACK_FAMILIES,
+            ),
+            "memory_tier_bindings": {
+                "inputs": bind_memory_tier_paths(
+                    {
+                        "exec_memory_packet": args.memory_json,
+                        "auditor_promotion_dossier": args.dossier_json,
+                        "ceo_go_signal": args.go_signal_md,
+                        "context_compaction_state": args.state_json,
+                    }
+                ),
+                "outputs": bind_memory_tier_paths(
+                    {
+                        "context_compaction_state": args.state_json,
+                        "context_compaction_status": args.output_json,
+                    }
+                ),
             },
             "action_current": action_current,
             "action_previous": action_previous,
