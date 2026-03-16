@@ -44,3 +44,41 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Deferred skill infrastructure (Phase 24C scope freeze)
+/skills/registry.yaml
+/skills/schemas/
+/skills/safe_db_migration/
+/.sop_config.yaml
+/extension_allowlist.yaml
+scripts/validate_skill_registry.py
+scripts/validate_skill_manifest.py
+scripts/validate_extension_allowlist.py
+tests/test_skill_infrastructure.py
+
+# Working documents (not release artifacts)
+agents_md_refactor_proposal.md
+skill_system_status.md
+test_workflow_integration.md
+tier1_skills_implementation_complete.md
+docs/next_phase_plan.md
+docs/agents_md_refactor_complete.md
+docs/context/w11_status.md
+docs/context/workflow_status_test.json
+
+# Experimental/benchmark (not production)
+/benchmark/
+scripts/run_baseline_benchmark.py
+scripts/measure_context_reduction.py
+scripts/test_policy_proposal.py
+scripts/validate_baseline.py
+tests/test_phase5_benchmark.py
+
+# Operational logs (timestamped, not source)
+docs/context/phase_end_logs/
+
+# Archive
+docs/archive/
+
+# Decisions directory (working docs)
+docs/decisions/
