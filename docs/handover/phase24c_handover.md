@@ -7,10 +7,10 @@ Owner: Codex
 
 ## 1) Executive Summary
 - Objective status: Phase 24C architecture and calibration machinery are built, tested, and operational in shadow mode.
-- Current readiness: Automated promotion criteria are mostly green. `C0`, `C2`, `C4`, `C4b`, and `C5` are now passing. `C3` remains the live automated blocker. `C1` remains a required manual signoff step.
+- Current readiness: Automated promotion criteria are mostly green. `C0`, `C1`, `C2`, `C4`, `C4b`, and `C5` are now passing. `C3` remains the live automated blocker.
 - PM-level decision framing: The top-level completion model is `Ops`, `Quality`, `Governance`, and `Rollout`. QA sits inside the `Quality` lane; it is not the whole story. Do not open new architecture, new schema work, or broader governance expansion.
 - Freeze posture: Keep architecture, prompt, and schema scope frozen until the promotion decision is made. `C5` is already green, so new v2 work is off the critical path.
-- Recommended top-level move: Stay on the narrow promotion path: P0 ops hygiene, W11 evidence collection to close `C3`, `C1` signoff preparation, one explicit enforce dry-run, canary enforce, full rollout, and a stable 2-week monitor.
+- Recommended top-level move: Stay on the narrow promotion path: P0 ops hygiene, W11 evidence collection to close `C3`, one explicit enforce dry-run, canary enforce, full rollout, and a stable 2-week monitor.
 
 ## 2) What This Phase Delivered
 - Independent auditor review flow is live through `scripts/run_auditor_review.py`.
@@ -57,14 +57,14 @@ Stay on the narrow promotion path:
 3. Keep the scope single-repo for `quant_current_scope` unless PM/CEO explicitly widen it.
 4. Do not widen scope with new v2/schema or architecture work.
 5. Treat `C3` as the main blocker.
-6. In parallel, prepare the evidence packet needed for `C1` so that once `C3` flips, PM can move directly to signoff and dry-run.
+6. Once `C3` flips, move directly to enforce dry-run (C1 signoff already complete per D-174).
 7. Keep enforce activation explicit via `-AuditMode enforce` through dry-run, canary, and the monitor window rather than flipping defaults early.
 
 ### Why This Is the Right Call
 - `C5` is already passing, so new v2 work is not on the critical path.
 - `C4b` has recovered to `100%`, removing the main operational hygiene blocker.
 - `C3` is the only remaining automated promotion blocker in the live GO signal.
-- `C1` is manual and should be prepared now, but not claimed complete before `C3` is satisfied.
+- `C1` is complete (D-174 recorded 2026-03-16), so once `C3` is satisfied, the path to enforce dry-run is clear.
 - Multiple shadow cycles are allowed by the playbook, but the worker should still wait for explicit approval before advancing execution.
 - Keeping rollout explicit and single-repo first preserves a cheap rollback path while evidence is still accumulating.
 
@@ -85,9 +85,9 @@ Stay on the narrow promotion path:
 - The error references stale source bindings that still point at `loop_cycle_summary_current.json`, which no longer exists after the temp snapshot is cleaned up.
 - PM implication: this is not the main promotion blocker today, but it is an operational inconsistency that should be cleaned before calling the phase "done done."
 
-### Risk 4: Manual Signoff Is Still Uncaptured
-- `C1` remains `MANUAL_CHECK`.
-- PM implication: Phase 24C cannot be declared rollout-ready until PM explicitly records signoff in the decision log with the required evidence links.
+### Risk 4: Manual Signoff Complete
+- `C1` is complete (D-174 recorded 2026-03-16).
+- PM implication: Phase 24C can proceed to enforce dry-run once `C3` is satisfied.
 
 ## 6) What Is Locked vs What Is Still Mutable
 
@@ -138,21 +138,18 @@ Stay on the narrow promotion path:
 | Stage | Objective | Exit Condition | Owner |
 |---|---|---|---|
 | 1. W11 Closure | Close `C3` with 2 consecutive qualifying weeks | Dossier shows `c3_min_weeks.met = true` | Worker / Ops |
-| 2. C1 Signoff Prep | Assemble manual readiness packet | Evidence bundle ready for PM review | Worker / PM |
-| 3. C1 Manual Signoff | Record PM approval in decision log | `C1` explicitly approved | PM |
-| 4. Enforce Dry-Run | Run one bounded enforce cycle | No false block and no infra failure | PM / Ops |
-| 5. Canary Enforce | 3-5 enforce runs with limited blast radius | FP rate `<5%`, no infra instability | PM |
-| 6. Full Enforce Rollout | Promote enforce from canary to normal operation | Rollout accepted and monitored | PM / CEO |
-| 7. Stable Completion | Hold stable enforce behavior for the monitoring window | Phase declared complete | PM / CEO |
+| 2. Enforce Dry-Run | Run one bounded enforce cycle | No false block and no infra failure | PM / Ops |
+| 3. Canary Enforce | 3-5 enforce runs with limited blast radius | FP rate `<5%`, no infra instability | PM |
+| 4. Full Enforce Rollout | Promote enforce from canary to normal operation | Rollout accepted and monitored | PM / CEO |
+| 5. Stable Completion | Hold stable enforce behavior for the monitoring window | Phase declared complete | PM / CEO |
 
 ### Recommended Immediate Sequence
 1. Hold worker execution until explicit approval is given for the next shadow cycle.
 2. Maintain W11 cadence and artifact freshness once approval is given.
 3. Keep annotation coverage at `100%`.
 4. Re-run dossier/GO/closure refreshes as evidence changes.
-5. Prepare the `C1` decision-log template in advance.
-6. Once `C3` flips, run the enforce dry-run immediately rather than reopening implementation work.
-7. Keep a W12 contingency in plan if evidence volume slips, because `C3` is calendar-bound rather than code-bound.
+5. Once `C3` flips, run the enforce dry-run immediately rather than reopening implementation work.
+6. Keep a W12 contingency in plan if evidence volume slips, because `C3` is calendar-bound rather than code-bound.
 
 ## 9) Upcoming PM Decisions
 
