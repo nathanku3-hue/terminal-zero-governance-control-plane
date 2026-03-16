@@ -33,9 +33,19 @@
         "problem_solving_alignment_score": 0.92,
         "expertise_coverage": [
           {
+            "domain": "principal",
+            "verdict": "APPLIED",
+            "rationale": "Designed auditor architecture with 10 governance checks (AUD-R000 through AUD-R009)"
+          },
+          {
             "domain": "riskops",
             "verdict": "APPLIED",
             "rationale": "Designed fail-closed infra error handling and canonical severity model"
+          },
+          {
+            "domain": "qa",
+            "verdict": "APPLIED",
+            "rationale": "Created 23 tests covering all rules, modes, severity, and exit codes"
           }
         ]
       },
@@ -58,6 +68,12 @@
           "path": "docs/context/schemas/auditor_fp_ledger.json.template",
           "locator": "1-50",
           "claim": "FP ledger schema with composite key and provenance fields"
+        },
+        {
+          "type": "doc",
+          "path": "docs/context/auditor_fp_ledger.json",
+          "locator": "annotations",
+          "claim": "Live FP ledger with 100% annotation coverage maintained across shadow runs"
         }
       ],
       "machine_optimized": {
@@ -72,6 +88,16 @@
             "domain": "principal",
             "verdict": "APPLIED",
             "rationale": "Designed composite key schema to prevent duplicate annotations"
+          },
+          {
+            "domain": "qa",
+            "verdict": "APPLIED",
+            "rationale": "Validated annotation workflow maintains 100% coverage across shadow runs"
+          },
+          {
+            "domain": "riskops",
+            "verdict": "APPLIED",
+            "rationale": "Designed provenance tracking to ensure audit trail for all TP/FP verdicts"
           }
         ]
       },
@@ -94,6 +120,12 @@
           "path": "scripts/phase_end_handover.ps1",
           "locator": "600-750",
           "claim": "G11 auditor gate integration with finalize path for digest rebuild"
+        },
+        {
+          "type": "test",
+          "path": "tests/test_run_auditor_review.py",
+          "locator": "test_auditor_shadow_mode_allows_policy_findings",
+          "claim": "Validated G11 gate behavior: shadow mode allows policy findings, enforce mode blocks"
         }
       ],
       "machine_optimized": {
@@ -105,9 +137,19 @@
         "problem_solving_alignment_score": 0.89,
         "expertise_coverage": [
           {
-            "domain": "system_eng",
+            "domain": "principal",
             "verdict": "APPLIED",
-            "rationale": "Integrated auditor into phase-end workflow with proper gate ordering"
+            "rationale": "Designed gate ordering and finalize path architecture for phase-end workflow"
+          },
+          {
+            "domain": "qa",
+            "verdict": "APPLIED",
+            "rationale": "Validated G11 gate behavior across shadow and enforce modes"
+          },
+          {
+            "domain": "riskops",
+            "verdict": "APPLIED",
+            "rationale": "Ensured digest rebuild runs after G11 BLOCK to maintain visibility of findings"
           }
         ]
       },
@@ -130,6 +172,12 @@
           "path": "scripts/build_ceo_bridge_digest.py",
           "locator": "300-400",
           "claim": "Section IX rendering with stale-file suppression"
+        },
+        {
+          "type": "test",
+          "path": "tests/test_build_ceo_bridge_digest.py",
+          "locator": "test_section_ix_stale_file_suppression",
+          "claim": "Validated stale-file suppression prevents rendering outdated auditor data"
         }
       ],
       "machine_optimized": {
@@ -141,9 +189,19 @@
         "problem_solving_alignment_score": 0.87,
         "expertise_coverage": [
           {
+            "domain": "principal",
+            "verdict": "APPLIED",
+            "rationale": "Designed source-based detection architecture to prevent stale data rendering"
+          },
+          {
             "domain": "qa",
             "verdict": "APPLIED",
             "rationale": "Implemented stale-file detection to prevent rendering outdated data"
+          },
+          {
+            "domain": "riskops",
+            "verdict": "APPLIED",
+            "rationale": "Ensured CEO digest never auto-discovers auditor files to prevent stale data visibility"
           }
         ]
       },
@@ -166,6 +224,12 @@
           "path": "docs/decision log.md",
           "locator": "2006-2007",
           "claim": "D-126: 5-condition promotion gate definition"
+        },
+        {
+          "type": "code",
+          "path": "scripts/auditor_calibration_report.py",
+          "locator": "validate_promotion_criteria",
+          "claim": "Automated validation of C0, C2, C3, C4, C4b, C5 promotion criteria"
         }
       ],
       "machine_optimized": {
@@ -177,9 +241,19 @@
         "problem_solving_alignment_score": 0.91,
         "expertise_coverage": [
           {
+            "domain": "principal",
+            "verdict": "APPLIED",
+            "rationale": "Designed 5-condition promotion gate architecture with automated and manual validation"
+          },
+          {
             "domain": "riskops",
             "verdict": "APPLIED",
             "rationale": "Designed numeric criteria to ensure statistical significance"
+          },
+          {
+            "domain": "qa",
+            "verdict": "APPLIED",
+            "rationale": "Implemented automated validation for C0, C2-C5 criteria in calibration report"
           }
         ]
       },

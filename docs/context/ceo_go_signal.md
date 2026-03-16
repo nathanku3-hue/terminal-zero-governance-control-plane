@@ -1,7 +1,7 @@
 # CEO GO Signal
 
 - Phase: Phase 24
-- Generated: 2026-03-15T12:23:06Z
+- Generated: 2026-03-16T12:33:30Z
 - Recommended Action: GO
 
 ## Dossier Criteria
@@ -27,6 +27,6 @@
 
 ## Artifact Links
 
-- Dossier JSON: `docs\context\auditor_promotion_dossier.json`
-- Calibration JSON: `docs\context\auditor_calibration_report.json`
-- Signal Markdown: `docs\context\ceo_go_signal.md`
+- Dossier JSON: `E:\code\SOP\quant_current_scope\docs\context\auditor_promotion_dossier.json`
+- Calibration JSON: `E:\code\SOP\quant_current_scope\docs\context\auditor_calibration_report.json`
+- Signal Markdown: `E:\code\SOP\quant_current_scope\docs\context\ceo_go_signal.md`
