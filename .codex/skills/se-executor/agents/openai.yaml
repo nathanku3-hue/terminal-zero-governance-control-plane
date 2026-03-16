@@ -1,3 +1,4 @@
+model: "codex-5.2"
 interface:
   display_name: "SE Executor"
   short_description: "Run implementation with artifact-tied tasks and proof-first verification"

@@ -1,0 +1,7 @@
+model: "claude"
+interface:
+  display_name: "Expert Researcher"
+  short_description: "Expert guidance with confidence gate"
+  default_prompt: "Use $expert-researcher to provide an expert answer with explicit expertise level and confidence."
+policy:
+  allow_implicit_invocation: true

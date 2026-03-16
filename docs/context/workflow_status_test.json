@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-16T10:30:00Z",
+  "phase_id": "phase-24c",
+  "phase_name": "Auditor Calibration & Shadow-to-Enforce Promotion",
+  "overall_status": "in_progress",
+  "overall_color": "yellow",
+  "workflow_weight": {
+    "frontend": 0,
+    "backend": 30,
+    "governance": 60,
+    "data": 10,
+    "research": 0
+  },
+  "workflow_status": {
+    "frontend": {
+      "status": "n/a",
+      "deliverables_total": 0,
+      "deliverables_complete": 0,
+      "deliverables_blocked": 0,
+      "criteria_total": 0,
+      "criteria_pass": 0,
+      "criteria_fail": 0
+    },
+    "backend": {
+      "status": "green",
+      "deliverables_total": 3,
+      "deliverables_complete": 3,
+      "deliverables_blocked": 0,
+      "criteria_total": 3,
+      "criteria_pass": 3,
+      "criteria_fail": 0
+    },
+    "governance": {
+      "status": "yellow",
+      "deliverables_total": 2,
+      "deliverables_complete": 1,
+      "deliverables_blocked": 0,
+      "criteria_total": 3,
+      "criteria_pass": 1,
+      "criteria_fail": 0
+    },
+    "data": {
+      "status": "yellow",
+      "deliverables_total": 1,
+      "deliverables_complete": 0,
+      "deliverables_blocked": 0,
+      "criteria_total": 2,
+      "criteria_pass": 0,
+      "criteria_fail": 0
+    },
+    "research": {
+      "status": "n/a",
+      "deliverables_total": 0,
+      "deliverables_complete": 0,
+      "deliverables_blocked": 0,
+      "criteria_total": 0,
+      "criteria_pass": 0,
+      "criteria_fail": 0
+    }
+  },
+  "blocking_issues": [],
+  "realm_criteria": {
+    "realm": "software_engineering",
+    "criteria_total": 3,
+    "criteria_pass": 3,
+    "criteria_fail": 0,
+    "criteria_pending": 0
+  }
+}

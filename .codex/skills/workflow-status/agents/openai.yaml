@@ -1,0 +1,7 @@
+model: "codex-5.2"
+interface:
+  display_name: "Workflow Status"
+  short_description: "Aggregate phase status by workflow type"
+  default_prompt: "Use $workflow-status to read phase brief and current artifacts, then emit workflow_status_latest.json with per-type aggregation (frontend/backend/governance/data/research), overall phase status, realm-specific criteria validation, and blocking issues. Always validate with shared validator and emit WorkflowStatusValidation: PASS/BLOCK."
+policy:
+  allow_implicit_invocation: true

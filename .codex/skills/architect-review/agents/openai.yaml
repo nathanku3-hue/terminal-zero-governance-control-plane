@@ -1,3 +1,4 @@
+model: "claude"
 interface:
   display_name: "Architect Review"
   short_description: "Assess boundaries, coupling, scaling, and security tradeoffs"

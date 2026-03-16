@@ -1,0 +1,7 @@
+model: "claude"
+interface:
+  display_name: "Project Guider"
+  short_description: "Orchestrate hierarchy and skill routing"
+  default_prompt: "Use $project-guider to bootstrap the session, confirm hierarchy, and route work by confidence."
+policy:
+  allow_implicit_invocation: true

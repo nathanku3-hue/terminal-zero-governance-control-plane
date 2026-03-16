@@ -175,6 +175,38 @@ def test_round_contract_checks_fails_on_unknown_id(tmp_path: Path) -> None:
     assert "Unknown DONE_WHEN_CHECKS ids: does_not_exist" in (result.stdout + result.stderr)
 
 
+def test_round_contract_checks_accepts_documented_builtin_closure_ids(tmp_path: Path) -> None:
+    round_md = tmp_path / "docs" / "context" / "round_contract_latest.md"
+    loop_json = tmp_path / "docs" / "context" / "loop_cycle_summary_latest.json"
+    closure_json = tmp_path / "docs" / "context" / "loop_closure_status_latest.json"
+
+    _write_text(
+        round_md,
+        "\n".join(
+            [
+                "# Round Contract",
+                "",
+                "- DONE_WHEN_CHECKS: startup_gate_status,go_signal_action_gate,freshness_gate,go_signal_truth_gate",
+                "",
+            ]
+        ),
+    )
+    _write_json(loop_json, {"steps": [{"name": "refresh_dossier"}]})
+    _write_json(
+        closure_json,
+        {
+            "checks": [
+                {"name": "startup_gate_status"},
+                {"name": "go_signal_action_gate"},
+            ]
+        },
+    )
+
+    result = _run(round_md, loop_json, closure_json)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[OK] DONE_WHEN_CHECKS validation passed." in result.stdout
+
+
 def test_round_contract_checks_fails_on_empty_list(tmp_path: Path) -> None:
     round_md = tmp_path / "docs" / "context" / "round_contract_latest.md"
     loop_json = tmp_path / "docs" / "context" / "loop_cycle_summary_latest.json"

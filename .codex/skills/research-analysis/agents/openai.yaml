@@ -1,3 +1,4 @@
+model: "claude"
 interface:
   display_name: "Research Analysis"
   short_description: "Extract methodology/findings from PDFs and cross-reference deltas"

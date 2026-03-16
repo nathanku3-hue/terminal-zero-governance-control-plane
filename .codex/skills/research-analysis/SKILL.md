@@ -8,25 +8,12 @@ description: Analyze domain research evidence from PDFs in docs/research and con
 Use this skill to produce evidence-backed planning support.
 
 ## 0. Project Init Hierarchy Confirmation (Hard Stop)
-1. At project init, load:
-   - `../_shared/hierarchy_template.md`
-   - `../_shared/field_templates/<domain>.md`
-2. Render hierarchy with locked columns:
-   - `Field | Expertise Level | Rationale`
-3. Ask user for explicit confirmation:
-   - `approve`
-   - `edit: <change>`
-   - `reject`
-4. Do not continue to evidence extraction until explicit approval is received.
-5. Session policy:
-   - Session definition: current chat/thread.
-   - Confirm once per project session.
-   - Retrigger only when:
-     - a new domain appears outside confirmed hierarchy, or
-     - user says `change hierarchy` or `new scope`.
-6. Before each research output, re-check that hierarchy confirmation exists in current thread.
-7. Required audit stamp in each output:
-   - `Hierarchy Confirmation: Approved | Session: <current-thread> | Trigger: <project-init|new-domain|change-scope> | Domains: <list>`
+1. Call `$hierarchy-init` to load templates, render the locked table, and gate on approval.
+2. Do not continue to evidence extraction until explicit approval is received.
+3. Before each research output, re-check that a hierarchy confirmation exists in the current thread.
+4. Ensure the hierarchy audit stamp is included in each output.
+
+**Reference**: For system wiring and validation chain details, see `AGENTS.md` Section 3 and `docs/workflow_wiring_detailed.md`.
 
 ## 1. Collect Inputs
 1. Read relevant PDFs from `docs/research/`.

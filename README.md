@@ -1,12 +1,12 @@
 # Terminal Zero Governance Control Plane
 
-`quant_current_scope` is a script-driven AI engineering governance control plane. It is built to run a bounded startup -> execution -> closure -> takeover loop, generate auditable artifacts, and keep escalation decisions tied to explicit evidence instead of informal prompt state.
+`quant_current_scope` is a script-driven AI engineering governance control plane. It runs a bounded startup -> loop -> closure -> takeover sequence, writes auditable artifacts, and keeps escalation decisions grounded in explicit evidence instead of informal prompt state.
 
 ## Start Here
 
 - External/public orientation: start with this README, then `CONTRIBUTING.md`, `SUPPORT.md`, and `SECURITY.md`.
 - Local operator flow: use `OPERATOR_LOOP_GUIDE.md`.
-- Internal governance/contract depth: use `docs/loop_operating_contract.md` and `docs/runbook_ops.md`.
+- Internal governance and operator procedures: use `docs/loop_operating_contract.md`, `docs/runbook_ops.md`, and `docs/operator_reference.md`.
 
 ## Who This Repository Is For
 
@@ -30,14 +30,32 @@ It is not packaged as a consumer application or hosted service.
 ## Canonical Entrypoints
 
 - `scripts/startup_codex_helper.py` — initialize a round and produce startup intake artifacts.
-- `scripts/run_loop_cycle.py` — execute one loop pass and write cycle artifacts.
+- `scripts/run_loop_cycle.py` — execute one loop pass and refresh loop artifacts.
 - `scripts/validate_loop_closure.py` — evaluate round readiness / closure state.
-- `scripts/supervise_loop.py` — monitor loop health across one or more cycles.
-- `scripts/print_takeover_entrypoint.py` — print takeover guidance from current artifacts.
+- `scripts/print_takeover_entrypoint.py` — print deterministic takeover guidance from current artifacts.
+- `scripts/supervise_loop.py` — optional loop-health monitoring across one or more cycles.
+
+## Shipped v1 Boundary
+
+The shipped `v1` product in this repository is the local, script-driven governance control plane. That boundary includes:
+
+- the bounded `startup -> loop -> closure -> takeover` operator flow driven by the canonical entrypoints above,
+- auditable runtime artifacts under `docs/context/`,
+- current operator docs, release docs, and validation/tests for that flow,
+- optional supervision and workflow overlays as operator aids, not as alternative authority surfaces.
+
+The following surfaces are not part of shipped `v1` and should be treated as future-state only until separately approved, implemented, and added to the release contract:
+
+- plugin architecture,
+- benchmark harness as a product boundary,
+- skills registry as a shipped extension system,
+- subagent routing matrix and worker inner loop,
+- rollout automation,
+- adaptive guardrails and broader memory optimization.
 
 ## Quickstart
 
-This README is the minimal public quickstart, while `OPERATOR_LOOP_GUIDE.md` is the fuller operator run sequence for local execution.
+This README stays intentionally short. Use `OPERATOR_LOOP_GUIDE.md` for the full local operator sequence and expected outputs.
 
 ### 1) Create and activate a virtual environment
 
@@ -55,37 +73,42 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2) Install dependencies (P2 canonical model)
+### 2) Install dependencies
 
 ```powershell
 python -m pip install --upgrade pip
-# Runtime install from canonical metadata + runtime constraints
 python -m pip install -c constraints.txt .
-# Contributor/test extras from canonical metadata + dev constraints
 python -m pip install -c constraints-dev.txt ".[dev]"
 ```
 
-### 3) Smoke-check the main entrypoints
+### 3) Verify the operator entrypoints
 
 ```powershell
 python scripts/startup_codex_helper.py --help
 python scripts/run_loop_cycle.py --help
-python scripts/supervise_loop.py --max-cycles 1
+python scripts/validate_loop_closure.py --help
+python scripts/print_takeover_entrypoint.py --help
 ```
 
-### 4) Run the core operator flow
+### 4) Run the control-plane operator flow
 
 ```powershell
 python scripts/startup_codex_helper.py --repo-root .
-python scripts/run_loop_cycle.py --repo-root . --skip-phase-end
+python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true
 python scripts/validate_loop_closure.py --repo-root .
 python scripts/print_takeover_entrypoint.py --repo-root .
 ```
 
-### 5) Run tests
+### 5) Optional supervision
 
 ```powershell
-python -m pytest tests -v --tb=short
+python scripts/supervise_loop.py --repo-root . --max-cycles 1 --check-interval-seconds 0
+```
+
+### 6) Run tests
+
+```powershell
+python -m pytest -q
 ```
 
 ## Repository Layout
@@ -101,9 +124,10 @@ python -m pytest tests -v --tb=short
 Some root-level `*_LATEST.md` files are runtime convenience mirrors for operators. They are not the public API surface of the repository and should not be treated as canonical documentation for external readers.
 
 For authoritative internal operator procedures, start with:
-- `docs/runbook_ops.md`
-- `docs/loop_operating_contract.md`
 - `OPERATOR_LOOP_GUIDE.md`
+- `docs/runbook_ops.md`
+- `docs/operator_reference.md`
+- `docs/loop_operating_contract.md`
 
 ## Documentation Routing
 
@@ -120,12 +144,15 @@ For authoritative internal operator procedures, start with:
 
 ### Internal Operator Docs
 
-- `OPERATOR_LOOP_GUIDE.md` — fuller local operator command sequence and expected outputs.
-- `docs/runbook_ops.md` — detailed operating runbook.
+- `OPERATOR_LOOP_GUIDE.md` — recommended local command sequence and expected outputs.
+- `docs/runbook_ops.md` — slim in-loop execution runbook for the active `run_loop_cycle.py` path.
+- `docs/operator_reference.md` — startup, closure, takeover, supervision, and troubleshooting reference for the current control-plane path.
 - `docs/loop_operating_contract.md` — governance contract and authority model.
+- `docs/decisions/phase5_architecture.md` — draft future-state architecture notes, not the shipped `v1` contract.
+- `docs/archive/legacy_quant_runbook.md` — archived historical quant/data/benchmark commands that are no longer part of the active operator path.
 - `docs/security.md` — internal security operations policy.
 - `.github/pull_request_template.md` — PR evidence checklist used by maintainers/contributors.
-- `docs/context/workflow_status_latest.{json,md}` — optional runtime workflow status overlays (not part of public API).
+- `docs/context/workflow_status_latest.{json,md}` — optional runtime workflow status overlays.
 
 ## CI Surface
 

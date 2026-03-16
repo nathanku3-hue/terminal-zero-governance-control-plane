@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -17,6 +19,7 @@ SECTION_KEYS = [
     "expert_request",
     "pm_ceo_research_brief",
     "board_decision_brief",
+    "skill_activation",
 ]
 
 
@@ -150,6 +153,12 @@ def _build_exec_memory_payload() -> dict:
                 "============================"
             ),
         },
+        "skill_activation": {
+            "status": "ok",
+            "skills": [],
+            "warnings": [],
+            "errors": [],
+        },
     }
 
 
@@ -174,13 +183,16 @@ def test_persist_advisory_sections_writes_expected_artifacts(tmp_path: Path) -> 
         assert artifact_bundle["payload"] == exec_memory_payload[section_key]
 
         output_json = artifact_bundle["json"]
-        output_md = artifact_bundle["md"]
         assert isinstance(output_json, Path)
-        assert isinstance(output_md, Path)
         assert output_json.exists()
-        assert output_md.exists()
         assert output_json.name == f"{section_key}_latest.json"
-        assert output_md.name == f"{section_key}_latest.md"
+
+        # skill_activation has no markdown output
+        if section_key != "skill_activation":
+            output_md = artifact_bundle["md"]
+            assert isinstance(output_md, Path)
+            assert output_md.exists()
+            assert output_md.name == f"{section_key}_latest.md"
 
         persisted_payload = json.loads(output_json.read_text(encoding="utf-8"))
         assert persisted_payload == {
@@ -265,6 +277,7 @@ def test_mirror_repo_root_convenience_copies_markdown_and_takeover_index(tmp_pat
         "board_decision_brief": repo_root / "BOARD_DECISION_BRIEF_LATEST.md",
         "takeover": repo_root / "TAKEOVER_LATEST.md",
     }
+    assert not (repo_root / "MILESTONE_OPTIMALITY_REVIEW_LATEST.md").exists()
 
     for section_key, mirror_path in mirrored_files.items():
         assert mirror_path.exists()
@@ -283,6 +296,80 @@ def test_mirror_repo_root_convenience_copies_markdown_and_takeover_index(tmp_pat
     assert "`BOARD_DECISION_BRIEF_LATEST.md`" in takeover_markdown
     assert f"`{advisory_artifacts['next_round_handoff']['md']}`" in takeover_markdown
     assert f"`{advisory_artifacts['expert_request']['md']}`" in takeover_markdown
+
+
+def test_advisory_publication_is_deterministic_across_fresh_interpreters(
+    tmp_path: Path,
+) -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    payload_json = json.dumps(_build_exec_memory_payload(), sort_keys=True)
+    snapshots: list[dict[str, object]] = []
+
+    for round_index in range(4):
+        round_root = tmp_path / f"round_{round_index}"
+        script = f"""
+import json
+from pathlib import Path
+from scripts.loop_cycle_artifacts import mirror_repo_root_convenience, persist_advisory_sections
+
+payload = json.loads({payload_json!r})
+repo_root = Path({str(round_root)!r})
+context_dir = repo_root / "docs" / "context"
+context_dir.mkdir(parents=True, exist_ok=True)
+exec_memory_json = context_dir / "exec_memory_packet_latest_current.json"
+exec_memory_json.write_text(json.dumps(payload, indent=2) + "\\n", encoding="utf-8")
+
+advisory_artifacts = persist_advisory_sections(
+    context_dir=context_dir,
+    exec_memory_json=exec_memory_json,
+)
+mirrored_files = mirror_repo_root_convenience(
+    repo_root=repo_root,
+    context_dir=context_dir,
+    advisory_artifacts=advisory_artifacts,
+)
+
+snapshot = {{}}
+for key, bundle in advisory_artifacts.items():
+    if bundle is None:
+        snapshot[key] = None
+        continue
+    md_path = bundle.get("md")
+    snapshot[key] = {{
+        "status": bundle["status"],
+        "payload": bundle["payload"],
+        "json_name": bundle["json"].name,
+        "md_name": md_path.name if md_path is not None else None,
+    }}
+
+print(
+    json.dumps(
+        {{
+            "artifacts": snapshot,
+            "mirrors": sorted(mirrored_files.keys()),
+        }},
+        sort_keys=True,
+    )
+)
+"""
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        snapshots.append(json.loads(result.stdout))
+
+    assert len(snapshots) == 4
+    assert all(
+        snapshot["artifacts"][section_key] is not None
+        for snapshot in snapshots
+        for section_key in SECTION_KEYS
+    )
+    assert all(snapshot == snapshots[0] for snapshot in snapshots[1:])
 
 
 @pytest.mark.parametrize("payload_text", [None, "{not json"])
@@ -305,6 +392,7 @@ def test_persist_advisory_sections_fail_closed_for_missing_or_malformed_exec_mem
         "expert_request": None,
         "pm_ceo_research_brief": None,
         "board_decision_brief": None,
+        "skill_activation": None,
     }
     assert not (context_dir / "next_round_handoff_latest.json").exists()
     assert not (context_dir / "expert_request_latest.json").exists()

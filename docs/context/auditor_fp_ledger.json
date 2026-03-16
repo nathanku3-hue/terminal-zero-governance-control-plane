@@ -216,6 +216,366 @@
       "annotated_by": "codex_auditor_calibration_v1",
       "annotated_at_utc": "2026-03-04T06:04:00Z",
       "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_165856",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_165856",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_165856",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_165856",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_165856",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170114",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170114",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170114",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170114",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170114",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170855",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170855",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170855",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170855",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260306_170855",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260307_135029",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260307_135029",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260307_135029",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260307_135029",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260307_135029",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_160703",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_160703",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_160703",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_160703",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_160703",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T10:40:24+00:00",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_193017",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T11:33:51Z",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_193017",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T11:33:51Z",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_193017",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T11:33:51Z",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_193017",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T11:33:51Z",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260311_193017",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-11T11:33:51Z",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_193037",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T11:34:45Z",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_193037",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T11:34:45Z",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_193037",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T11:34:45Z",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_193037",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T11:34:45Z",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_193037",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T11:34:45Z",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_201815",
+      "finding_id": "AUD-001",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T12:19:55Z",
+      "notes": "PM-24C-001 missing principal/qa triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_201815",
+      "finding_id": "AUD-002",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T12:19:55Z",
+      "notes": "PM-24C-002 missing qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_201815",
+      "finding_id": "AUD-004",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T12:19:55Z",
+      "notes": "PM-24C-003 missing principal/qa/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_201815",
+      "finding_id": "AUD-006",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T12:19:55Z",
+      "notes": "PM-24C-004 missing principal/riskops triad domains - rule fired correctly"
+    },
+    {
+      "repo_id": "quant_current_scope",
+      "run_id": "20260315_201815",
+      "finding_id": "AUD-008",
+      "verdict": "TP",
+      "annotated_by": "operator",
+      "annotated_at_utc": "2026-03-15T12:19:55Z",
+      "notes": "PM-24C-005 missing principal/qa triad domains - rule fired correctly"
     }
   ]
 }

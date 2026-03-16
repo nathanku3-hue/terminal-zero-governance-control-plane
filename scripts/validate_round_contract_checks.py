@@ -10,6 +10,20 @@ from typing import Any
 
 KEY_VALUE_PATTERN = re.compile(r"^\s*-\s*([A-Za-z0-9_]+)\s*:\s*(.*?)\s*$")
 
+# These closure checks are documented in round_contract_template.md but may not
+# appear in the interim closure preview passed to this validator because they
+# are evaluated later in validate_loop_closure.py.
+BUILTIN_CLOSURE_CHECK_IDS: frozenset[str] = frozenset(
+    {
+        "go_signal_action_gate",
+        "tdd_contract_gate",
+        "freshness_gate",
+        "go_signal_truth_gate",
+        "weekly_summary_truth_gate",
+        "exec_memory_truth_gate",
+    }
+)
+
 
 def _read_text(path: Path) -> tuple[str | None, str | None]:
     if not path.exists():
@@ -304,6 +318,7 @@ def main() -> int:
     if availability_error:
         print(f"[ERROR] {availability_error}")
         return 2
+    available_ids |= BUILTIN_CLOSURE_CHECK_IDS
 
     unknown_ids: list[str] = []
     seen: set[str] = set()

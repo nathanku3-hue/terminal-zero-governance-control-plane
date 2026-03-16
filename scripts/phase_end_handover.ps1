@@ -6,6 +6,7 @@ param(
     [string]$DispatchManifestPath = "",
     [string]$WorkerReplyPath = "",
     [string[]]$OrphanInclude = @(),
+    [string[]]$OrphanExclude = @(),
     [string]$PythonExe = "",
     [string]$LogsRelativeDir = "docs/context/phase_end_logs",
     [string]$ScanRoot = "",
@@ -51,6 +52,7 @@ function Get-RepoProfileDefaults {
                 dispatch_manifest       = "docs/context/dispatch_manifest.json"
                 worker_reply_packet     = "docs/context/worker_reply_packet.json"
                 orphan_include          = @("*.py", "*.ps1", "*.ts", "*.tsx", "*.js", "*.jsx", "*.yaml", "*.yml")
+                orphan_exclude          = @("docs/archive/**")
             }
         }
         "Film" {
@@ -64,6 +66,7 @@ function Get-RepoProfileDefaults {
                 dispatch_manifest       = "docs/context/dispatch_manifest.json"
                 worker_reply_packet     = "docs/context/worker_reply_packet.json"
                 orphan_include          = @("*.py", "*.ps1", "*.ts", "*.tsx", "*.js", "*.jsx", "*.yaml", "*.yml")
+                orphan_exclude          = @("docs/archive/**")
             }
         }
         default {
@@ -77,6 +80,7 @@ function Get-RepoProfileDefaults {
                 dispatch_manifest       = "docs/context/dispatch_manifest.json"
                 worker_reply_packet     = "docs/context/worker_reply_packet.json"
                 orphan_include          = @("*.py", "*.ps1", "*.ts", "*.tsx", "*.js", "*.jsx", "*.yaml", "*.yml")
+                orphan_exclude          = @("docs/archive/**")
             }
         }
     }
@@ -367,6 +371,12 @@ $orphanIncludePatterns = if ($OrphanInclude -and $OrphanInclude.Count -gt 0) {
 else {
     @($profileDefaults.orphan_include)
 }
+$orphanExcludePatterns = if ($OrphanExclude -and $OrphanExclude.Count -gt 0) {
+    $OrphanExclude
+}
+else {
+    @($profileDefaults.orphan_exclude)
+}
 
 $gateResults = @()
 $overall = "PASS"
@@ -384,6 +394,7 @@ $resolvedConfig = [ordered]@{
     escalation_path        = $escalationPath
     digest_path            = $digestPath
     orphan_include         = $orphanIncludePatterns
+    orphan_exclude         = $orphanExcludePatterns
     skip_orphan_gate       = [bool]$SkipOrphanGate
     skip_dispatch_gate     = [bool]$SkipDispatchGate
 }
@@ -551,6 +562,11 @@ if (-not $stopExecution) {
             $orphanArgs = @("--traceability", $traceabilityPath, "--since-commit", $resolvedSinceCommit)
             foreach ($pattern in $orphanIncludePatterns) {
                 $orphanArgs += @("--include", $pattern)
+            }
+            foreach ($pattern in $orphanExcludePatterns) {
+                if (-not [string]::IsNullOrWhiteSpace($pattern)) {
+                    $orphanArgs += @("--exclude", $pattern)
+                }
             }
             $ok = Add-And-Check (Invoke-PythonGate -GateName "G07_orphan_change_gate" -ScriptPath (Join-Path $scriptRoot "validate_orphan_changes.py") -PythonPath $pythonPath -RepoRootAbs $repoRootAbs -LogPath $logsDirAbs -Arguments $orphanArgs -PreviewOnly:$DryRun)
             if (-not $ok) { $stopExecution = $true }

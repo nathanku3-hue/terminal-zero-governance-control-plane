@@ -1,3 +1,4 @@
+model: "codex-5.4"
 interface:
   display_name: "SAW Review Gate"
   short_description: "Run Subagents-After-Work review and reconciliation"

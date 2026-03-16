@@ -1,0 +1,7 @@
+model: "codex-5.2"
+interface:
+  display_name: "Context Bootstrap"
+  short_description: "Build and load current context packet"
+  default_prompt: "Use $context-bootstrap to build and validate docs/context/current_context.* and output the four required sections: What Was Done, What Is Locked, What Is Next, First Command."
+policy:
+  allow_implicit_invocation: true

@@ -737,12 +737,11 @@ def test_workflow_status_ready_to_escalate_green(tmp_path: Path) -> None:
     assert validation_node["status_color"] == "green"
 
 
-def test_workflow_status_relative_output_path(tmp_path: Path) -> None:
-    """Verify relative output path is resolved against repo root."""
+def test_workflow_status_rejects_noncanonical_relative_output_path(tmp_path: Path) -> None:
+    """Verify noncanonical relative JSON overlay paths are rejected."""
     fixtures = _create_workflow_status_fixtures(tmp_path)
     repo_root = fixtures["repo_root"]
 
-    # Use relative path
     relative_output_path = Path("workflow_status_test.json")
 
     result = subprocess.run(
@@ -760,13 +759,10 @@ def test_workflow_status_relative_output_path(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 1, result.stdout + result.stderr
-
-    # Verify file is created at repo_root / relative_path
+    assert "WARNING: Failed to generate workflow status overlay" in result.stderr
     expected_path = repo_root / relative_output_path
-    assert expected_path.exists()
-
-    workflow_status = json.loads(expected_path.read_text(encoding="utf-8"))
-    assert "schema_version" in workflow_status
+    assert not expected_path.exists()
+    assert not (repo_root / "docs" / "context" / "workflow_status_latest.json").exists()
 
 
 def test_workflow_status_timestamps_valid_iso8601(tmp_path: Path) -> None:
@@ -1172,8 +1168,8 @@ def test_workflow_status_both_flags_emit_consistent_outputs(tmp_path: Path) -> N
     fixtures = _create_workflow_status_fixtures(tmp_path)
     repo_root = fixtures["repo_root"]
 
-    json_out = repo_root / "workflow_status.json"
-    md_out = repo_root / "workflow_status.md"
+    json_out = repo_root / "docs" / "context" / "workflow_status_latest.json"
+    md_out = repo_root / "docs" / "context" / "workflow_status_latest.md"
     result = subprocess.run(
         [
             sys.executable,
@@ -1206,7 +1202,7 @@ def test_workflow_status_md_only_no_json(tmp_path: Path) -> None:
     """Verify MD-only flag doesn't create JSON file."""
     fixtures = _create_workflow_status_fixtures(tmp_path)
     repo_root = fixtures["repo_root"]
-    md_output_path = repo_root / "docs" / "context" / "workflows_latest.md"
+    md_output_path = repo_root / "docs" / "context" / "workflow_status_latest.md"
     json_output_path = repo_root / "docs" / "context" / "workflow_status_latest.json"
 
     result = _run_with_workflow_status_md(repo_root, md_output_path)
@@ -1219,12 +1215,11 @@ def test_workflow_status_md_only_no_json(tmp_path: Path) -> None:
     assert not json_output_path.exists()
 
 
-def test_workflow_status_md_relative_path(tmp_path: Path) -> None:
-    """Verify relative MD path resolves to repo_root."""
+def test_workflow_status_md_rejects_noncanonical_relative_path(tmp_path: Path) -> None:
+    """Verify noncanonical relative Markdown overlay paths are rejected."""
     fixtures = _create_workflow_status_fixtures(tmp_path)
     repo_root = fixtures["repo_root"]
 
-    # Use relative path
     relative_output_path = Path("workflow_status_test.md")
 
     result = subprocess.run(
@@ -1242,13 +1237,36 @@ def test_workflow_status_md_relative_path(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 1, result.stdout + result.stderr
-
-    # Verify file is created at repo_root / relative_path
+    assert "WARNING: Failed to generate workflow status Markdown overlay" in result.stderr
     expected_path = repo_root / relative_output_path
-    assert expected_path.exists()
+    assert not expected_path.exists()
+    assert not (repo_root / "docs" / "context" / "workflow_status_latest.md").exists()
 
-    md_content = expected_path.read_text(encoding="utf-8")
-    assert "# Workflow Status Overlay" in md_content
+
+def test_workflow_status_rejects_repo_prefixed_output_path(tmp_path: Path) -> None:
+    """Verify repo-root-prefixed overlay paths are rejected to prevent nested drift."""
+    repo_root = tmp_path / "quant_current_scope"
+    _create_workflow_status_fixtures(repo_root)
+    relative_output_path = Path(repo_root.name) / "docs" / "context" / "workflow_status_latest.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--repo-root",
+            str(repo_root),
+            "--workflow-status-json-out",
+            str(relative_output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "WARNING: Failed to generate workflow status overlay" in result.stderr
+    assert not (repo_root / relative_output_path).exists()
+    assert not (repo_root / "docs" / "context" / "workflow_status_latest.json").exists()
 
 
 def test_workflow_status_md_fallback_next_action_when_missing(tmp_path: Path) -> None:

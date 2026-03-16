@@ -116,6 +116,7 @@ class LoopCycleRuntime:
     expert_request_artifacts: dict[str, Any] | None = None
     pm_ceo_research_brief_artifacts: dict[str, Any] | None = None
     board_decision_brief_artifacts: dict[str, Any] | None = None
+    skill_activation_artifacts: dict[str, Any] | None = None
 
     # Convenience paths
     repo_root_convenience: dict[str, Path] | None = None

@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-07T05:50:29Z
+- GeneratedAtUTC: 2026-03-15T12:18:16Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -13,6 +13,8 @@
 Date: 2026-03-01
 Owner: PM / Architecture Office
 Status: ACTIVE
+Audience: internal PM / architecture reference
+Public-entrypoint status: internal strategy/planning document; public readers should start at `README.md`
 
 ## Why This File Exists
 - Consolidate top-level thinking models used for PM, architecture, and execution governance.
@@ -119,67 +121,85 @@ Application pattern:
 ## Context Packet (Markdown)
 ~~~markdown
 ## What Was Done
-- Implemented Phase 24C auditor calibration system (auditor + calibration reporting + FP ledger)
-- Completed first shadow cycle and annotation workflow
-- Fixed 9 critical gaps in calibration script (status schema, BOM encoding, consecutive weeks logic, items counting, timestamp validation, ledger validation, output paths)
-- Created 51 tests (23 auditor + 28 calibration) with zero regressions
+- Phase 24C delivered the auditor calibration system, dossier reporting, FP ledger workflow, and the loop-cycle refactor checkpoint.
+- Annotation coverage has been restored to `100%`, and the live promotion machinery is operational in shadow mode.
+- PM/CEO framing is now aligned to the 4-lane completion model: `Ops`, `Quality`, `Governance`, and `Rollout`.
+- The code baseline is green and new v2/schema work is confirmed off the critical path because `C5` is already passing.
 
 ## What Is Locked
-- Auditor criteria C0/C2/C3/C4/C4b/C5 logic is implemented and tested
-- Shadow mode + dossier reporting workflow is operational
-- Fail-closed validation architecture (exit 2 always blocks)
-- FP ledger schema with composite key (repo_id, run_id, finding_id)
+- Schema version expectation is `v2.0.0`.
+- Fail-closed governance remains intact.
+- Loop-cycle modularization is complete enough for the current milestone.
+- Architecture, prompt, and schema scope stay frozen until the promotion decision.
+- `quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.
+- Enforce should remain explicit via `-AuditMode enforce` through dry-run, canary, and monitor rather than flipping defaults early.
 
 ## What Is Next
-- Continue shadow runs to reach C2/C3 evidence thresholds (30+ items, 2+ consecutive weeks)
-- Maintain 100% C/H annotation coverage after each run
-- Regenerate weekly calibration reports
-- Run dossier at window end (2026-03-17) and complete C1 manual signoff if eligible
-- Execute canary enforce cycles (3-5 runs) before full rollout
+- P0 ops hygiene and W11 evidence collection must keep advancing until `C3` reaches 2 consecutive qualifying weeks.
+- `C1` PM signoff is still missing and must be recorded in `docs/decision log.md`.
+- Enforce dry-run, canary, full rollout, and the stable 2-week monitor are not yet complete.
+- Standalone closure should be checked for the current exec-memory truth mismatch on the `latest` packet path.
+- Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.
+- Do not reopen schema, prompt, or architecture work.
+- Push through P0 ops recovery, `C3`, `C1`, explicit enforce dry-run, canary, rollout, and the 2-week monitor.
+- Carry a W12 contingency because `C3` is calendar-bound rather than code-fixable.
+- Hold worker execution at the approval gate.
+- After approval, run the next full shadow cycle without widening scope.
+- If new C/H findings appear, annotate them to maintain `100%` coverage.
+- Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.
+- Prepare the `C1` signoff packet in parallel so PM can move immediately when `C3` flips.
 
 ## First Command
-`powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow`
+```text
+Wait for explicit approval before running the next shadow cycle. Once approved, run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow`.
+```
 ~~~
 
 ## Context Packet (JSON)
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-07T05:50:29Z",
+  "generated_at_utc": "2026-03-15T12:18:16Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
+    "docs/handover/phase24c_handover.md",
     "docs/lessonss.md",
     "docs/phase_brief/phase20-brief.md",
     "docs/phase_brief/phase24c-brief.md"
   ],
   "active_phase": 24,
   "what_was_done": [
-    "Implemented Phase 24C auditor calibration system (auditor + calibration reporting + FP ledger)",
-    "Completed first shadow cycle and annotation workflow",
-    "Fixed 9 critical gaps in calibration script (status schema, BOM encoding, consecutive weeks logic, items counting, timestamp validation, ledger validation, output paths)",
-    "Created 51 tests (23 auditor + 28 calibration) with zero regressions"
+    "Phase 24C delivered the auditor calibration system, dossier reporting, FP ledger workflow, and the loop-cycle refactor checkpoint.",
+    "Annotation coverage has been restored to `100%`, and the live promotion machinery is operational in shadow mode.",
+    "PM/CEO framing is now aligned to the 4-lane completion model: `Ops`, `Quality`, `Governance`, and `Rollout`.",
+    "The code baseline is green and new v2/schema work is confirmed off the critical path because `C5` is already passing."
   ],
   "what_is_locked": [
-    "Auditor criteria C0/C2/C3/C4/C4b/C5 logic is implemented and tested",
-    "Shadow mode + dossier reporting workflow is operational",
-    "Fail-closed validation architecture (exit 2 always blocks)",
-    "FP ledger schema with composite key (repo_id, run_id, finding_id)"
+    "Schema version expectation is `v2.0.0`.",
+    "Fail-closed governance remains intact.",
+    "Loop-cycle modularization is complete enough for the current milestone.",
+    "Architecture, prompt, and schema scope stay frozen until the promotion decision.",
+    "`quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.",
+    "Enforce should remain explicit via `-AuditMode enforce` through dry-run, canary, and monitor rather than flipping defaults early."
   ],
   "what_is_next": [
-    "Continue shadow runs to reach C2/C3 evidence thresholds (30+ items, 2+ consecutive weeks)",
-    "Maintain 100% C/H annotation coverage after each run",
-    "Regenerate weekly calibration reports",
-    "Run dossier at window end (2026-03-17) and complete C1 manual signoff if eligible",
-    "Execute canary enforce cycles (3-5 runs) before full rollout"
+    "P0 ops hygiene and W11 evidence collection must keep advancing until `C3` reaches 2 consecutive qualifying weeks.",
+    "`C1` PM signoff is still missing and must be recorded in `docs/decision log.md`.",
+    "Enforce dry-run, canary, full rollout, and the stable 2-week monitor are not yet complete.",
+    "Standalone closure should be checked for the current exec-memory truth mismatch on the `latest` packet path.",
+    "Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.",
+    "Do not reopen schema, prompt, or architecture work.",
+    "Push through P0 ops recovery, `C3`, `C1`, explicit enforce dry-run, canary, rollout, and the 2-week monitor.",
+    "Carry a W12 contingency because `C3` is calendar-bound rather than code-fixable."
   ],
-  "first_command": "powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow",
+  "first_command": "Wait for explicit approval before running the next shadow cycle. Once approved, run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow`.",
   "next_todos": [
-    "Continue shadow runs to reach C2/C3 evidence thresholds (30+ items, 2+ consecutive weeks)",
-    "Maintain 100% C/H annotation coverage after each run",
-    "Regenerate weekly calibration reports",
-    "Run dossier at window end (2026-03-17) and complete C1 manual signoff if eligible",
-    "Execute canary enforce cycles (3-5 runs) before full rollout"
+    "Hold worker execution at the approval gate.",
+    "After approval, run the next full shadow cycle without widening scope.",
+    "If new C/H findings appear, annotate them to maintain `100%` coverage.",
+    "Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.",
+    "Prepare the `C1` signoff packet in parallel so PM can move immediately when `C3` flips."
   ]
 }
 ~~~
@@ -188,8 +208,13 @@ Application pattern:
 
 ### docs/decision log.md
 ~~~markdown
-Decision Log: Terminal Zero
-Author: Atomic Mesh | Last Updated: 2026-03-05 (Phase 24C Loop-Automation Hardening)
+Decision Log: Terminal Zero Governance Control Plane
+Author: Atomic Mesh | Last Updated: 2026-03-09 (Identity framing clarified)
+
+This log is the long-lived decision record for the current governance control plane.
+Legacy quant-era decisions are retained below for historical traceability; current operator behavior is governed by the active control-plane contracts and runbooks.
+
+Reader note: the first table entries below begin with legacy quant-era history; use the active governance docs as the authoritative source for present-day operator behavior.
 
 Part 1: Master Decision Log
 
@@ -290,6 +315,32 @@ Part 1: Master Decision Log
 | D-94 | strategy/ticker-pool | Quarterly centroid drift and circular fallback risk degraded anchor intent in Mahalanobis scoring | Replace cyc centroid with per-slice anchor-injected mean in z-space (`MU`,`LRCX`,`AMAT`,`KLAC`,`STX`,`WDC`) and enforce `score_col` as pre-pool metric only; when anchors are missing, fallback to top-k by pre-pool score with critical logging | Removes centroid drift, blocks chicken-and-egg score recursion, and preserves deterministic fallback behavior with explicit telemetry. |
 | D-103 | strategy/ticker-pool | Pre-pool ranking lacked deterministic sector context visibility and no explicit Path1 directive telemetry contract | Attach `sector/industry` from static `sector_map.parquet` into conviction frame before `rank_ticker_pool` using permno-first/ticker-fallback deterministic mapping; emit `DICTATORSHIP_MODE` and Path1 telemetry into sample/summary artifacts | Keeps ranking inputs context-aware without runtime API calls and creates auditable Path1 directive evidence for each slice run. |
 | D-104 | strategy/ticker-pool | Path1 geometry/runtime gates could silently degrade when projection failed, sparse slices were skipped, or unknown-sector rows collapsed balanced resampling | Fail fast on non-finite sector-projection residualization, add explicit slice-skip logging, exclude `UNKNOWN` from sector-balance depth checks, and expose `--dictatorship-mode on/off` toggle in slice runner with model telemetry parity | Prevents silent geometry corruption, improves operational observability, preserves deterministic balanced-resample behavior under partial context coverage, and enables controlled de-anchor experiments. |
+| D-148 | governance/optimality-review | Milestone-close simplicity and entropy concerns kept recurring, but only as discussion; creating a new subsystem would overengineer the advisory layer | Reuse `docs/templates/optimality_review_brief.md` and `docs/optimality_review_protocol.md` to add one optional `ELEGANCE_ENTROPY_SNAPSHOT` with lean proxy fields and explicit `I don't know yet` fallback | Makes elegance and maintainability discussable in one existing artifact without adding gates, validators, or authority changes. |
+| D-149 | governance/startup | Startup profile choice needed evidence-learned guidance without introducing new authority paths | Add offline deterministic advisory ranking artifact from local shipped-project outcomes (`docs/context/profile_selection_ranking_latest.json`) and surface it in startup artifacts as recommendation-only; startup intake and active `PROJECT_PROFILE` remain authoritative | Improves profile selection signal quality while preserving fail-closed governance and avoiding any control-plane authority change. |
+| D-150 | governance/operator | Profile ranking input could drift because outcome records were manual and inconsistently shaped across rounds | Add deterministic corpus-capture step to write normalized profile-outcome records from current loop artifacts plus operator-supplied shipped/postmortem inputs before ranking build | Keeps ranking evidence auditable and comparable round-to-round without changing startup/control-plane authority. |
+| D-151 | governance/docs | Pragmatic execution philosophy existed in discussion but not encoded as one auditable docs contract | Add CN/EN pragmatic SOP and enforce five process rules in docs: manifest-first for big changes, single logic-spine index, orchestrator governance-only role split, doc lifecycle tiers, and AI coding inside explicit boundaries/non-goals | Reduces coordination ambiguity and keeps change execution lean, bounded, and reviewable without introducing new runtime authority. |
+| D-152 | governance/truth-protocol | Teams asked for an “ultimate truth layer,” but cross-repo domain semantics are not uniform and can create false certainty | Define a repo-init truth protocol and add a high-semantic-risk falsification pack template (`docs/templates/domain_falsification_pack.md`) plus a conditional structural closure gate when the active round contract explicitly requires it | Improves semantic rigor for domain-heavy decisions while preserving existing authority ownership and avoiding universal-engine overreach. |
+| D-153 | governance/decision-quality | Teams needed a lean way to evaluate “optimal under constraints” beyond pass/merge completion | Add an advisory optimality review protocol + brief template focused on top-level semantic tradeoffs (`PRIMARY_OBJECTIVE`, `TOP_LEVEL_TRADEOFFS`, `RECOMMENDED_BALANCE`, `WHAT_WOULD_FLIP_DECISION`) with max 2-3 tradeoffs | Improves high-impact decision quality while preserving stable authority model and avoiding control-plane redesign. |
+| D-154 | governance/roadmap | Optimality-engine discussion recurred across rounds without one canonical operator artifact showing current state, target state, and next minimal patches | Add `docs/minimal_optimality_roadmap.md` and link it from the runbook as the single PM-style roadmap for current engine vs optimal engine gaps | Keeps strategic improvement work explicit, sequenced, and lean without changing the stable control plane or adding new runtime gates. |
+| D-155 | governance/decision-quality | High-impact decisions still tended to converge on one recommended path without a canonical in-brief comparison of alternatives | Extend the existing advisory `optimality_review_brief` into a `2-3` option compare mode with evidence-bound `TOP_LEVEL_EFFECT`, `WHY_NOW`, and `COST_IF_WRONG`, plus explicit `I don't know yet` fallback when comparison is not honest yet | Improves decision quality for one-way and semantic-heavy rounds while keeping the patch docs-only, advisory-only, and free of new gates or authority paths. |
+| D-156 | governance/milestone-review | Local round quality could improve while overall milestone shape still became more complex, with no single advisory checkpoint asking whether the milestone actually made the system simpler | Reuse the existing advisory `optimality_review_brief` as a milestone-close addendum with `MILESTONE_ID`, `SHAPE_DELTA`, `KEEP_THIS_SHAPE_TODAY`, `TOP_2_REGRETS_IF_WRONG`, and `WHAT_TO_REMOVE_NEXT` stored in `docs/context/milestone_optimality_review_latest.md` | Adds a lean milestone-level shape review without introducing any new gate, control-plane authority, or extra subsystem. |
+| D-157 | governance/learning-loop | The system could reason better before merge, but it still learned too little from what actually happened after ship/merge | Extend `scripts/capture_profile_outcome_record.py` and the operator docs so the same local corpus records lean shipped-outcome feedback (`rollback_status`, `followup_changes_within_30d`, `semantic_issue_detected_after_merge`) in addition to shipped/postmortem inputs | Adds a small evidence-learned `R3` loop while preserving advisory-only behavior, local determinism, and the stable control plane. |
+| D-158 | governance/operator-ux | Milestone close brief existed under `docs/context`, but operator scan flow still lacked a repo-root one-screen PM summary | Add `MILESTONE_OPTIMALITY_REVIEW_LATEST.md` as a convenience-only thin PM summary mirror of `docs/context/milestone_optimality_review_latest.md` with snapshot/recommendation/regret/removal/evidence fields while keeping `docs/context` as the authoritative source | Improves operator usability without changing gates, authority, or control-plane behavior. |
+| D-159 | governance/operator-ux | Repo-root mirror wording drifted across docs, making the mirror lane feel less like one consistent family | Standardize mirror language around four shared rules: convenience-only, authoritative `docs/context` source, thin PM summary, and no gate or authority change | Keeps operator handoff language predictable end-to-end without creating new mirrors, subsystems, or control-plane behavior. |
+| D-160 | governance/philosophy | The repo had strong operational contracts, but lacked one canonical non-command explanation of how intent, context operations, abstention, optimality, beauty, and delegation strategy fit together as an engineering method | Refresh `docs/engineering_philosophy.md` as the canonical top-level methodology document covering intent-to-code translation, why optimal does not equal beautiful, why context is an operating problem, why `I don't know yet` matters, how to monitor drift under context growth, and when centralized delegation beats single-agent or naive multi-agent patterns | Gives the repo a stable philosophical spine for evaluating code quality, context health, and task-shape-appropriate delegation without adding new runtime behavior, gates, roles, or authority paths. |
+| D-161 | governance/learning-loop | The repo had no canonical way to pull philosophy or heuristic refinements from another actively operated repo without overreacting to papers or mutating policy automatically | Add a minimal `thesis_pull` template, protocol, authoritative working copy, and thin repo-root mirror so thesis pulls only run from active-repo evidence, combine local data with `1-3` academic inputs, classify research by actionability, and stop at human-reviewed heuristic proposals | Creates a bounded evidence-led philosophy-learning loop without adding new gates, roles, subsystems, or automatic policy mutation. |
+| D-162 | governance/operator-ux | The thesis-pull mirror existed at repo root, but the main operator guide did not point to it for quick scan flow | Add one short operator-guide pointer to `THESIS_PULL_LATEST.md` as the live one-screen thesis mirror while preserving `docs/context/thesis_pull_latest.md` as authoritative and the mirror as convenience-only | Improves operator discoverability and quick scan flow without changing the stable control plane, mirror authority rules, or any gate behavior. |
+| D-163 | governance/thesis-pull-polish | Thesis-pull docs were functionally correct, but still had small mirror-family wording drift and no explicit freshness/abstention fields for conservative pulls | Align thesis-pull mirror wording with the repo-root mirror family and add advisory-only `EVIDENCE_FRESHNESS_WINDOW` plus `ABSTENTION_REASON_CODE` to the template and working copy | Closes the remaining docs-only polish gap without adding any gate, validator, script, role, or subsystem. |
+| D-164 | governance/phase5 | Phase 5 direction needed formal approval before spec/discovery work could begin | Approved Phase 5 direction (plugin architecture, benchmark harness, skills library, hierarchical memory optimization) and 5A.0 spec/discovery work ONLY. Implementation explicitly BLOCKED until freeze exit and implementation approval. Target repo: `quant_current_scope`. All Phase 5 approvals recorded in this decision log. | Enables architecture specification work while preserving freeze discipline and preventing premature implementation. |
+| D-165 | governance/phase5 | Extension loading needed explicit allowlist policy to prevent unapproved plugins from entering production | Approved ADR-003: Extension Loading Policy. Extensions use explicit allowlist with PM/CEO approval before activation. No dynamic loading without governance. Skills are declarative YAML only (no executable code). Version pinning required. Deprecation grace period: 90 days. Emergency disable available for security issues. | Establishes safe extension loading model with clear approval gates and security boundaries. |
+| D-166 | governance/phase5 | Benchmark-driven policy changes needed human-in-loop to prevent silent policy mutations | Approved ADR-004: Benchmark → Policy Feedback Loop. Benchmark results inform policy changes, but humans approve all changes. No silent policy updates. Monthly benchmark cadence + event-triggered runs. Policy changes apply to next round (not active round). Rollback and emergency override processes defined. | Enables adaptive guardrails while preserving human decision authority and preventing automated policy drift. |
+| D-167 | governance/phase5 | ADR-004 policy loosening format used explicit negatives (require_X: False), which appeared to disable protections and conflicted with advisory-only model | Amended ADR-004 to use additive-only format: recommended_guardrail_strength and min_review_level instead of require_X: False. Policy recommendations never disable protections. Kernel floor enforcement always wins. | Clarifies that policy layer recommends thresholds but never turns protections off; kernel validates and enforces floor. |
+| D-168 | governance/phase5 | ADR-003 approval authority was ambiguous (PM/CEO required, but examples showed PM alone) | Amended ADR-003 to explicit approval authority: PM alone for LOW-risk skills, CEO required for MEDIUM/HIGH-risk, both required for approval routing changes. Added risk_level field to allowlist schema. | Removes implementation ambiguity and establishes clear approval delegation rules. |
+| D-169 | governance/phase5 | ADR-003 benchmark requirements were approval criteria, but benchmark harness is still Phase 5 design artifact | Amended ADR-003 with interim rule: eval.yaml is declarative until harness operational. Skills requiring benchmark validation need benchmark-waiver entry in decision log. After harness operational, benchmark requirements enforced. | Allows skill approval to proceed during Phase 5A while preserving benchmark requirement for post-5A.1 skills. |
+| D-170 | governance/phase5 | ADR-004 baseline policy (first run becomes baseline) was brittle and vulnerable to noisy first run | Amended ADR-004 to 3-run median baseline per model version. Added re-baselining rules: model version change, major update, baseline drift (3 consecutive trends), or manual PM/CEO request. | Reduces baseline noise and prevents single outlier run from skewing future policy changes. |
+| D-171 | governance/phase5 | ADR-003/004 had implementation-facing inconsistencies: baseline object field mismatch, tightening logic still used boolean-style output conflicting with D-167, risk_level not required in allowlist schema | Amended ADR-004: fixed baseline.baseline_score reference consistency, converted tightening logic to additive-only format (min_review_level, min_approval_level). Amended ADR-003: made risk_level required field in allowlist schema, added to all examples. | Removes implementation ambiguity and ensures consistent additive-only policy format across tightening and loosening logic. |
+| D-172 | governance/phase5 | Phase 5A.0 architecture complete; freeze exit needed to begin implementation | Approved freeze exit for Phase 5 implementation. Current freeze (loop_operating_contract.md lines 9, 14) superseded for Phase 5 work only. Phase 5 implementation may proceed incrementally with validation at each milestone. All other work remains frozen. Implementation plan: phase5_implementation_plan_today_v2.md. | Enables Phase 5 implementation while preserving freeze discipline for non-Phase-5 work. |
+| D-173 | governance/phase5 | Phase 5A.1 Benchmark Harness Setup complete; operational baseline established | Completed 5A.1 implementation. Promptfoo 0.121.1 installed and operational. sql_accuracy suite implemented with 5 prompts and vendor-neutral assertions. Baseline established: anthropic:claude-opus-4-6 scored 0.91 (median of 3 runs). Harness correctly fails closed on provider errors and distinguishes assertion failures from API errors. Scripts operational: run_baseline_benchmark.py, validate_baseline.py, test_policy_proposal.py. All tests passing (12/12 in test_phase5_benchmark.py). | Delivers operational benchmark harness with real baseline. Enables 5A.2 (Subagent Routing Matrix) to proceed. |
 
 Part 2: Decision Rationale (Phase 4 — Optimizer)
 
@@ -2240,6 +2291,123 @@ Philosophy Local-First Loop + Gemini Handover Automation (2026-03-01): Worker-Fi
 - Rollback note:
   - Revert D-139..D-144 touched files listed above; no schema-breaking changes were introduced.
   - If rollback is partial, prioritize restoring old `validate_dispatch_acks.py` semantics only with explicit duplicate-ID policy acceptance.
+
+### Phase 24C: Advisory Uncertainty Boundary Clarification (2026-03-07)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-145 | governance/advisory-boundaries | The loop was operationally fail-closed, but worker/director outputs lacked one explicit advisory artifact that says where machine-only execution should stop and what lane should help next | Added advisory-only `automation_uncertainty_status` to `scripts/build_exec_memory_packet.py` and a canonical `docs/automation_boundary_registry.md` covering PM review, PM/CEO review, expert input, and manual UX/signoff boundaries | Makes "I don't know / machine should stop here" explicit without adding gates, authorities, or new control-plane complexity |
+
+- Evidence:
+  - `python -m py_compile scripts/build_exec_memory_packet.py` -> PASS
+  - `python -m pytest tests/test_build_exec_memory_packet.py -q` -> PASS
+  - Updated/new files: `scripts/build_exec_memory_packet.py`, `docs/automation_boundary_registry.md`, `tests/test_build_exec_memory_packet.py`
+- Rollback note:
+  - Remove `docs/automation_boundary_registry.md` and revert the advisory-only uncertainty summary additions in `scripts/build_exec_memory_packet.py` and `tests/test_build_exec_memory_packet.py`; no gate or schema authority rollback is required.
+
+### Phase 24C: Split-Style Advisory and Worker Delivery (2026-03-08)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-146 | governance/operator-ux | Advisory artifacts and worker packets were structurally valid, but they did not expose one consistent machine/human/paste-ready split for downstream automation and operator delegation | Add additive split-style surfaces: worker `response_views` (`machine_view`, `human_brief`, `paste_ready_block`), advisory artifact `human_brief` + `machine_view` alongside existing `paste_ready_block`, and consumer rendering in loop-cycle markdown, takeover entrypoint, and CEO digest | Improves machine transport, PM-style readability, and copy/paste delegation without changing authority, gates, or the stable control plane |
+
+- Evidence:
+  - `python -m pytest tests/test_validate_worker_reply_packet.py tests/test_build_exec_memory_packet.py tests/test_run_loop_cycle.py tests/test_print_takeover_entrypoint.py tests/test_build_ceo_bridge_digest.py tests/test_system_control_plane_integration.py -q`
+  - Updated files include: `docs/context/schemas/worker_reply_packet.json.template`, `scripts/validate_worker_reply_packet.py`, `scripts/build_exec_memory_packet.py`, `scripts/run_loop_cycle.py`, `scripts/print_takeover_entrypoint.py`, `scripts/build_ceo_bridge_digest.py`, `docs/loop_operating_contract.md`, `docs/expert_invocation_policy.md`, `tests/test_validate_worker_reply_packet.py`, `tests/test_build_exec_memory_packet.py`, `tests/test_run_loop_cycle.py`, `tests/test_print_takeover_entrypoint.py`, `tests/test_build_ceo_bridge_digest.py`, `tests/test_system_control_plane_integration.py`
+- Rollback note:
+  - Revert the split-style additive fields and consumer rendering above; authoritative worker/digest/control-plane behavior remains intact because the change is additive and backward-compatible.
+
+### Phase 24C: Milestone Expert Roster Fail-Closed Advisory Signals (2026-03-08)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-147 | governance/expert-lineup | Advisory expert assignment could imply a domain choice even when no milestone roster existed or the requested domain was outside approved lineup | Add additive roster-aware advisory fields in exec-memory artifacts (`roster_fit`, `requested_domain`, `board_reentry_required`, lineup/memory statuses) sourced from `docs/context/milestone_expert_roster_latest.json` when present. Emit explicit fail-closed statuses `ROSTER_MISSING`, `UNKNOWN_EXPERT_DOMAIN`, and `BOARD_LINEUP_REVIEW_REQUIRED` instead of silently assigning escalation-critical experts | Makes lineup uncertainty explicit for PM/CEO board reentry while preserving existing authority boundaries and avoiding new hard control-plane gates |
+
+- Evidence:
+  - `python -m pytest tests/test_build_exec_memory_packet.py -q`
+  - Updated files include: `scripts/build_exec_memory_packet.py`, `tests/test_build_exec_memory_packet.py`, `docs/expert_invocation_policy.md`, `docs/automation_boundary_registry.md`, `docs/decision_authority_matrix.md`
+- Rollback note:
+  - Revert the additive roster/memory fields and docs updates above; existing advisory artifacts and authority model continue unchanged.
+
+### Phase 24C: Advisory R4 Elegance / Entropy Snapshot Reuse (2026-03-08)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-148 | governance/optimality-review | Milestone-close simplicity and entropy concerns kept recurring, but only as discussion; creating a new subsystem would overengineer the advisory layer | Reused `docs/templates/optimality_review_brief.md` and `docs/optimality_review_protocol.md` to add one optional `ELEGANCE_ENTROPY_SNAPSHOT` with lean proxy fields and explicit `I don't know yet` fallback | Makes elegance and maintainability discussable in one existing artifact without adding gates, validators, or authority changes |
+
+- Evidence:
+  - `rg "ELEGANCE_ENTROPY_SNAPSHOT|CONCEPT_SURFACE_DELTA|I don't know yet|advisory only" OPERATOR_LOOP_GUIDE.md docs/optimality_review_protocol.md docs/templates/optimality_review_brief.md docs/runbook_ops.md docs/minimal_optimality_roadmap.md docs/loop_operating_contract.md`
+  - Updated files include: `OPERATOR_LOOP_GUIDE.md`, `docs/optimality_review_protocol.md`, `docs/templates/optimality_review_brief.md`, `docs/runbook_ops.md`, `docs/minimal_optimality_roadmap.md`, `docs/loop_operating_contract.md`
+- Rollback note:
+  - Revert the additive R4 snapshot fields and references above; the prior optimality brief and milestone-close addendum remain intact because this change does not alter any gate or authority path.
+
+### Phase 5A.2: Subagent Routing Matrix (2026-03-13)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-174 | governance/subagent-routing | Subagent context loading lacked explicit role-to-artifact mapping, causing potential context bleed and unmeasured token overhead | Created `benchmark/subagent_routing_matrix.yaml` with 6 role mappings (startup_deputy, execution_deputy, specialist_deputy, pm_research_deputy, board_decision_deputy, auditor_deputy), each with required/optional/conditional/excluded artifacts and token budgets. Added `scripts/validate_routing_matrix.py` (schema + path validator), `scripts/measure_context_reduction.py` (token savings calculator), and `tests/test_subagent_routing.py` (selector/validator/slice tests). Token estimator: `len(text) // 4` from `build_exec_memory_packet.py:246`. | Provides deterministic context isolation per subagent role with measurable token reduction. No Agent tool integration yet (deferred). Validator rejects nested duplicates. Test coverage: required/optional/conditional semantics, duplicate rejection, token budgets. |
+
+- Evidence:
+  - `python scripts/validate_routing_matrix.py benchmark/subagent_routing_matrix.yaml .` → exit 0, "✓ Routing matrix valid: 6 roles"
+  - `python scripts/measure_context_reduction.py benchmark/subagent_routing_matrix.yaml .` → Baseline: 37,496 tokens across 15 artifacts; Average savings per role: 30,203 tokens (80.6% reduction)
+  - `python -m pytest tests/test_subagent_routing.py -v` → 19 passed in 0.17s
+  - Budget utilization: startup_deputy 89.2%, execution_deputy 158.3% (over-budget, needs optimization), specialist_deputy 12.2%, pm_research_deputy 16.1%, board_decision_deputy 83.6%, auditor_deputy 101.0%
+  - Token savings by role: startup_deputy 81.0%, execution_deputy 49.3%, specialist_deputy 96.7%, pm_research_deputy 96.6%, board_decision_deputy 86.6%, auditor_deputy 73.1%
+  - Created files: `benchmark/subagent_routing_matrix.yaml`, `scripts/validate_routing_matrix.py`, `scripts/measure_context_reduction.py`, `tests/test_subagent_routing.py`
+- Rollback note:
+  - Remove `benchmark/subagent_routing_matrix.yaml`, `scripts/validate_routing_matrix.py`, `scripts/measure_context_reduction.py`, `tests/test_subagent_routing.py`. No schema-breaking changes.
+
+### Phase 5A.2b: Path Validation Hardening and Test Coverage (2026-03-13)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-175 | governance/subagent-routing | D-174 claimed duplicate rejection but only checked within-role duplicates, not path security (absolute paths, `..` escapes, nested `quant_current_scope/...` duplicates). Tests reimplemented production logic locally instead of importing real scripts. | Created shared `scripts/utils/path_validator.py` with `validate_artifact_path(path, repo_root)` that rejects: (1) absolute paths (`/` or drive letters), (2) `..` parent escapes, (3) nested `quant_current_scope/...` duplicates, (4) paths escaping repo root via resolution. Patched `validate_routing_matrix.py` and `measure_context_reduction.py` to import and apply validator to all artifact classes (required/optional/conditional). Rewrote `tests/test_subagent_routing.py` to import production code (`validate_routing_matrix`, `measure_context_reduction`, `path_validator`) and added negative test cases for path validation. | Corrects D-174 overclaim by adding missing path security validation. Eliminates test/production drift by using real scripts in tests. Hardens artifact path handling against directory traversal and malformed paths. |
+| D-175b | governance/subagent-routing | D-175 rejected nested duplicates (`quant_current_scope/quant_current_scope/...`) but allowed single repo-root-prefix (`quant_current_scope/docs/...`). `measure_context_reduction.py` used `continue` on invalid paths (fail-open), allowing silent skips instead of hard failures. | Added single repo-root-prefix check in `path_validator.py` line 41: rejects paths starting with `repo_root.name` (e.g., `quant_current_scope/docs/...`). Changed all `continue` statements to `sys.exit(1)` in `measure_context_reduction.py` (lines 55, 68, 83, 110) to ensure script exits non-zero on invalid paths. Added test cases: `test_reject_single_repo_root_prefix` and `test_metric_script_exits_on_invalid_path` in `test_subagent_routing.py`. Amended: Fixed repo-root-prefix check to handle `.` CLI invocation case using `repo_root.resolve().name` (line 43). Added CLI invocation tests: `test_validator_rejects_repo_prefix_with_dot_repo_root` and `test_metric_script_rejects_repo_prefix_with_dot_repo_root`. | Closes remaining gaps from D-175: prevents repo-root-prefix confusion and ensures fail-fast behavior on invalid paths. Completes Phase 5A.2b hardening. |
+
+- Evidence:
+  - `python scripts/validate_routing_matrix.py benchmark/subagent_routing_matrix.yaml .` → exit 0, "✓ Routing matrix valid: 6 roles"
+  - `python scripts/measure_context_reduction.py benchmark/subagent_routing_matrix.yaml .` → Baseline: 37,496 tokens; Average savings: 30,203 tokens (80.6% reduction)
+  - `python -m pytest tests/test_subagent_routing.py -q` → 26 passed in 0.15s
+  - New test coverage: `test_reject_absolute_unix_path`, `test_reject_absolute_windows_path`, `test_reject_parent_escape`, `test_reject_nested_quant_current_scope`, `test_accept_valid_relative_path`, `test_reject_empty_path`, `test_invalid_path_rejected`, `test_parent_escape_rejected`, `test_invalid_path_blocks_validation`
+  - Created files: `scripts/utils/path_validator.py`
+  - Updated files: `scripts/validate_routing_matrix.py`, `scripts/measure_context_reduction.py`, `tests/test_subagent_routing.py`
+- Rollback note:
+  - Remove `scripts/utils/path_validator.py`. Revert changes to `scripts/validate_routing_matrix.py`, `scripts/measure_context_reduction.py`, `tests/test_subagent_routing.py` to D-174 baseline. Path validation will be absent.
+
+### Phase 5B.1: Skills Infrastructure (2026-03-13)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-176 | skills/safe-db-migration | Phase 5 requires reference skill implementation with HIGH-risk approval and benchmark evidence per ADR-003 extension loading policy | Approved safe-db-migration v1.0.0 skill (HIGH-risk, database category) with benchmark evidence: Claude Opus 4.6 sql_accuracy baseline = 0.91 >= required threshold 0.85. Skill includes: (1) 8-step declarative execution flow (analyze → generate → validate → rollback), (2) strict guardrails (backup verification, rollback plan, test coverage ≥80%, auditor review, CEO GO signal), (3) eval requirements (sql_accuracy ≥ 0.85), (4) comprehensive README and PostgreSQL example. Added to skills/registry.yaml and extension_allowlist.yaml with approval_decision_id D-176. | Establishes first production skill with full ADR-003 compliance: declarative-only steps (no executable code), kernel guardrail floor enforcement (cannot weaken existing gates), benchmark-driven approval (0.91 baseline exceeds 0.85 requirement), and complete manifest validation (skill.yaml, guardrails.yaml, eval.yaml, README.md, examples/). |
+| D-176a | governance/project-config | Phase 5B.1 requires project-local skill activation via .sop_config.yaml per ADR-003:165 shape | Approved .sop_config.yaml for quant_current_scope project with project_name="quant_current_scope", guardrail_strength="tight", active_skills=["safe-db-migration"], disabled_skills=[]. Project config validated against global allowlist: safe-db-migration is status=active, applicable_projects=["all"], and approval_decision_id D-176 exists in decision log. | Completes Phase 5B.1 activation contract: global allowlist (extension_allowlist.yaml) defines approved skills, project config (.sop_config.yaml) activates subset for local use, validators enforce allowlist → project consistency. |
+| D-176b | skills/safe-db-migration | Phase 5B.1b hardening identified reasoning_depth requirement as premature without established benchmark suite | Amendment to D-176: reasoning_depth requirement deferred to future phase. sql_accuracy evidence (0.91 >= 0.85) sufficient for 5B.1 approval. Removed reasoning_depth >= 0.80 from skills/safe_db_migration/eval.yaml and updated README.md accordingly. | Preserves skill approval while acknowledging that reasoning_depth benchmark does not yet exist in benchmark/ directory. Single-metric approval (sql_accuracy) provides sufficient evidence for HIGH-risk database skill given strict guardrail enforcement (backup verification, rollback plan, auditor review, CEO GO signal). |
+| D-177 | governance/phase5 | Phase 5B.2 requires skill activation visibility in subagent packets without execution semantics | Approved Thin Skill-Activation Bridge implementation: (1) skill_resolver.py surfaces active skills from .sop_config.yaml validated against extension_allowlist.yaml with fail-soft semantics, (2) skill_activation section added to exec_memory_packet with status/skills/warnings/errors, (3) skill_activation_latest.json persisted as standalone artifact in docs/context/, (4) added to execution_deputy and specialist_deputy optional_artifacts in routing matrix. Routing budget impact: execution_deputy 159.7% utilization (12K budget, 19,165 actual with skill_activation at 169 tokens), specialist_deputy 13.9% utilization (10K budget, 1,388 actual). Validation: 55 tests passing (9 new skill_activation tests, 46 existing tests updated). | Completes Phase 5B.2 activation bridge: subagents receive skill metadata without execution hooks, fail-soft resolver prevents governance file errors from blocking loop cycles, routing matrix integration preserves context isolation, standalone artifact enables future skill-aware routing decisions. Execution semantics remain blocked until Phase 5C skill execution engine approval. |
+
+- Evidence:
+  - Schema definitions created (6 files): `skills/schemas/registry_schema.yaml`, `skills/schemas/skill_schema.yaml`, `skills/schemas/guardrails_schema.yaml`, `skills/schemas/eval_schema.yaml`, `skills/schemas/allowlist_schema.yaml`, `skills/schemas/project_config_schema.yaml`
+  - Registry and config files created (3 files): `skills/registry.yaml` (schema_version 1.0.0, 1 skill), `extension_allowlist.yaml` (schema_version 1.0.0, 1 skill), `.sop_config.yaml` (project_name quant_current_scope, 1 active skill)
+  - Reference skill created: `skills/safe_db_migration/skill.yaml` (8 steps), `skills/safe_db_migration/guardrails.yaml` (6 pre-execution gates, 3 during-execution gates, 3 post-execution gates), `skills/safe_db_migration/eval.yaml` (1 benchmark requirement: sql_accuracy >= 0.85), `skills/safe_db_migration/README.md`, `skills/safe_db_migration/examples/postgres_add_column.md`
+  - Validators created (3 scripts): `scripts/validate_skill_registry.py` (registry-driven, ignores legacy skills/*), `scripts/validate_skill_manifest.py` (validates full skill directory), `scripts/validate_extension_allowlist.py` (validates allowlist + project config, checks approval_decision_id in decision log)
+  - Tests created: `tests/test_skill_infrastructure.py` (schema validation, allowlist resolution, approval metadata, registry-driven validation, benchmark evidence)
+  - Benchmark evidence: `benchmark/baselines/anthropic_claude-opus-4-6_sql_accuracy_baseline.json` shows baseline_score = 0.91, requirement = 0.85, evidence: 0.91 >= 0.85 ✓
+  - Validation results: skill_activation_latest.json artifact size: 169 tokens (679 chars), execution_deputy budget utilization: 19,165 / 12,000 (159.7%), specialist_deputy budget utilization: 1,388 / 10,000 (13.9%), test suite: 55 passing
+- Rollback note:
+  - Remove `skills/schemas/`, `skills/registry.yaml`, `extension_allowlist.yaml`, `.sop_config.yaml`, `skills/safe_db_migration/`, `scripts/validate_skill_registry.py`, `scripts/validate_skill_manifest.py`, `scripts/validate_extension_allowlist.py`, `tests/test_skill_infrastructure.py`. No schema-breaking changes to existing governance artifacts.
+
+### Phase 24C: C1 Manual Signoff (PENDING) (2026-03-15)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-178 | governance/promotion | C1 manual signoff requires explicit PM/CEO approval, and the refreshed dossier shows C3 not met because only W10 logs are present in `docs/context/phase_end_logs` | Recorded a PENDING C1 signoff entry with evidence links; C1 remains `MANUAL_CHECK` and closure remains `NOT_READY` until W11 logs are restored and criteria pass | Preserves audit trail without claiming authority or overriding automated criteria |
+
+- Evidence:
+  - `docs/context/auditor_promotion_dossier.json` (2026-03-15 refresh; C3 fails)
+  - `docs/context/auditor_calibration_report.json` (2026-03-15 refresh)
+  - `docs/context/ceo_go_signal.md` (2026-03-15 refresh; HOLD)
+  - `docs/context/loop_closure_status_latest.json` (2026-03-15 refresh; NOT_READY)
+  - `docs/context/w11_status.md` (2026-03-11 run_id 20260311_193017; logs missing in `docs/context/phase_end_logs`)
+- Rollback note:
+  - Remove this PENDING C1 entry; no gate or authority changes.
 ~~~
 
 ### docs/handover/phase20_handover.md
@@ -2344,11 +2512,273 @@ NextPhaseApproval: PENDING
 Prompt: Reply "approve next phase" to start execution.
 ~~~
 
+### docs/handover/phase24c_handover.md
+~~~markdown
+# Phase 24C Handover (PM-Friendly)
+
+Date: 2026-03-11
+Phase Window: 2026-03-03 to 2026-03-17
+Status: HOLD
+Owner: Codex
+
+## 1) Executive Summary
+- Objective status: Phase 24C architecture and calibration machinery are built, tested, and operational in shadow mode.
+- Current readiness: Automated promotion criteria are mostly green. `C0`, `C2`, `C4`, `C4b`, and `C5` are now passing. `C3` remains the live automated blocker. `C1` remains a required manual signoff step.
+- PM-level decision framing: The top-level completion model is `Ops`, `Quality`, `Governance`, and `Rollout`. QA sits inside the `Quality` lane; it is not the whole story. Do not open new architecture, new schema work, or broader governance expansion.
+- Freeze posture: Keep architecture, prompt, and schema scope frozen until the promotion decision is made. `C5` is already green, so new v2 work is off the critical path.
+- Recommended top-level move: Stay on the narrow promotion path: P0 ops hygiene, W11 evidence collection to close `C3`, `C1` signoff preparation, one explicit enforce dry-run, canary enforce, full rollout, and a stable 2-week monitor.
+
+## 2) What This Phase Delivered
+- Independent auditor review flow is live through `scripts/run_auditor_review.py`.
+- Calibration and dossier reporting are live through `scripts/auditor_calibration_report.py`.
+- FP ledger workflow is live and currently at full C/H annotation coverage.
+- Loop-cycle architecture refactor is complete through:
+  - immutable context extraction,
+  - mutable runtime extraction,
+  - exec-memory stage interface extraction,
+  - operational fixes for file-mode and bootstrap behavior.
+- Current code baseline is stable:
+  - `380 passed` in the full test suite at the latest validated checkpoint.
+
+## 3) Current State Snapshot
+
+### Promotion Criteria
+| Criterion | Status | Current Value | PM Read |
+|---|---|---|---|
+| C0 | PASS | `0 failures` | Infra is healthy enough to keep progressing |
+| C1 | MANUAL_CHECK | `MANUAL_CHECK` | PM signoff still required before enforce promotion |
+| C2 | PASS | `60 >= 30` | Evidence volume threshold already met |
+| C3 | FAIL | `1 consecutive weeks >= 2` | Live automated blocker; time/evidence bound |
+| C4 | PASS | `0.00%` | FP rate is within tolerance |
+| C4b | PASS | `100.00%` | Annotation discipline has been restored |
+| C5 | PASS | `1 versions: ['2.0.0']` | No new v2 migration work is needed on the critical path |
+
+### Operating Status
+- CEO GO signal is still `HOLD`.
+- Next-round handoff is `ACTION_REQUIRED`.
+- Loop cycle currently finishes as `HOLD`, not `ERROR`.
+- Closure remains `NOT_READY`.
+
+## 4) Current Decision Point
+
+### The Actual Upcoming Decision
+The upcoming PM decision is not "what new system should be built next." It is:
+
+`Should the worker be authorized to run the next shadow cycle inside the current freeze so W11 can keep advancing C3, while PM prepares the C1 signoff path in parallel?`
+
+### Recommended Answer
+Stay on the narrow promotion path:
+1. Hold the worker at an approval gate until PM explicitly authorizes the next shadow cycle.
+2. Once approved, keep shadow-mode cadence active through W11.
+3. Keep the scope single-repo for `quant_current_scope` unless PM/CEO explicitly widen it.
+4. Do not widen scope with new v2/schema or architecture work.
+5. Treat `C3` as the main blocker.
+6. In parallel, prepare the evidence packet needed for `C1` so that once `C3` flips, PM can move directly to signoff and dry-run.
+7. Keep enforce activation explicit via `-AuditMode enforce` through dry-run, canary, and the monitor window rather than flipping defaults early.
+
+### Why This Is the Right Call
+- `C5` is already passing, so new v2 work is not on the critical path.
+- `C4b` has recovered to `100%`, removing the main operational hygiene blocker.
+- `C3` is the only remaining automated promotion blocker in the live GO signal.
+- `C1` is manual and should be prepared now, but not claimed complete before `C3` is satisfied.
+- Multiple shadow cycles are allowed by the playbook, but the worker should still wait for explicit approval before advancing execution.
+- Keeping rollout explicit and single-repo first preserves a cheap rollback path while evidence is still accumulating.
+
+## 5) PM-Relevant Open Risks
+
+### Risk 1: C3 Is Still Blocking Promotion
+- Current state: only one qualifying week is present.
+- Implication: enforce promotion cannot be claimed from code quality alone.
+- PM action: keep the team focused on W11 cadence and evidence freshness, not new features.
+
+### Risk 2: Closure Is Still Not Ready
+- Current closure result is `NOT_READY`.
+- Primary visible reason: `go_signal_action_gate` still fails because the CEO GO signal is `HOLD`.
+- PM implication: even though most dossier criteria are green, the escalation gate is still correctly fail-closed.
+
+### Risk 3: Standalone Closure Shows an Exec-Memory Truth Mismatch
+- The current standalone closure artifact also shows `exec_memory_truth_gate` failing against `exec_memory_packet_latest.json`.
+- The error references stale source bindings that still point at `loop_cycle_summary_current.json`, which no longer exists after the temp snapshot is cleaned up.
+- PM implication: this is not the main promotion blocker today, but it is an operational inconsistency that should be cleaned before calling the phase "done done."
+
+### Risk 4: Manual Signoff Is Still Uncaptured
+- `C1` remains `MANUAL_CHECK`.
+- PM implication: Phase 24C cannot be declared rollout-ready until PM explicitly records signoff in the decision log with the required evidence links.
+
+## 6) What Is Locked vs What Is Still Mutable
+
+### Locked
+- Top-level completion model: `Ops`, `Quality`, `Governance`, `Rollout`.
+- Auditor criteria implementation for `C0`, `C2`, `C3`, `C4`, `C4b`, `C5`.
+- Shadow reporting and dossier generation pipeline.
+- Worker packet schema expectation at `v2.0.0`.
+- Loop-cycle refactor architecture:
+  - `loop_cycle_context.py`
+  - `loop_cycle_runtime.py`
+  - `loop_cycle_artifacts.py`
+  - `run_loop_cycle.py`
+- Architecture, prompt, and schema freeze until the promotion decision.
+- Fail-closed promotion model: `HOLD` is visible, but escalation is still blocked until readiness is true.
+
+### Still Mutable
+- Weekly evidence accumulation for W11.
+- PM signoff packet and decision-log entry for `C1`.
+- Enforce dry-run evidence.
+- Canary rollout sequencing and final default-mode flip timing.
+- Cross-repo rollout expansion after `quant_current_scope` is closed.
+- Repair of the standalone exec-memory truth mismatch on the `latest` packet path if it persists.
+
+## 7) Delivered Scope vs Deferred Scope
+
+### Delivered
+- Auditor review system and calibration dossier.
+- FP ledger and 100% C/H annotation state.
+- PM/CEO-facing advisory surfaces:
+  - next-round handoff,
+  - expert request,
+  - PM/CEO research brief,
+  - board decision brief.
+- Internal loop-cycle modularization and functional exec-memory stage seam.
+
+### Deferred
+- `C1` PM signoff entry.
+- Cross-repo readiness confirmation for the enforce path.
+- Enforce dry-run evidence.
+- Canary enforce sequence.
+- Full enforce rollout and post-rollout monitoring window.
+- Final closure of the standalone `exec_memory_truth_gate` mismatch on `exec_memory_packet_latest.json`.
+
+## 8) Roadmap To "Done Done"
+
+### Phase 24C Completion Path
+| Stage | Objective | Exit Condition | Owner |
+|---|---|---|---|
+| 1. W11 Closure | Close `C3` with 2 consecutive qualifying weeks | Dossier shows `c3_min_weeks.met = true` | Worker / Ops |
+| 2. C1 Signoff Prep | Assemble manual readiness packet | Evidence bundle ready for PM review | Worker / PM |
+| 3. C1 Manual Signoff | Record PM approval in decision log | `C1` explicitly approved | PM |
+| 4. Enforce Dry-Run | Run one bounded enforce cycle | No false block and no infra failure | PM / Ops |
+| 5. Canary Enforce | 3-5 enforce runs with limited blast radius | FP rate `<5%`, no infra instability | PM |
+| 6. Full Enforce Rollout | Promote enforce from canary to normal operation | Rollout accepted and monitored | PM / CEO |
+| 7. Stable Completion | Hold stable enforce behavior for the monitoring window | Phase declared complete | PM / CEO |
+
+### Recommended Immediate Sequence
+1. Hold worker execution until explicit approval is given for the next shadow cycle.
+2. Maintain W11 cadence and artifact freshness once approval is given.
+3. Keep annotation coverage at `100%`.
+4. Re-run dossier/GO/closure refreshes as evidence changes.
+5. Prepare the `C1` decision-log template in advance.
+6. Once `C3` flips, run the enforce dry-run immediately rather than reopening implementation work.
+7. Keep a W12 contingency in plan if evidence volume slips, because `C3` is calendar-bound rather than code-bound.
+
+## 9) Upcoming PM Decisions
+
+### Decision A: Stay Narrow or Reopen Scope?
+- Recommendation: stay narrow.
+- Why: Phase 24C is now promotion-ops work, not architecture work.
+
+### Decision B: When To Start C1 Signoff?
+- Recommendation: prepare now, approve only after `C3` is green.
+- Why: this keeps momentum high without bypassing the evidence gate.
+
+### Decision C: Is Cross-Repo Readiness Required Before Any Enforce Action?
+- Recommendation: close `quant_current_scope` first and treat Quant/Film expansion as rollout wave 2 unless PM/CEO explicitly broaden scope.
+- Why: the current briefs and playbooks are single-repo scoped, and forcing cross-repo scope now would widen risk without helping close the active blocker.
+
+### Decision D: Is the Standalone Exec-Memory Truth Mismatch a Must-Fix Before C1?
+- Recommendation: yes, resolve or explicitly classify it before claiming "done done."
+- Why: it is not the main blocker today, but it weakens the closure surface that PM will rely on during promotion.
+
+### Decision E: When Should Enforce Become the Default?
+- Recommendation: keep `-AuditMode enforce` explicit through the dry-run, canary, and monitor window.
+- Why: explicit invocation keeps rollback one-line cheap while evidence is still being collected.
+
+### Decision F: Is W12 Contingency Part of the Plan?
+- Recommendation: yes.
+- Why: `C3` depends on elapsed qualifying weeks, so March 12-14 evidence volume may still leave time as the governing factor.
+
+## 10) Context File Pack (Suggested Reading Order)
+
+### Contract and Phase Intent
+- `docs/phase_brief/phase24c-brief.md`
+- `docs/w11_execution_plan.md`
+- `docs/phase24c_transition_playbook.md`
+
+### Live Decision Artifacts
+- `docs/context/ceo_go_signal.md`
+- `docs/context/auditor_promotion_dossier.json`
+- `docs/context/auditor_calibration_report.json`
+- `docs/context/ceo_weekly_summary_latest.md`
+
+### Live Loop and Closure State
+- `docs/context/loop_cycle_summary_latest.json`
+- `docs/context/loop_closure_status_latest.json`
+- `docs/context/next_round_handoff_latest.md`
+
+### PM/CEO Advisory Views
+- `docs/context/board_decision_brief_latest.md`
+- `docs/context/pm_ceo_research_brief_latest.md`
+- `docs/context/expert_request_latest.md`
+
+### Operational Inputs
+- `docs/context/auditor_fp_ledger.json`
+- `docs/context/round_contract_latest.md`
+- `docs/context/worker_reply_packet.json`
+
+### Code Surfaces Relevant To The Current Decision
+- `scripts/auditor_calibration_report.py`
+- `scripts/run_auditor_review.py`
+- `scripts/phase_end_handover.ps1`
+- `scripts/run_loop_cycle.py`
+- `scripts/validate_loop_closure.py`
+
+## 11) PM Context Notes
+- The repo is no longer blocked on annotation discipline. That work is complete for the current evidence set.
+- The repo is not asking for another design wave. The next value comes from disciplined promotion execution.
+- The handoff advisory artifacts are now aligned around one message: complete the remaining signoff path and rerun closure after the automated criteria are satisfied.
+- The board-style brief currently recommends the minimum-correct path, not a broader redesign.
+
+## 12) New Context Packet (for /new)
+- What was done:
+  - Phase 24C delivered the auditor calibration system, dossier reporting, FP ledger workflow, and the loop-cycle refactor checkpoint.
+  - Annotation coverage has been restored to `100%`, and the live promotion machinery is operational in shadow mode.
+  - PM/CEO framing is now aligned to the 4-lane completion model: `Ops`, `Quality`, `Governance`, and `Rollout`.
+  - The code baseline is green and new v2/schema work is confirmed off the critical path because `C5` is already passing.
+- What is locked:
+  - Schema version expectation is `v2.0.0`.
+  - Fail-closed governance remains intact.
+  - Loop-cycle modularization is complete enough for the current milestone.
+  - Architecture, prompt, and schema scope stay frozen until the promotion decision.
+  - `quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.
+  - Enforce should remain explicit via `-AuditMode enforce` through dry-run, canary, and monitor rather than flipping defaults early.
+- What is next:
+  - P0 ops hygiene and W11 evidence collection must keep advancing until `C3` reaches 2 consecutive qualifying weeks.
+  - `C1` PM signoff is still missing and must be recorded in `docs/decision log.md`.
+  - Enforce dry-run, canary, full rollout, and the stable 2-week monitor are not yet complete.
+  - Standalone closure should be checked for the current exec-memory truth mismatch on the `latest` packet path.
+  - Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.
+  - Do not reopen schema, prompt, or architecture work.
+  - Push through P0 ops recovery, `C3`, `C1`, explicit enforce dry-run, canary, rollout, and the 2-week monitor.
+  - Carry a W12 contingency because `C3` is calendar-bound rather than code-fixable.
+- Immediate first step:
+  - Wait for explicit approval before running the next shadow cycle. Once approved, run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow`.
+- Next Todos:
+  - Hold worker execution at the approval gate.
+  - After approval, run the next full shadow cycle without widening scope.
+  - If new C/H findings appear, annotate them to maintain `100%` coverage.
+  - Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.
+  - Prepare the `C1` signoff packet in parallel so PM can move immediately when `C3` flips.
+
+## 13) Approval Metadata
+ConfirmationRequired: YES
+NextPhaseApproval: PENDING
+Prompt: Reply "approve next shadow cycle" to release the Ops lane while keeping the current freeze intact.
+~~~
+
 ### docs/lessonss.md
 ~~~markdown
 # lessonss.md
 
-Last updated: 2026-03-02
+Last updated: 2026-03-08
 
 ## Purpose
 Track mistakes, root causes, and guardrails so repeated errors are prevented.
@@ -2421,6 +2851,22 @@ Track mistakes, root causes, and guardrails so repeated errors are prevented.
 | 2026-03-02 | Phase 24B bootstrap threshold mode | Bootstrap packet (confidence=0.30, relatability=0.0, all-SKIPPED) would hard-fail under `--enforce-score-thresholds`; non-obvious that this is expected | Threshold enforcement capability added without documenting bootstrap-incompatible state | Added explicit runbook rule: threshold mode must not be enabled while `phase_bootstrap` packet is active; added `test_bootstrap_v2_packet_fails_threshold_enforcement` test to prove expected failure | For enforcement flags that require real worker data, document incompatibility with scaffold packets in runbook and test the expected failure path | `docs/runbook_ops.md`, `tests/test_validate_worker_reply_packet.py::test_bootstrap_v2_packet_fails_threshold_enforcement` |
 | 2026-03-02 | Phase 24C auditor citation path validation | Test `test_enforce_mode_passes_clean_packet` failed because citation paths (`scripts/a.py`, `tests/test_a.py`) in the packet didn't exist in the temp directory, causing AUD-R006 HIGH findings | Packet builder referenced paths that only exist in real repo, not in test `tmp_path` | Created stub files in the test directory matching citation paths before running auditor | When testing auditor checks that verify file existence, always create matching stub files in the test fixture; citation path validation is repo-root-relative | `tests/test_run_auditor_review.py::test_enforce_mode_passes_clean_packet` |
 | 2026-03-02 | Phase 24C severity model design | Initial plan had AUD-R000 as INFO in shadow / HIGH in enforce, creating contradictory canonical severity | Severity was mode-dependent, breaking the invariant needed for FP calibration across modes | Applied canonical severity model: severity is always the same in both modes; only `blocking` flag differs | Never make severity mode-dependent; use a separate `blocking` flag to control enforcement behavior while keeping severity stable for analytics | `scripts/run_auditor_review.py`, `tests/test_run_auditor_review.py::test_canonical_severity_identical_across_modes` |
+| 2026-03-08 | Startup profile selection ranking | Startup advisory support existed, but the ranking producer was missing and the output shape was not fully aligned with downstream consumers | Implementation focus stopped at startup intake surfacing instead of closing the producer/consumer loop with operator-ready evidence | Added `scripts/build_profile_selection_ranking.py`, emitted startup-compatible advisory fields (`score`, `confidence`, `evidence_summary`, `ranking`), and documented the operator flow | When adding an advisory consumer first, immediately add the smallest deterministic producer artifact and align its schema to the consumer before calling the loop complete | `scripts/build_profile_selection_ranking.py`, `tests/test_build_profile_selection_ranking.py`, `tests/test_startup_codex_helper.py`, `OPERATOR_LOOP_GUIDE.md`, `docs/profile_selection_ranking_advisory.md` |
+| 2026-03-08 | Profile-ranking corpus capture docs | Ranking evidence could still drift because corpus records were manually assembled and inconsistent across rounds | Operator flow documented ranking build but not a normalized capture step from loop artifacts + shipped/postmortem signals | Added explicit corpus-capture command/contract to operator guide and advisory doc, and recorded decision D-150 | For advisory ranking loops, always document the normalized capture step before ranking generation so evidence stays comparable and auditable | `OPERATOR_LOOP_GUIDE.md`, `docs/profile_selection_ranking_advisory.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Pragmatic SOP docs encoding | Team philosophy was discussed but not uniformly encoded as operational docs constraints | Governance expectations were spread across chats and partially implied in existing contracts | Added one CN/EN pragmatic SOP, one canonical logic spine index, one change-manifest template, and lean contract/runbook references with decision log trace | For process changes, ship one canonical policy doc + one index + one operator template so execution stays auditable and bounded | `docs/pragmatic_sop.md`, `docs/logic_spine_index.md`, `docs/templates/change_manifest_template.md`, `docs/loop_operating_contract.md`, `docs/runbook_ops.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Repo-init truth protocol docs | “Ultimate truth layer” framing risked over-generalizing across repos with different domain semantics | Global-truth framing did not separate repo-specific canonical sources from domain-heavy falsification needs | Added lean repo-init truth protocol doc + domain falsification pack template, and linked operator/contract references with a conditional structural closure gate when the round contract explicitly requires it | For semantic-risk decisions, use repo-specific truth protocol and run falsification pack only when ambiguity/high-impact is present; keep authority unchanged while validating structure when required | `docs/repo_init_truth_protocol.md`, `docs/templates/domain_falsification_pack.md`, `docs/runbook_ops.md`, `docs/loop_operating_contract.md`, `docs/decision log.md`, `docs/lessonss.md`, `scripts/validate_domain_falsification_pack.py`, `scripts/validate_loop_closure.py` |
+| 2026-03-08 | Advisory optimality review docs | Pass/merge-ready status was treated as sufficient without explicit top-level tradeoff framing under constraints | Decision-quality framing was implicit and scattered across conversations | Added a lean optimality-review protocol and template, plus minimal runbook/contract references and decision-log record | For high-impact semantic decisions, require a short optimality brief with max 2-3 top-level tradeoffs and explicit flip conditions; keep it advisory only | `docs/optimality_review_protocol.md`, `docs/templates/optimality_review_brief.md`, `docs/runbook_ops.md`, `docs/loop_operating_contract.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Minimal optimality roadmap doc | Optimality-gap discussion kept recurring, but there was no single PM-style artifact showing current engine, target engine, gap, and next lean sequence | The guidance existed in chat analysis only, so prioritization could drift round-to-round | Added one canonical roadmap doc and linked it from the runbook for operator use | When a strategic gap repeats across rounds, collapse it into one canonical roadmap artifact before adding more process or gates | `docs/minimal_optimality_roadmap.md`, `docs/runbook_ops.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Multi-option optimality compare mode | High-impact rounds still risked prematurely collapsing to one recommendation even after adding optimality review | The brief captured tradeoffs but not a canonical A/B/C comparison with explicit downside and uncertainty handling | Extended the existing optimality brief/template/contract guidance to compare 2-3 options with evidence paths and explicit `I don't know yet` fallback | When decision quality is the gap, first extend the existing advisory artifact into compare mode before creating a new subsystem, validator, or gate | `docs/optimality_review_protocol.md`, `docs/templates/optimality_review_brief.md`, `docs/runbook_ops.md`, `docs/loop_operating_contract.md`, `docs/round_contract_template.md`, `docs/minimal_optimality_roadmap.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Milestone-level optimality review | Strong local rounds could still accumulate into a more complex milestone because there was no explicit milestone-close shape review | Review surface existed at round level, but not at milestone-close where the accumulated system shape becomes visible | Reused the same optimality brief as a milestone-close addendum with explicit shape/regret/removal fields and a dedicated live artifact path | Before adding a new subsystem for milestone review, first reuse the existing advisory artifact once per milestone and force an honest `I don't know yet` when the milestone is too fresh to judge | `docs/optimality_review_protocol.md`, `docs/templates/optimality_review_brief.md`, `docs/runbook_ops.md`, `docs/loop_operating_contract.md`, `docs/minimal_optimality_roadmap.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | R3 shipped-outcome feedback (lean) | Post-merge learning risked spawning a new subsystem even though profile-outcome capture infrastructure already existed | Improvement intent focused on outcome feedback, but path selection could drift toward extra gates/authority changes | Reused `scripts/capture_profile_outcome_record.py` and the existing profile outcome corpus flow to append shipped-outcome fields as advisory evidence only | For R3-style learning loops, prefer additive reuse of existing corpus/script and keep it advisory-only with no new gate or authority path | `scripts/capture_profile_outcome_record.py`, `scripts/build_profile_selection_ranking.py`, `docs/profile_selection_ranking_advisory.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Lean R4 elegance / entropy snapshot | Meta-review pressure could have created another subsystem or score engine just to discuss maintainability | Treated elegance/entropy as if it needed a new mechanism instead of extending the existing advisory brief | Reused the existing optimality brief with lean proxy fields and explicit `I don't know yet` states | When the gap is meta-clarity, extend the existing advisory artifact before adding a scorer, validator, gate, or subsystem | `OPERATOR_LOOP_GUIDE.md`, `docs/optimality_review_protocol.md`, `docs/templates/optimality_review_brief.md`, `docs/runbook_ops.md`, `docs/minimal_optimality_roadmap.md`, `docs/loop_operating_contract.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Milestone optimality mirror UX | Milestone-close brief was usable but not glanceable at repo root during operator handoff moments | Convenience lane existed for other advisory outputs, but milestone optimality still required navigating into `docs/context` | Added `MILESTONE_OPTIMALITY_REVIEW_LATEST.md` as a one-screen PM summary mirror while preserving `docs/context/milestone_optimality_review_latest.md` as authoritative | For operator convenience asks, add thin repo-root mirrors that only summarize existing advisory artifacts and never create new authority or gate behavior | `MILESTONE_OPTIMALITY_REVIEW_LATEST.md`, `OPERATOR_LOOP_GUIDE.md`, `docs/runbook_ops.md`, `docs/loop_operating_contract.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Mirror-family wording consistency | Mirror docs could drift into slightly different authority/convenience phrasing even when behavior stayed the same | The mirror lane had a shared intent but not one explicit wording convention | Standardized the lane around convenience-only, authoritative `docs/context` source, thin PM summary, and no gate or authority change | When adding or polishing repo-root mirrors, reuse the same four phrases so operators can scan the family without reinterpreting semantics | `MILESTONE_OPTIMALITY_REVIEW_LATEST.md`, `OPERATOR_LOOP_GUIDE.md`, `docs/runbook_ops.md`, `docs/loop_operating_contract.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Canonical engineering philosophy doc | The repo had strong operational rules, but not one short methodology doc explaining how intent, context operations, abstention, optimality, beauty, and delegation strategy should shape code under context-heavy AI execution | Process guidance was distributed across contracts and runbooks, making the philosophical spine harder to transfer or review | Refreshed `docs/engineering_philosophy.md` to cover intent-to-code translation, optimal vs beautiful, context as an operating problem, abstention, drift monitoring, and single-agent vs delegated multi-agent patterns with research anchors | When a governance layer matures, add one canonical non-command philosophy doc before adding more procedure so operators can reason from principles instead of only rules, and match delegation style to task shape instead of defaulting to swarms | `docs/engineering_philosophy.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Thesis-pull philosophy learning loop | Cross-repo philosophy learning could easily drift into paper-led novelty or silent policy mutation without one bounded artifact and authority rule | There was no canonical way to combine live external-repo evidence with selective research while keeping local evidence primary and policy change human-reviewed | Added a minimal thesis-pull template, protocol, authoritative working copy, thin root mirror, and one short philosophy note tying any refinement to explicit human-reviewed heuristic updates | When pulling heuristics from another repo, only do it from active SOP or fresh real operating evidence, combine with `1-3` academic inputs, classify research by actionability, and never auto-mutate policy | `docs/templates/thesis_pull_template.md`, `docs/thesis_pull_protocol.md`, `docs/context/thesis_pull_latest.md`, `THESIS_PULL_LATEST.md`, `docs/engineering_philosophy.md`, `docs/runbook_ops.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Repo-root mirror discoverability | A thin repo-root mirror loses most of its operator value if the main quick-scan guide does not point to it | Convenience mirrors were being added correctly, but discoverability from the primary operator flow was still implicit | Added one short operator-guide pointer to the live thesis mirror | When a repo-root mirror is intended for quick scan flow, link it from `OPERATOR_LOOP_GUIDE.md` and keep the mirror convenience-only with `docs/context` authoritative | `OPERATOR_LOOP_GUIDE.md`, `THESIS_PULL_LATEST.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-08 | Thesis-pull docs-only polish | Final polish pressure could have spawned extra thesis-learning machinery even though the remaining gap was only wording and explicit conservative-state metadata | The thesis-pull lane was already structurally sufficient; what remained was a small consistency and traceability pass | Aligned mirror wording with the repo-root mirror family and added advisory-only freshness/abstention fields to the template and working copy | When a learning loop is structurally good enough, prefer one small docs-only polish pass over adding a new subsystem, gate, validator, or role | `THESIS_PULL_LATEST.md`, `OPERATOR_LOOP_GUIDE.md`, `docs/thesis_pull_protocol.md`, `docs/templates/thesis_pull_template.md`, `docs/context/thesis_pull_latest.md`, `docs/decision log.md`, `docs/lessonss.md` |
 ~~~
 
 ### docs/phase_brief/phase20-brief.md
@@ -2673,7 +3119,7 @@ Implement independent auditor review system with false-positive calibration and 
 **Risk:** Insufficient shadow data (C2/C3 not met)
 - **Mitigation:** 2-week window with weekly cadence ensures 30+ items across 2+ weeks
 
-**Risk:** High FP rate (C4 >5%)
+**Risk:** High FP rate (C4 >=5%)
 - **Mitigation:** Rule tuning during shadow window; can extend window if needed
 
 **Risk:** Infra failures (C0 violations)
@@ -2710,7 +3156,7 @@ If enforce mode causes operational issues:
 4. Re-run dossier validation
 5. Repeat canary enforce cycles
 
-**Rollback trigger:** >5% false-block rate in enforce mode over 2+ consecutive weeks
+**Rollback trigger:** FP rate >=5% in enforce mode; revert to shadow immediately per `docs/rollback_protocol.md` and resume promotion only after the recovery criteria are met
 
 ---
 

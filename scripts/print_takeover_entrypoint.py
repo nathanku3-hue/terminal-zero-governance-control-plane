@@ -10,6 +10,34 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+try:
+    from utils.path_validator import validate_artifact_path
+except ModuleNotFoundError:
+    try:
+        from scripts.utils.path_validator import validate_artifact_path
+    except ModuleNotFoundError:
+        def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
+            path = str(path).strip()
+            if not path:
+                return False, "Empty path"
+            if path.startswith("/") or (len(path) >= 2 and path[1] == ":"):
+                return False, f"Absolute path not allowed: {path}"
+            path_parts = path.replace("\\", "/").split("/")
+            if ".." in path_parts:
+                return False, f"Parent directory escape (..) not allowed: {path}"
+            if path_parts[0] == repo_root.resolve().name:
+                return False, (
+                    f"Path must not start with repo root name '{repo_root.resolve().name}'"
+                )
+            try:
+                artifact_path = (repo_root / path).resolve()
+                artifact_path.relative_to(repo_root.resolve())
+            except ValueError:
+                return False, f"Path escapes repository root: {path}"
+            except Exception as exc:  # pragma: no cover - defensive fallback
+                return False, f"Path resolution error: {path} ({exc})"
+            return True, ""
+
 from print_takeover_workflow_overlay_models import (
     ArtifactInput,
     WorkflowNode,
@@ -25,6 +53,8 @@ NEXT_ROUND_HANDOFF_PATH = "docs/context/next_round_handoff_latest.md"
 EXPERT_REQUEST_PATH = "docs/context/expert_request_latest.md"
 PM_CEO_RESEARCH_BRIEF_PATH = "docs/context/pm_ceo_research_brief_latest.md"
 BOARD_DECISION_BRIEF_PATH = "docs/context/board_decision_brief_latest.md"
+APPROVED_WORKFLOW_STATUS_JSON = Path("docs/context/workflow_status_latest.json")
+APPROVED_WORKFLOW_STATUS_MD = Path("docs/context/workflow_status_latest.md")
 
 ROOT_CONVENIENCE_MIRRORS = [
     "NEXT_ROUND_HANDOFF_LATEST.md",
@@ -97,6 +127,35 @@ def _atomic_write_text(path: Path, content: str) -> None:
         except FileNotFoundError:
             pass
         raise
+
+
+def _resolve_approved_overlay_output(
+    *,
+    repo_root: Path,
+    candidate: Path,
+    expected_relative: Path,
+) -> Path:
+    expected_path = (repo_root / expected_relative).resolve()
+    if candidate.is_absolute():
+        resolved_path = candidate.resolve()
+        try:
+            resolved_path.relative_to(repo_root.resolve())
+        except ValueError as exc:
+            raise ValueError(
+                f"Workflow status overlay must stay under repo root: {candidate}"
+            ) from exc
+    else:
+        is_valid, error = validate_artifact_path(candidate.as_posix(), repo_root)
+        if not is_valid:
+            raise ValueError(error)
+        resolved_path = (repo_root / candidate).resolve()
+
+    if resolved_path != expected_path:
+        raise ValueError(
+            f"Workflow status overlay path must be '{expected_relative.as_posix()}' "
+            f"(got '{candidate.as_posix()}')."
+        )
+    return resolved_path
 
 
 SECTION_MARKER_FALLBACKS: dict[str, dict[str, dict[str, str]]] = {
@@ -1189,9 +1248,11 @@ def main(argv: list[str] | None = None) -> int:
         try:
             now_utc = datetime.now(timezone.utc)
             payload_overlay = _assemble_workflow_status_payload(repo_root, now_utc)
-            output_path = args.workflow_status_json_out
-            if not output_path.is_absolute():
-                output_path = repo_root / output_path
+            output_path = _resolve_approved_overlay_output(
+                repo_root=repo_root,
+                candidate=args.workflow_status_json_out,
+                expected_relative=APPROVED_WORKFLOW_STATUS_JSON,
+            )
             output_json = json.dumps(payload_overlay, indent=2, ensure_ascii=False)
             _atomic_write_text(output_path, output_json + "\n")
         except Exception as exc:
@@ -1203,9 +1264,11 @@ def main(argv: list[str] | None = None) -> int:
             if payload_overlay is None:
                 now_utc = datetime.now(timezone.utc)
                 payload_overlay = _assemble_workflow_status_payload(repo_root, now_utc)
-            output_path = args.workflow_status_md_out
-            if not output_path.is_absolute():
-                output_path = repo_root / output_path
+            output_path = _resolve_approved_overlay_output(
+                repo_root=repo_root,
+                candidate=args.workflow_status_md_out,
+                expected_relative=APPROVED_WORKFLOW_STATUS_MD,
+            )
             output_md = _render_workflow_status_markdown(payload_overlay)
             _atomic_write_text(output_path, output_md)
         except Exception as exc:

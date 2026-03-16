@@ -183,3 +183,45 @@ def test_main_writes_json_output(monkeypatch, tmp_path: Path) -> None:
     payload = json.loads(json_out.read_text(encoding="utf-8"))
     assert payload["overall_status"] == "PASS"
     assert len(payload["checks"]) == 2
+
+
+def test_run_fast_checks_refreshes_cycle_before_closure_validation(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    state = {"cycle_ran": False}
+
+    def _fake_run(
+        command: list[str],
+        cwd: str | None = None,
+        capture_output: bool = True,
+        text: bool = True,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, capture_output, text, check
+        command_text = " ".join(command)
+        if "run_loop_cycle.py" in command_text:
+            state["cycle_ran"] = True
+            return subprocess.CompletedProcess(command, 0, stdout="PASS\n", stderr="")
+        if "validate_loop_closure.py" in command_text:
+            if state["cycle_ran"]:
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    stdout="READY_TO_ESCALATE\n",
+                    stderr="",
+                )
+            return subprocess.CompletedProcess(command, 1, stdout="NOT_READY\n", stderr="")
+        return subprocess.CompletedProcess(command, 2, stdout="", stderr="unknown command")
+
+    monkeypatch.setattr(run_fast_checks.subprocess, "run", _fake_run)
+
+    args = run_fast_checks.parse_args(["--repo-root", str(tmp_path)])
+    exit_code, payload = run_fast_checks.run_fast_checks(args)
+
+    assert exit_code == 0
+    assert payload["overall_status"] == "PASS"
+    assert [item["name"] for item in payload["checks"]] == [
+        "run_loop_cycle",
+        "validate_loop_closure",
+    ]

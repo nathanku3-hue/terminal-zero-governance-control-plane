@@ -11,16 +11,6 @@ from typing import Any
 
 CHECKS: tuple[dict[str, Any], ...] = (
     {
-        "name": "validate_loop_closure",
-        "args": [
-            "scripts/validate_loop_closure.py",
-            "--repo-root",
-            ".",
-            "--freshness-hours",
-            "72",
-        ],
-    },
-    {
         "name": "run_loop_cycle",
         "args": [
             "scripts/run_loop_cycle.py",
@@ -29,6 +19,16 @@ CHECKS: tuple[dict[str, Any], ...] = (
             "--skip-phase-end",
             "--allow-hold",
             "true",
+        ],
+    },
+    {
+        "name": "validate_loop_closure",
+        "args": [
+            "scripts/validate_loop_closure.py",
+            "--repo-root",
+            ".",
+            "--freshness-hours",
+            "72",
         ],
     },
 )

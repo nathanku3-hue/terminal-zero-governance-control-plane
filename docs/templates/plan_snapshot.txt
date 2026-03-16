@@ -1,0 +1,28 @@
+Top-Down Snapshot Template
+- Render inside a fenced `text` code block when used in Markdown.
+- Column widths: Stage=14, Current Scope=16, Rating=7, Next Scope=38 (total width 80).
+- Pad or truncate content to keep the closing | aligned.
+
+Top-Down Snapshot
+L1: <project pillar>
+L2 Active Streams: <stream1, stream2, ...>
+L2 Deferred Streams: <stream3, ... | none>
+L3 Stage Flow: Planning -> Executing -> Iterate Loop -> Final Verification -> CI/CD
+Active Stream: <one stream>
+Active Stage Level: <L2|L3|L4>
+
++--------------+----------------+-------+--------------------------------------+
+| Stage        | Current Scope  | Rating| Next Scope                           |
++--------------+----------------+-------+--------------------------------------+
+| Planning     | B=.. OH=.. AC=.| 45/100| 1) <primary> [45/100]: <reason>...   |
++--------------+----------------+-------+--------------------------------------+
+Remark: 2) <secondary item> [00/100]: <one-line reason> (optional; show only if next_step_certainty < 75 and rating_diff_between_top_next_steps < 20)
+
+Snapshot Delta (back-and-forth planning)
+- Use after the first full snapshot in-thread.
+- Only list changed header fields and changed rows.
+- Do not repeat the full table unless the user asks or the hierarchy/active stream/stage level changes.
+
+Snapshot Delta
+- Active Stream: <old> -> <new> (only if changed)
+- Row: Planning | Rating 45/100 -> 55/100 | Next Scope: 1) <primary> [55/100]: <reason>

@@ -1,6 +1,6 @@
 schema_version: "1.0.0"
 phase: "phase24c"
-last_updated_utc: "2026-03-07T00:00:00Z"
+last_updated_utc: "2026-03-15T00:00:00Z"
 
 directives:
   - directive_id: "PM-24A-001"
@@ -497,3 +497,18 @@ directives:
         - path: "tests/test_aggregate_worker_status.py::test_escalation_append_allows_new_event_when_existing_is_resolved"
         - path: "tests/test_validate_dispatch_acks.py::test_validate_dispatch_acks_fails_on_duplicate_correlation_id"
         - path: "tests/test_validate_dispatch_acks.py::test_validate_dispatch_acks_hash_mismatch_exit_code_unchanged"
+
+  - directive_id: "PM-24C-021"
+    source: "docs/decision log.md#D-146"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "scripts/loop_cycle_artifacts.py"
+        - file: "scripts/loop_cycle_runtime.py"
+        - file: "tests/test_loop_cycle_artifacts.py"
+        - file: "docs/ARTIFACT_POLICY.md"
+        - file: "docs/decision log.md"
+        - file: "docs/pm_to_code_traceability.yaml"
+      validators:
+        - path: "tests/test_loop_cycle_artifacts.py::test_persist_advisory_sections_writes_expected_artifacts"
+        - path: "tests/test_loop_cycle_artifacts.py::test_mirror_repo_root_convenience_copies_markdown_and_takeover_index"

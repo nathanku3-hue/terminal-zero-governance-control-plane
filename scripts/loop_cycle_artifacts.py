@@ -13,6 +13,22 @@ REPO_ROOT_CONVENIENCE_SPECS: tuple[tuple[str, str, str], ...] = (
     ("board_decision_brief", "BOARD_DECISION_BRIEF_LATEST.md", "Board Decision Brief"),
 )
 REPO_ROOT_TAKEOVER_FILENAME = "TAKEOVER_LATEST.md"
+APPROVED_CONTEXT_ARTIFACT_FILENAMES = frozenset(
+    {
+        "next_round_handoff_latest.json",
+        "next_round_handoff_latest.md",
+        "expert_request_latest.json",
+        "expert_request_latest.md",
+        "pm_ceo_research_brief_latest.json",
+        "pm_ceo_research_brief_latest.md",
+        "board_decision_brief_latest.json",
+        "board_decision_brief_latest.md",
+        "skill_activation_latest.json",
+    }
+)
+APPROVED_REPO_ROOT_CONVENIENCE_FILENAMES = frozenset(
+    {filename for _, filename, _ in REPO_ROOT_CONVENIENCE_SPECS} | {REPO_ROOT_TAKEOVER_FILENAME}
+)
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -28,6 +44,24 @@ def _atomic_write_text(path: Path, content: str) -> None:
         except FileNotFoundError:
             pass
         raise
+
+
+def _approved_context_output_path(context_dir: Path, filename: str) -> Path:
+    if filename not in APPROVED_CONTEXT_ARTIFACT_FILENAMES:
+        raise ValueError(f"Unapproved context artifact filename: {filename}")
+    output_path = context_dir / filename
+    if output_path.parent != context_dir:
+        raise ValueError(f"Context artifact must be written directly under {context_dir}: {output_path}")
+    return output_path
+
+
+def _approved_repo_root_output_path(repo_root: Path, filename: str) -> Path:
+    if filename not in APPROVED_REPO_ROOT_CONVENIENCE_FILENAMES:
+        raise ValueError(f"Unapproved repo-root convenience filename: {filename}")
+    output_path = repo_root / filename
+    if output_path.parent != repo_root:
+        raise ValueError(f"Repo-root convenience artifact must be written directly under {repo_root}: {output_path}")
+    return output_path
 
 
 def _coerce_string_list(value: Any) -> list[str]:
@@ -340,8 +374,8 @@ def _persist_exec_memory_section(
     if not isinstance(section_payload, dict) or not section_payload:
         return None
 
-    output_json = context_dir / f"{output_prefix}_latest.json"
-    output_md = context_dir / f"{output_prefix}_latest.md"
+    output_json = _approved_context_output_path(context_dir, f"{output_prefix}_latest.json")
+    output_md = _approved_context_output_path(context_dir, f"{output_prefix}_latest.md")
     artifact_payload = {
         "schema_version": "1.0.0",
         "generated_at_utc": str(memory_payload.get("generated_at_utc", "")).strip(),
@@ -415,6 +449,39 @@ def _persist_board_decision_brief(
     )
 
 
+def _persist_skill_activation(
+    *,
+    context_dir: Path,
+    exec_memory_json: Path,
+) -> dict[str, Any] | None:
+    """Persist skill_activation section as standalone JSON artifact."""
+    if not exec_memory_json.exists():
+        return None
+
+    try:
+        memory_payload = json.loads(exec_memory_json.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+
+    skill_activation = memory_payload.get("skill_activation")
+    if not isinstance(skill_activation, dict) or not skill_activation:
+        return None
+
+    output_json = _approved_context_output_path(context_dir, "skill_activation_latest.json")
+    artifact_payload = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": str(memory_payload.get("generated_at_utc", "")).strip(),
+        "source_exec_memory_json": str(exec_memory_json),
+        "skill_activation": skill_activation,
+    }
+    _atomic_write_text(output_json, json.dumps(artifact_payload, indent=2) + "\n")
+    return {
+        "json": output_json,
+        "status": str(skill_activation.get("status", "")).strip() or "UNKNOWN",
+        "payload": skill_activation,
+    }
+
+
 def persist_advisory_sections(
     context_dir: Path, exec_memory_json: Path
 ) -> dict[str, dict[str, Any] | None]:
@@ -432,6 +499,10 @@ def persist_advisory_sections(
             exec_memory_json=exec_memory_json,
         ),
         "board_decision_brief": _persist_board_decision_brief(
+            context_dir=context_dir,
+            exec_memory_json=exec_memory_json,
+        ),
+        "skill_activation": _persist_skill_activation(
             context_dir=context_dir,
             exec_memory_json=exec_memory_json,
         ),
@@ -490,7 +561,7 @@ def _mirror_repo_root_convenience_files(
             continue
         try:
             content = source_md.read_text(encoding="utf-8-sig")
-            target_path = repo_root / filename
+            target_path = _approved_repo_root_output_path(repo_root, filename)
             _atomic_write_text(target_path, content)
         except OSError:
             continue
@@ -499,7 +570,7 @@ def _mirror_repo_root_convenience_files(
     if not mirrored_files:
         return mirrored_files
 
-    takeover_path = repo_root / REPO_ROOT_TAKEOVER_FILENAME
+    takeover_path = _approved_repo_root_output_path(repo_root, REPO_ROOT_TAKEOVER_FILENAME)
     try:
         _atomic_write_text(
             takeover_path,
@@ -526,4 +597,3 @@ def mirror_repo_root_convenience(
         context_dir=context_dir,
         advisory_artifacts=advisory_artifacts,
     )
-

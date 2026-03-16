@@ -9,36 +9,11 @@ Execute this workflow after each work round.
 When the round closes a phase, execute Section 6 in the same round before publishing final status.
 
 ## 0. Project Init Hierarchy Confirmation (Hard Stop)
-1. At project init, load:
-   - `../_shared/hierarchy_template.md`
-   - `../_shared/field_templates/<domain>.md`
-2. Render hierarchy using locked columns:
-   - `Field | Expertise Level | Rationale`
-3. Ask user for explicit confirmation:
-   - `approve`
-   - `edit: <change>`
-   - `reject`
-4. Do not proceed until explicit approval is given, unless parent/orchestrator provides a valid in-thread hierarchy confirmation stamp for inherited execution.
-5. Session policy:
-   - Session definition: current chat/thread.
-   - Confirm once per project session.
-   - Retrigger only when:
-     - a new domain appears outside confirmed hierarchy, or
-     - user says `change hierarchy` or `new scope`.
-6. Before each SAW round, re-check that a hierarchy confirmation exists in current thread.
-7. Required audit stamp in every SAW report:
-   - `Hierarchy Confirmation: Approved | Session: <current-thread> | Trigger: <project-init|new-domain|change-scope> | Domains: <list>`
-8. Non-interactive exception:
-   - If parent/orchestrator sets fixed mode and inherited confirmation is present, do not re-prompt user during reviewer-only passes.
-9. Persisted fallback (only when in-thread stamp is missing):
-   - Use latest approved hierarchy snapshot from `docs/spec.md` + active `docs/phase*-brief.md`.
-   - Mark `FallbackSource` in the SAW report audit stamp.
-   - Fallback validity checks:
-     - both fallback files exist and are readable,
-     - both contain recognizable hierarchy fields (`L1`, `L2`, `L3`/stage flow).
-   - Fallback staleness checks:
-     - if fallback context is stale/ambiguous for current round, set `SAW Verdict: BLOCK` and request explicit reconfirmation.
-   - Require explicit user reconfirmation at the next interactive planning step.
+1. Call `$hierarchy-init` to load templates, render the locked table, and gate on approval.
+2. Before each SAW round, re-check that a hierarchy confirmation exists in the current thread.
+3. Ensure the hierarchy audit stamp is included at the top of the SAW report.
+
+**Reference**: For system wiring and validation chain details, see `AGENTS.md` Section 3 and `docs/workflow_wiring_detailed.md`.
 
 ## 1. Scope and Ownership
 1. Declare the work round scope in one line.
@@ -123,8 +98,13 @@ When the round closes a phase, execute Section 6 in the same round before publis
 3. Use `Stage | Current Scope | Rating | Next Scope` columns.
 4. Planning row must explicitly include `Boundary`, `Owner/Handoff`, and `Acceptance Checks`.
 5. Keep rows single-line; avoid wrapped cells.
-6. Secondary next suggestion must be outside the table as `Remark:` and only shown when `next_step_certainty < 75` and `rating_diff_between_top_next_steps < 20`.
-7. Use this terminal-safe fixed-width ASCII template:
+6. Render the snapshot block inside a fenced `text` code block to preserve alignment.
+7. Fix column widths to `Stage=14`, `Current Scope=16`, `Rating=7`, `Next Scope=38` (total width 80); pad or truncate content (use `...`) to keep the closing `|` aligned and prevent wrapping.
+8. Secondary next suggestion must be outside the table as `Remark:` and only shown when `next_step_certainty < 75` and `rating_diff_between_top_next_steps < 20`.
+9. Use delta-only snapshots on back-and-forth planning:
+   - After the first full snapshot in-thread, emit `Snapshot Delta` with only changed header fields and changed rows.
+   - Do not repeat the full snapshot/table unless the user asks or the hierarchy/active stream/stage level changes.
+10. Use this terminal-safe fixed-width ASCII template:
 
 ```text
 Top-Down Snapshot
@@ -135,12 +115,16 @@ L3 Stage Flow: Planning -> Executing -> Iterate Loop -> Final Verification -> CI
 Active Stream: <one stream>
 Active Stage Level: <L2|L3|L4>
 
-+--------------------+----------------------+--------+--------------------------------------------------------------+
-| Stage              | Current Scope        | Rating | Next Scope                                                   |
-+--------------------+----------------------+--------+--------------------------------------------------------------+
-| <Planning|...>     | <B/OH/AC token>      | 00/100 | 1) <primary item> [00/100]: <one-line reason>               |
-+--------------------+----------------------+--------+--------------------------------------------------------------+
++--------------+----------------+-------+--------------------------------------+
+| Stage        | Current Scope  | Rating| Next Scope                           |
++--------------+----------------+-------+--------------------------------------+
+| Planning     | B=.. OH=.. AC=.| 45/100| 1) <primary> [45/100]: <reason>...   |
++--------------+----------------+-------+--------------------------------------+
 Remark: 2) <secondary item> [00/100]: <one-line reason> (optional; show only if next_step_certainty < 75 and rating_diff_between_top_next_steps < 20)
+
+Snapshot Delta
+- Active Stream: <old> -> <new> (only if changed)
+- Row: Planning | Rating 45/100 -> 55/100 | Next Scope: 1) <primary> [55/100]: <reason>
 ```
 
 ## 6. Phase-End Closeout Protocol (Mandatory When Phase Closes)

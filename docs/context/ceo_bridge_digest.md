@@ -1,5 +1,5 @@
 # CEO Bridge Digest
-Generated: 2026-03-09T07:55:20.950791Z
+Generated: 2026-03-15T12:18:18.916930Z
 Digest Version: 2.0.0
 
 ## I. First Principles Engineering Summary
@@ -132,24 +132,3 @@ _Note: Verdict is PASS in shadow mode because blocking is mode-driven, not sever
 
 ## XI. Recommended PM Actions
 *Please review active escalations, traceability score, confidence/citation completeness, and score gates before dispatching new plans.*
-
-## XII. Lineup and Memory Governance
-
-### Expert Request Governance
-
-- Requested domain: riskops
-- Roster fit: IN_ROSTER
-- Milestone ID: unspecified_milestone
-- Board re-entry required: False
-
-### Board Governance
-
-- Lineup decision needed: False
-- Approved roster snapshot: milestone_id=unspecified_milestone; mandatory_domains=principal, riskops, qa; optional_domains=math_stats, portfolio_risk, market_microstructure, data_eng, infra_perf
-- Reintroduce board when: UNKNOWN_DOMAIN, EXPERT_CONFLICT, ONE_WAY_OR_HIGH_RISK, MILESTONE_GATE
-
-### Memory Governance
-
-- Expert memory status: CONSISTENT
-- Board memory status: CONSISTENT
-- Milestone expert roster status: path=docs/context/milestone_expert_roster_latest.json; present=True; status=ROSTER_READY; milestone_id=unspecified_milestone; mandatory_domains=principal, riskops, qa; optional_domains=math_stats, portfolio_risk, market_microstructure, data_eng, infra_perf; all_domains=principal, riskops, qa, math_stats, portfolio_risk, market_microstructure, data_eng, infra_perf; board_reentry_triggers=unknown_domain, expert_conflict, one_way_or_high_risk, milestone_gate; unknown_domain_policy=ESCALATE_TO_BOARD
