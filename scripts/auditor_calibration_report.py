@@ -10,6 +10,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
+except Exception:
+    from ceo_go_signal_contract import resolve_c1_signoff_criterion  # type: ignore[no-redef]
+
+
 def _now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -104,6 +110,11 @@ def main() -> None:
     parser.add_argument("--output-json", required=True, help="Output JSON report path")
     parser.add_argument("--output-md", required=True, help="Output Markdown report path")
     parser.add_argument("--mode", choices=["weekly", "dossier"], default="weekly", help="Report mode")
+    parser.add_argument(
+        "--decision-log-md",
+        default="docs/decision log.md",
+        help="Decision log markdown path used to resolve C1 manual signoff.",
+    )
     parser.add_argument("--from-utc", help="Start timestamp (ISO 8601 UTC)")
     parser.add_argument("--to-utc", help="End timestamp (ISO 8601 UTC)")
     parser.add_argument("--min-items", type=int, default=30, help="Min items for dossier C2")
@@ -364,9 +375,21 @@ def main() -> None:
 
     # Check promotion criteria (dossier mode)
     criteria = {}
+    automated_not_met: list[str] = []
     if args.mode == "dossier":
+        decision_log_path = Path(args.decision_log_md)
+        decision_log_text = ""
+        if decision_log_path.exists():
+            try:
+                decision_log_text = decision_log_path.read_text(encoding="utf-8-sig")
+            except Exception as exc:
+                print(
+                    f"WARNING: Failed to read decision log {decision_log_path}: {exc}",
+                    file=sys.stderr,
+                )
+
         c0_met = (infra_failures == 0)
-        c1_met = "MANUAL_CHECK"
+        c1_criterion = resolve_c1_signoff_criterion(decision_log_text)
         c2_met = (total_items >= args.min_items)
 
         # C3: consecutive weeks with min items per week
@@ -401,7 +424,7 @@ def main() -> None:
 
         criteria = {
             "c0_infra_health": {"met": c0_met, "value": f"{infra_failures} failures"},
-            "c1_24b_close": {"met": c1_met, "value": "MANUAL_CHECK"},
+            "c1_24b_close": c1_criterion,
             "c2_min_items": {"met": c2_met, "value": f"{total_items} >= {args.min_items}"},
             "c3_min_weeks": {"met": c3_met, "value": f"{max_consecutive} consecutive weeks >= {args.min_weeks}"},
             "c4_fp_rate": {"met": c4_met, "value": f"{fp_rate:.2%}" if fp_rate is not None else "N/A"},

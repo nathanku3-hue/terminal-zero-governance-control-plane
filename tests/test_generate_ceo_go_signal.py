@@ -39,7 +39,7 @@ def _criteria(
 ) -> dict:
     return {
         "c0_infra_health": {"met": c0, "value": "0 failures"},
-        "c1_24b_close": {"met": "MANUAL_CHECK", "value": "MANUAL_CHECK"},
+        "c1_24b_close": {"met": True, "value": "APPROVED"},
         "c2_min_items": {"met": c2, "value": "30 >= 30"},
         "c3_min_weeks": {"met": c3, "value": "2 consecutive weeks >= 2"},
         "c4_fp_rate": {"met": c4, "value": "0.00%"},
@@ -113,7 +113,7 @@ def test_generate_ceo_go_signal_go_when_all_automated_criteria_met(tmp_path: Pat
     assert "- Recommended Action: GO" in content
     assert "- Phase: Phase 24C" in content
     assert "| C0 | PASS | 0 failures |" in content
-    assert "| C1 | MANUAL_CHECK | MANUAL_CHECK |" in content
+    assert "| C1 | PASS | APPROVED |" in content
 
 
 def test_generate_ceo_go_signal_hold_when_automated_criteria_not_met(tmp_path: Path) -> None:

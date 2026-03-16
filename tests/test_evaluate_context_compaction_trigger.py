@@ -55,7 +55,10 @@ def _base_dossier(c0=True, c1=None, c2=True, c3=True, c4=True, c4b=True, c5=True
         "schema_version": "1.0.0",
         "promotion_criteria": {
             "c0_infra_health": {"met": c0, "value": "0 failures"},
-            "c1_24b_close": {"met": c1, "value": "MANUAL_CHECK"},
+            "c1_24b_close": {
+                "met": True if c1 is None else c1,
+                "value": "APPROVED" if c1 in (None, True) else "MANUAL_CHECK",
+            },
             "c2_min_items": {"met": c2, "value": "30 >= 30"},
             "c3_min_weeks": {"met": c3, "value": "2 consecutive weeks >= 2"},
             "c4_fp_rate": {"met": c4, "value": "0.00%"},
@@ -120,7 +123,7 @@ def test_trigger_on_action_change(tmp_path: Path) -> None:
             "action_current": "HOLD",
             "criteria_current": {
                 "C0": True,
-                "C1": None,
+                "C1": True,
                 "C2": True,
                 "C3": True,
                 "C4": True,
@@ -155,7 +158,7 @@ def test_no_trigger_baseline(tmp_path: Path) -> None:
             "action_current": "HOLD",
             "criteria_current": {
                 "C0": True,
-                "C1": None,
+                "C1": True,
                 "C2": True,
                 "C3": True,
                 "C4": True,

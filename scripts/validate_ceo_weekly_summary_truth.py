@@ -428,9 +428,9 @@ def _value_truth_errors(
 
     c1_actual = actual_values.get("C1")
     if c1_actual is not None:
-        expected_c1 = expected_values["C1"].upper()
-        actual_c1_status = _normalize_status_token(c1_actual)
-        if "MANUAL_CHECK" in expected_c1 and actual_c1_status != "MANUAL_CHECK":
+        expected_c1 = _strip_markdown(expected_values["C1"]).upper()
+        actual_c1 = _strip_markdown(c1_actual).upper()
+        if actual_c1 != expected_c1:
             errors.append(
                 "Criterion C1 value mismatch: "
                 f"markdown={c1_actual}, expected={expected_values['C1']}"

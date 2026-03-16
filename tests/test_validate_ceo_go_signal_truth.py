@@ -35,7 +35,7 @@ def _criteria(
 ) -> dict:
     return {
         "c0_infra_health": {"met": c0, "value": "0 failures"},
-        "c1_24b_close": {"met": "MANUAL_CHECK", "value": "MANUAL_CHECK"},
+        "c1_24b_close": {"met": True, "value": "APPROVED"},
         "c2_min_items": {"met": c2, "value": "30 >= 30"},
         "c3_min_weeks": {"met": c3, "value": "2 consecutive weeks >= 2"},
         "c4_fp_rate": {"met": c4, "value": "0.00%"},

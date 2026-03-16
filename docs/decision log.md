@@ -2189,7 +2189,7 @@ Philosophy Local-First Loop + Gemini Handover Automation (2026-03-01): Worker-Fi
 
 | ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
 |------|-----------|---------------------|--------------------------|-----------|
-| D-178 | governance/promotion | C1 manual signoff requires explicit PM/CEO approval; automated criteria now pass and closure is READY_TO_ESCALATE, but C1 remains manual | Recorded a PENDING C1 signoff entry with refreshed evidence links; no approval granted and C1 remains `MANUAL_CHECK` until PM/CEO signoff | Captures the current evidence snapshot without asserting authority or changing any gate behavior |
+| D-178 | governance/promotion | Historical pre-approval snapshot captured before PM signoff landed | Recorded the pre-approval evidence state on 2026-03-15. This snapshot is superseded by `D-174` on 2026-03-16, which grants PM signoff and closes `C1`. | Preserves the earlier evidence checkpoint without conflicting with the authoritative `C1` approval record. |
 
 - Evidence:
   - `docs/context/auditor_promotion_dossier.json` (2026-03-15 refresh; W11 >= 10, C3 PASS)

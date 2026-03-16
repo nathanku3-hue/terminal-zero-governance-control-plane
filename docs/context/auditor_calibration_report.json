@@ -1,24 +1,24 @@
 {
   "schema_version": "1.0.0",
   "report_type": "weekly",
-  "generated_at_utc": "2026-03-15T12:22:47.613758+00:00",
+  "generated_at_utc": "2026-03-16T13:37:26.082508+00:00",
   "data_range": {
     "from_utc": "2026-03-03T00:00:00Z",
     "to_utc": null,
-    "runs_included": 16
+    "runs_included": 17
   },
   "totals": {
-    "items_reviewed": 66,
+    "items_reviewed": 72,
     "critical": 1,
-    "high": 52,
-    "medium": 42,
+    "high": 57,
+    "medium": 46,
     "low": 0,
     "info": 0
   },
   "fp_analysis": {
     "ledger_loaded": true,
-    "ch_total": 53,
-    "ch_annotated": 53,
+    "ch_total": 58,
+    "ch_annotated": 58,
     "ch_unannotated": 0,
     "ch_fp_count": 0,
     "fp_rate": 0.0,
@@ -53,10 +53,10 @@
       "fp_count": 0
     },
     "AUD-R005": {
-      "total": 41,
+      "total": 45,
       "critical": 0,
       "high": 0,
-      "medium": 41,
+      "medium": 45,
       "low": 0,
       "info": 0,
       "fp_count": 0
@@ -71,9 +71,9 @@
       "fp_count": 0
     },
     "AUD-R003": {
-      "total": 50,
+      "total": 55,
       "critical": 0,
-      "high": 50,
+      "high": 55,
       "medium": 0,
       "low": 0,
       "info": 0,
@@ -94,6 +94,14 @@
       "critical": 0,
       "high": 10,
       "medium": 8,
+      "low": 0,
+      "info": 0
+    },
+    "2026-W12": {
+      "items": 6,
+      "critical": 0,
+      "high": 5,
+      "medium": 4,
       "low": 0,
       "info": 0
     }

@@ -8,11 +8,11 @@
 
 ## Purpose
 
-Provide step-by-step checklists and pass/fail thresholds for transitioning from C3 closure through C1 signoff, canary enforce, and full rollout.
+Provide step-by-step checklists and pass/fail thresholds for transitioning from C3 closure through C1 verification, canary enforce, and full rollout.
 
 Use this playbook for:
 - Validating entry criteria before each phase transition
-- Collecting required evidence for C1 manual signoff
+- Verifying that C1 signoff remains evidenced by `D-174`
 - Executing canary enforce with clear success criteria
 - Making stop/go decisions for full enforce rollout
 
@@ -235,7 +235,7 @@ cat docs/context/phase_end_logs/phase_end_handover_summary_<run_id>.md | grep "g
 **Objective:** Validate enforce mode with limited blast radius before full rollout
 
 **Entry Criteria:**
-- [ ] C1 manual signoff complete (Phase 2 PASS)
+- [x] C1 manual signoff complete (`D-174` recorded 2026-03-16)
 - [ ] PM approval to begin canary enforce
 - [ ] Rollback protocol ready (docs/rollback_protocol.md)
 - [ ] Escalation paths clear (docs/decision_authority_matrix.md)

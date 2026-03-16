@@ -54,7 +54,7 @@ def _make_dossier() -> dict:
         "report_type": "dossier",
         "promotion_criteria": {
             "c0_infra_health": {"met": True, "value": "0 failures"},
-            "c1_24b_close": {"met": "MANUAL_CHECK", "value": "MANUAL_CHECK"},
+            "c1_24b_close": {"met": True, "value": "APPROVED"},
             "c2_min_items": {"met": True, "value": "50 >= 30"},
             "c3_min_weeks": {"met": False, "value": "1 consecutive weeks >= 2"},
         },
@@ -758,7 +758,7 @@ def test_replanning_section_captures_blocking_gaps_and_recommendation(tmp_path: 
     assert any(gap["code"] == "c3_min_weeks" for gap in replanning["blocking_gaps"])
     assert any(gap["code"] == "blocking_reason" for gap in replanning["blocking_gaps"])
     assert replanning["next_replan_recommendation"].startswith(
-        "Capture the required manual signoff"
+        "Address final_result:HOLD from loop_cycle_summary"
     )
 
     md_content = md_path.read_text(encoding="utf-8")

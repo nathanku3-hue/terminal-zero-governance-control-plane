@@ -1,7 +1,7 @@
 # CEO GO Signal
 
 - Phase: Phase 24
-- Generated: 2026-03-16T12:33:30Z
+- Generated: 2026-03-16T13:37:26Z
 - Recommended Action: GO
 
 ## Dossier Criteria
@@ -9,8 +9,8 @@
 | Criterion | Status | Value |
 |---|---|---|
 | C0 | PASS | 0 failures |
-| C1 | MANUAL_CHECK | MANUAL_CHECK |
-| C2 | PASS | 66 >= 30 |
+| C1 | PASS | APPROVED |
+| C2 | PASS | 72 >= 30 |
 | C3 | PASS | 2 consecutive weeks >= 2 |
 | C4 | PASS | 0.00% |
 | C4b | PASS | 100.00% |
@@ -22,11 +22,10 @@
 
 ## Next Steps
 
-1. Complete C1 manual signoff (MANUAL_CHECK) in decision log.
-2. Proceed with enforce-mode canary and rollout using phase-end handover.
+1. Proceed with enforce-mode canary and rollout using phase-end handover.
 
 ## Artifact Links
 
-- Dossier JSON: `E:\code\SOP\quant_current_scope\docs\context\auditor_promotion_dossier.json`
-- Calibration JSON: `E:\code\SOP\quant_current_scope\docs\context\auditor_calibration_report.json`
-- Signal Markdown: `E:\code\SOP\quant_current_scope\docs\context\ceo_go_signal.md`
+- Dossier JSON: `docs\context\auditor_promotion_dossier.json`
+- Calibration JSON: `docs\context\auditor_calibration_report.json`
+- Signal Markdown: `docs\context\ceo_go_signal.md`

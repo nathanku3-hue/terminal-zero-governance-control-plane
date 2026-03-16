@@ -26,6 +26,20 @@ def _write_json_with_bom(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8-sig")
 
 
+def _write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _decision_log_with_d174() -> str:
+    return """# Decision Log
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-174 | governance/phase24c | C1 PM signoff for Phase 24C enforce promotion | PM signoff granted for Phase 24C enforce promotion. | Satisfies C1 manual signoff requirement. Enables enforce promotion path once C3 automated blocker clears. Date: 2026-03-16. |
+"""
+
+
 def _make_findings(
     run_id: str,
     mode: str = "shadow",
@@ -99,6 +113,7 @@ def _run_calibration(
     min_items_per_week: int = 10,
     min_weeks: int = 2,
     max_fp_rate: float = 0.05,
+    decision_log_path: Path | None = None,
 ) -> tuple[subprocess.CompletedProcess[str], dict, str]:
     output_json = logs_dir / "report.json"
     output_md = logs_dir / "report.md"
@@ -119,6 +134,8 @@ def _run_calibration(
     
     if ledger_path:
         args.extend(["--ledger", str(ledger_path)])
+    if decision_log_path:
+        args.extend(["--decision-log-md", str(decision_log_path)])
     if from_utc:
         args.extend(["--from-utc", from_utc])
     if to_utc:
@@ -412,6 +429,46 @@ def test_dossier_c3_consecutive_weeks_pass(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert report["promotion_criteria"]["c3_min_weeks"]["met"] is True
     assert "2 consecutive weeks" in report["promotion_criteria"]["c3_min_weeks"]["value"]
+
+
+def test_dossier_c1_derives_pass_from_d174_decision_log(tmp_path: Path) -> None:
+    """C1 resolves to PASS/APPROVED when D-174 is present in decision log."""
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    decision_log_path = tmp_path / "docs" / "decision log.md"
+    _write_text(decision_log_path, _decision_log_with_d174())
+
+    _write_json(
+        logs_dir / "auditor_findings_20260301_120000.json",
+        _make_findings("20260301_120000", timestamp="2026-03-01T12:00:00Z", items_reviewed=15),
+    )
+    _write_json(
+        logs_dir / "phase_end_handover_status_20260301_120000.json",
+        _make_status("20260301_120000", gates=[_make_gate("G11_auditor_review", command="--mode shadow")]),
+    )
+    _write_json(
+        logs_dir / "auditor_findings_20260308_120000.json",
+        _make_findings("20260308_120000", timestamp="2026-03-08T12:00:00Z", items_reviewed=20),
+    )
+    _write_json(
+        logs_dir / "phase_end_handover_status_20260308_120000.json",
+        _make_status("20260308_120000", gates=[_make_gate("G11_auditor_review", command="--mode shadow")]),
+    )
+
+    result, report, md_content = _run_calibration(
+        logs_dir,
+        mode="dossier",
+        min_items=30,
+        min_items_per_week=10,
+        min_weeks=2,
+        decision_log_path=decision_log_path,
+    )
+
+    assert result.returncode == 0
+    assert report["promotion_criteria"]["c1_24b_close"]["met"] is True
+    assert report["promotion_criteria"]["c1_24b_close"]["value"] == "APPROVED"
+    assert report["promotion_criteria"]["c1_24b_close"]["decision_id"] == "D-174"
+    assert "| c1_24b_close | ✅ | APPROVED |" in md_content
 
 
 def test_dossier_c3_non_consecutive_weeks_fail(tmp_path: Path) -> None:

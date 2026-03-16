@@ -1,17 +1,17 @@
 # Auditor Calibration Report (WEEKLY)
 
-**Generated:** 2026-03-15T12:22:47.613758+00:00
-**Runs included:** 16
+**Generated:** 2026-03-16T13:37:26.082508+00:00
+**Runs included:** 17
 **Time range:** 2026-03-03T00:00:00Z to N/A
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Items reviewed | 66 |
+| Items reviewed | 72 |
 | CRITICAL | 1 |
-| HIGH | 52 |
-| MEDIUM | 42 |
+| HIGH | 57 |
+| MEDIUM | 46 |
 | LOW | 0 |
 | INFO | 0 |
 
@@ -20,8 +20,8 @@
 | Metric | Value |
 |--------|-------|
 | Ledger loaded | True |
-| C/H total | 53 |
-| C/H annotated | 53 |
+| C/H total | 58 |
+| C/H annotated | 58 |
 | C/H unannotated | 0 |
 | C/H FP count | 0 |
 | FP rate | 0.00% |
@@ -33,9 +33,9 @@
 |---------|-------|---|---|---|---|---|-----|
 | AUD-R001 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | AUD-R002 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
-| AUD-R003 | 50 | 0 | 50 | 0 | 0 | 0 | 0 |
+| AUD-R003 | 55 | 0 | 55 | 0 | 0 | 0 | 0 |
 | AUD-R004 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
-| AUD-R005 | 41 | 0 | 0 | 41 | 0 | 0 | 0 |
+| AUD-R005 | 45 | 0 | 0 | 45 | 0 | 0 | 0 |
 | AUD-R007 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 
 ## Weekly Windows
@@ -44,3 +44,4 @@
 |------|-------|---|---|---|---|---|
 | 2026-W10 | 54 | 1 | 42 | 34 | 0 | 0 |
 | 2026-W11 | 12 | 0 | 10 | 8 | 0 | 0 |
+| 2026-W12 | 6 | 0 | 5 | 4 | 0 | 0 |

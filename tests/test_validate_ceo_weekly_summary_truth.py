@@ -29,7 +29,7 @@ def _criteria(
 ) -> dict:
     return {
         "c0_infra_health": {"met": c0, "value": "0 failures"},
-        "c1_24b_close": {"met": "MANUAL_CHECK", "value": "MANUAL_CHECK"},
+        "c1_24b_close": {"met": True, "value": "APPROVED"},
         "c2_min_items": {"met": c2, "value": "30 >= 30"},
         "c3_min_weeks": {"met": c3, "value": "2 consecutive weeks >= 2"},
         "c4_fp_rate": {"met": c4, "value": "0.00%"},
@@ -51,7 +51,7 @@ def _weekly_markdown(*, c2_status: str = "PASS", recommendation: str | None = "G
         "| Criterion | Business Meaning | Status | Progress | Target |\n"
         "|---|---|---|---|---|\n"
         "| **C0: System Health** | No infrastructure failures | ✅ | 0 failures | 0 failures |\n"
-        "| **C1: Operational Readiness** | Manual PM approval required | ⚠️ | MANUAL_CHECK | PM signoff |\n"
+        "| **C1: Operational Readiness** | PM signoff recorded in decision log | PASS | APPROVED | D-174 |\n"
         f"| **C2: Evidence Volume** | Enough data to measure quality | {c2_status} | 30/30 items | 30+ items |\n"
         "| **C3: Consistency** | Sustained quality over time | PASS | 2/2 weeks | 2+ consecutive weeks |\n"
         "| **C4: Quality Rate** | Low false-alarm rate | PASS | 0.00% | <5% false alarms |\n"

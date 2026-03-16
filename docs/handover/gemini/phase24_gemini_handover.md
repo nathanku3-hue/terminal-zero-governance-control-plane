@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-16T12:33:28Z
+- GeneratedAtUTC: 2026-03-16T13:37:25Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -159,7 +159,7 @@ Wait for explicit approval before running the next shadow cycle. Once approved, 
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-16T12:33:28Z",
+  "generated_at_utc": "2026-03-16T13:37:25Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -2399,7 +2399,7 @@ Philosophy Local-First Loop + Gemini Handover Automation (2026-03-01): Worker-Fi
 
 | ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
 |------|-----------|---------------------|--------------------------|-----------|
-| D-178 | governance/promotion | C1 manual signoff requires explicit PM/CEO approval; automated criteria now pass and closure is READY_TO_ESCALATE, but C1 remains manual | Recorded a PENDING C1 signoff entry with refreshed evidence links; no approval granted and C1 remains `MANUAL_CHECK` until PM/CEO signoff | Captures the current evidence snapshot without asserting authority or changing any gate behavior |
+| D-178 | governance/promotion | Historical pre-approval snapshot captured before PM signoff landed | Recorded the pre-approval evidence state on 2026-03-15. This snapshot is superseded by `D-174` on 2026-03-16, which grants PM signoff and closes `C1`. | Preserves the earlier evidence checkpoint without conflicting with the authoritative `C1` approval record. |
 
 - Evidence:
   - `docs/context/auditor_promotion_dossier.json` (2026-03-15 refresh; W11 >= 10, C3 PASS)
@@ -2732,7 +2732,7 @@ Stay on the narrow promotion path:
 ## 11) PM Context Notes
 - The repo is no longer blocked on annotation discipline. That work is complete for the current evidence set.
 - The repo is not asking for another design wave. The next value comes from disciplined promotion execution.
-- The handoff advisory artifacts are now aligned around one message: complete the remaining signoff path and rerun closure after the automated criteria are satisfied.
+- The handoff advisory artifacts are now aligned around one message: `C1` is already evidenced by `D-174`; refresh automated artifacts and rerun closure as needed.
 - The board-style brief currently recommends the minimum-correct path, not a broader redesign.
 
 ## 12) New Context Packet (for /new)

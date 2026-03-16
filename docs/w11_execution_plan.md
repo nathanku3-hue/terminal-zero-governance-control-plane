@@ -118,7 +118,7 @@ Next Checkpoint: <date and target>
 **C3 Closure:**
 - W11 has 10+ items by March 14 (12+ by March 15 for buffer)
 - Dossier shows: `c3_min_weeks: {met: true, value: "2 consecutive weeks >= 2"}`
-- Dossier exits 0 (only C1 MANUAL_CHECK remains)
+- Dossier exits 0 with `c1_24b_close: {met: true, value: "APPROVED"}` sourced from `D-174`
 
 **Quality Maintained:**
 - Annotation coverage: 100% (no unannotated C/H findings)

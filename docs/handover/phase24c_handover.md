@@ -215,7 +215,7 @@ Stay on the narrow promotion path:
 ## 11) PM Context Notes
 - The repo is no longer blocked on annotation discipline. That work is complete for the current evidence set.
 - The repo is not asking for another design wave. The next value comes from disciplined promotion execution.
-- The handoff advisory artifacts are now aligned around one message: complete the remaining signoff path and rerun closure after the automated criteria are satisfied.
+- The handoff advisory artifacts are now aligned around one message: `C1` is already evidenced by `D-174`; refresh automated artifacts and rerun closure as needed.
 - The board-style brief currently recommends the minimum-correct path, not a broader redesign.
 
 ## 12) New Context Packet (for /new)

@@ -242,12 +242,15 @@ def main() -> int:
         phase_arg=args.phase,
     )
     generated_at = _utc_now_iso()
+    c1_complete = criterion_met(criteria, "c1_24b_close") is True
 
     if action == "GO":
-        next_steps = [
-            "Complete C1 manual signoff (MANUAL_CHECK) in decision log.",
-            "Proceed with enforce-mode canary and rollout using phase-end handover.",
-        ]
+        next_steps = ["Proceed with enforce-mode canary and rollout using phase-end handover."]
+        if not c1_complete:
+            next_steps.insert(
+                0,
+                "Complete C1 manual signoff in `docs/decision log.md` before rollout promotion.",
+            )
     elif action == "REFRAME":
         next_steps = [
             "Resolve infra failures in audit/calibration pipeline first.",

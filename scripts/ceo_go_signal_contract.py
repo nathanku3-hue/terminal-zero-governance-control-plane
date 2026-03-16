@@ -25,9 +25,17 @@ AUTOMATED_CRITERIA_KEYS = (
     "c5_all_v2",
 )
 
+C1_SIGNOFF_DECISION_ID = "D-174"
+_C1_SIGNOFF_ROW_PATTERN = re.compile(
+    rf"^\|\s*{re.escape(C1_SIGNOFF_DECISION_ID)}\s*\|.*Satisfies C1 manual signoff requirement\..*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_C1_SIGNOFF_DATE_PATTERN = re.compile(r"Date:\s*(\d{4}-\d{2}-\d{2})", re.IGNORECASE)
+
 __all__ = [
     "AUTOMATED_CRITERIA_KEYS",
     "CRITERIA_ORDER",
+    "C1_SIGNOFF_DECISION_ID",
     "criterion_met",
     "criterion_status_display",
     "criterion_value",
@@ -35,6 +43,7 @@ __all__ = [
     "extract_infra_failures",
     "load_json_fail_open",
     "promotion_criteria",
+    "resolve_c1_signoff_criterion",
     "determine_recommended_action",
     "to_int",
 ]
@@ -111,8 +120,6 @@ def criterion_value(criteria: dict[str, Any], key: str) -> str:
 
 
 def criterion_status_display(key: str, met_value: Any) -> str:
-    if key == "c1_24b_close":
-        return "MANUAL_CHECK"
     if met_value is True:
         return "PASS"
     if met_value is False:
@@ -120,6 +127,27 @@ def criterion_status_display(key: str, met_value: Any) -> str:
     if isinstance(met_value, str):
         return met_value
     return "N/A"
+
+
+def resolve_c1_signoff_criterion(decision_log_text: str | None) -> dict[str, Any]:
+    text = (decision_log_text or "").strip()
+    if not text:
+        return {"met": "MANUAL_CHECK", "value": "MANUAL_CHECK"}
+
+    row_match = _C1_SIGNOFF_ROW_PATTERN.search(text)
+    if row_match is None:
+        return {"met": "MANUAL_CHECK", "value": "MANUAL_CHECK"}
+
+    row_text = row_match.group(0)
+    criterion: dict[str, Any] = {
+        "met": True,
+        "value": "APPROVED",
+        "decision_id": C1_SIGNOFF_DECISION_ID,
+    }
+    date_match = _C1_SIGNOFF_DATE_PATTERN.search(row_text)
+    if date_match is not None:
+        criterion["decision_date"] = date_match.group(1)
+    return criterion
 
 
 def detect_phase(
