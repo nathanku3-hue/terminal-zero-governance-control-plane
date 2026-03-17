@@ -2199,3 +2199,25 @@ Philosophy Local-First Loop + Gemini Handover Automation (2026-03-01): Worker-Fi
   - `docs/context/loop_closure_status_latest.json` (2026-03-15 refresh; READY_TO_ESCALATE)
 - Rollback note:
   - Remove this PENDING C1 entry; no gate or authority changes.
+
+### Phase 24C: C1 Propagation Guard + _latest Artifact Scan Closure (2026-03-17)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-179 | governance/artifact-refresh | Regression risk: a C1 APPROVED dossier could leak `MANUAL_CHECK` / `manual_signoff_c1` tokens into downstream artifacts, or stale “manual signoff” wording could persist in committed `_latest*` context artifacts | Recorded the verified closure statement below and added deterministic integration coverage `tests/test_artifact_c1_propagation.py` to guard C1 propagation: (1) APPROVED dossier must not emit `MANUAL_CHECK` in exec-memory artifacts; (2) MANUAL_CHECK dossier must emit `manual_signoff_c1` in supervisor status | Creates an automated regression guard and a precise, defensible P0 closure record tied to a concrete wildcard scan and passing tests. |
+
+Closure statement (verified):
+
+After regenerating and validating the full `docs/context/*_latest*.json` and `docs/context/*_latest*.md` set, there is no `MANUAL_CHECK`, no `manual_signoff_c1`, and no `manual signoff` anywhere under those wildcard paths.
+
+- Evidence:
+  - `git status --short` → clean
+  - `python -m pytest tests/test_artifact_c1_propagation.py -v` → 2 passed
+  - `python -m pytest -q` → 494 passed
+  - Wildcard scan over `docs/context/*_latest*.json` + `docs/context/*_latest*.md` for `MANUAL_CHECK|manual_signoff_c1|manual signoff` → 0 matches
+  - `docs/context/context_compaction_status_latest.json` → `C1: true`
+  - `docs/context/context_compaction_state_latest.json` → `C1: true`
+  - `docs/context/exec_memory_packet_latest.json` → contains neither `MANUAL_CHECK` nor `manual_signoff_c1`
+
+- Rollback note:
+  - Revert commit `e5e7a77` to remove the integration test guard, and remove this D-179 entry.
