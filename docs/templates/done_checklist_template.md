@@ -57,18 +57,68 @@ Purpose: define machine-checkable done criteria for a phase, round, or feature.
 ## Machine-Checkable Rules
 
 ### Pass Conditions
-```
-<machine-readable pass condition 1>
-<machine-readable pass condition 2>
-<machine-readable pass condition N or NONE>
+```bash
+# Example: Evidence artifacts exist
+test -f data/processed/phaseN_summary.json || exit 1
+test -f data/processed/phaseN_evidence.csv || exit 1
+
+# Example: Tests pass
+pytest tests/test_phaseN.py -v || exit 1
+
+# Example: Lint passes
+flake8 src/ || exit 1
+mypy src/ || exit 1
+
+# Example: Immutable SSOT unchanged
+git diff --exit-code data/processed/phase_M_ssot.json || exit 1
+
+# Example: Required files exist
+test -f docs/phase_brief/phaseN-brief.md || exit 1
+test -f docs/handover/phaseN_handover.md || exit 1
 ```
 
 ### Fail Conditions
+```bash
+# Example: Forbidden files exist (should not exist)
+! test -f data/processed/phaseN_promoted.json || exit 1
+
+# Example: Forbidden changes (SSOT mutated)
+git diff --quiet data/processed/phase_M_ssot.json || exit 1
+
+# Example: Tests fail
+pytest tests/test_phaseN.py -v && exit 0 || exit 1
+
+# Example: Lint fails
+flake8 src/ && exit 0 || exit 1
 ```
-<machine-readable fail condition 1>
-<machine-readable fail condition 2>
-<machine-readable fail condition N or NONE>
+
+### Machine-Checkable Script
+
+Create a `check_done.sh` script that runs all pass conditions:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "Checking done criteria..."
+
+# Pass conditions
+test -f data/processed/phaseN_summary.json
+test -f data/processed/phaseN_evidence.csv
+pytest tests/test_phaseN.py -v
+flake8 src/
+mypy src/
+git diff --exit-code data/processed/phase_M_ssot.json
+test -f docs/phase_brief/phaseN-brief.md
+test -f docs/handover/phaseN_handover.md
+
+# Fail conditions (inverted)
+! test -f data/processed/phaseN_promoted.json
+
+echo "All done criteria passed."
 ```
+
+Run with: `bash check_done.sh`
 
 ## Evidence Used
 - `<current context>`
