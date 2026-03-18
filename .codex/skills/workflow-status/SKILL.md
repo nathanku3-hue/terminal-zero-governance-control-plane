@@ -121,6 +121,57 @@ Read phase brief + current artifacts → emit workflow status snapshot with per-
        "research": { ... }
      },
      "realm_criteria": {
+       "total": 0,
+       "pass": 0,
+       "fail": 0,
+       "manual_check": 0
+     },
+     "blocking_issues": [
+       {"type": "deliverable", "id": "...", "name": "...", "reason": "..."},
+       {"type": "criterion", "id": "...", "name": "...", "reason": "..."}
+     ],
+     "truth_layers": {
+       "static_truth": ["top_level_PM.md", "decision log.md", "phase brief"],
+       "live_truth": ["current_context.md"],
+       "bridge_truth": ["bridge_contract_current.md"],
+       "evidence_truth": ["done_checklist_current.md", "multi_stream_contract_current.md", "post_phase_alignment_current.md"],
+       "planner_truth": ["planner_packet_current.md", "impact_packet_current.md"],
+       "observability": ["observability_pack_current.md"]
+     },
+     "missing_artifacts": [
+       {"artifact": "impact_packet_current.md", "reason": "mature repo but impact packet missing"},
+       {"artifact": "observability_pack_current.md", "reason": "5+ phases completed but observability pack missing"}
+     ],
+     "repo_shape": {
+       "stream_model": "single-stream | multi-stream",
+       "maturity": "early | mature",
+       "active_streams": ["Backend", "Frontend/UI", "Data", "Docs/Ops"],
+       "deferred_streams": []
+     },
+     "kernel_activation": {
+       "bridge_contract": "active",
+       "done_checklist": "active",
+       "planner_packet": "active",
+       "impact_packet": "active | not_needed",
+       "multi_stream_contract": "active | not_needed",
+       "post_phase_alignment": "active | not_needed",
+       "observability_pack": "active | not_needed",
+       "artifact_pruning_rules": "active | not_needed"
+     }
+   }
+   ```
+2. Emit terminal output:
+   - Phase summary (id, name, overall status, overall color)
+   - Per-type status table (workflow_type, status, deliverables, criteria)
+   - Blocking issues (if any)
+   - Truth layers (which exist, which are missing)
+   - Repo shape (stream model, maturity, active/deferred streams)
+   - Kernel activation (which capabilities are active, which are not needed)
+   - Next action
+       "data": { ... },
+       "research": { ... }
+     },
+     "realm_criteria": {
        "realm": "finance",
        "criteria_total": 3,
        "criteria_pass": 2,

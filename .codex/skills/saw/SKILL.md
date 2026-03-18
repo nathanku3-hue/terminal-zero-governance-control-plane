@@ -41,27 +41,46 @@ When the round closes a phase, execute Section 6 in the same round before publis
 3. In-scope Critical findings: auto `SAW Verdict: BLOCK`, no user override. The finding must be resolved before the round can close.
 4. In-scope High findings: do not close SAW while unresolved unless user explicitly accepts risk.
 5. Inherited out-of-scope Critical/High findings: carry in `Open Risks` with `Owner` + `TargetDate` + target milestone. User acceptance is allowed before milestone close.
-6. Publish `SAW Verdict: PASS` or `SAW Verdict: BLOCK`.
-5. SAW report publication is terminal for the round and must not trigger nested SAW recursion.
-6. Emit closure counts:
+6. **Worker to PM/Planner Return Loop Check (Mandatory):**
+   - After bounded execution, verify that execution truth was converted into planner truth:
+     - `docs/context/impact_packet_current.md` refreshed (changed files, owned files, touched interfaces, failing checks)
+     - `docs/context/bridge_contract_current.md` refreshed (SYSTEM_DELTA, PM_DELTA, OPEN_DECISION, RECOMMENDED_NEXT_STEP, DO_NOT_REDECIDE)
+     - `docs/context/post_phase_alignment_current.md` refreshed when multi-stream or system-shaping work completes
+   - If any required artifact is missing or stale, emit `ReturnLoopCheck: BLOCK` and add to `Open Risks`.
+   - If all required artifacts are refreshed, emit `ReturnLoopCheck: PASS`.
+7. **Organic Integration Check (Mandatory when new surface added):**
+   - If this round added a new view/report/tab/surface, verify:
+     - New surface is explicitly classified as: core surface, temporary diagnostic surface, or replacement surface
+     - If temporary, system names what should absorb or replace it later
+     - If replacement, system names what older surface should be deprecated
+     - Round states whether overall system shape became: more integrated, unchanged, or more fragmented
+     - Round names one explicit next simplification step
+   - If new surface was added but organic integration check is missing, emit `OrganicIntegrationCheck: BLOCK` and add to `Open Risks`.
+   - If no new surface was added, emit `OrganicIntegrationCheck: N/A`.
+   - If new surface was added and organic integration check exists, emit `OrganicIntegrationCheck: PASS`.
+8. Publish `SAW Verdict: PASS` or `SAW Verdict: BLOCK`.
+9. SAW report publication is terminal for the round and must not trigger nested SAW recursion.
+10. Emit closure counts:
    - `ChecksTotal`, `ChecksPassed`, `ChecksFailed` from the `CHK-*` set.
    - `ChecksFailed` includes explicit fails and missing/not-run checks.
-7. Emit one machine-check line:
+11. Emit one machine-check line:
    - `ClosurePacket: RoundID=<...>; ScopeID=<...>; ChecksTotal=<int>; ChecksPassed=<int>; ChecksFailed=<int>; Verdict=<PASS|BLOCK>; OpenRisks=<...>; NextAction=<...>`.
-8. Validate closure packet with:
+12. Validate closure packet with:
    - `python .codex/skills/_shared/scripts/validate_closure_packet.py --packet "<ClosurePacket line>" --require-open-risks-when-block --require-next-action-when-block`.
    - Record `ClosureValidation: PASS` or `ClosureValidation: BLOCK` in report.
-9. Validate SAW report blocks with:
+13. Validate SAW report blocks with:
    - `python .codex/skills/_shared/scripts/validate_saw_report_blocks.py --report-file "<saw_report_path>"`.
    - Record `SAWBlockValidation: PASS` or `SAWBlockValidation: BLOCK` in report.
-10. Hard close gate:
+14. Hard close gate:
    - missing `RoundID`, `ScopeID`, or any `Checks*` field => `SAW Verdict: BLOCK`.
    - failed closure validation => `SAW Verdict: BLOCK`.
    - failed SAW block validation => `SAW Verdict: BLOCK`.
-   - `SAW Verdict: PASS` only when `ChecksFailed=0` and no unresolved in-scope Critical/High findings.
-11. No-change edge case:
+   - `ReturnLoopCheck: BLOCK` => `SAW Verdict: BLOCK`.
+   - `OrganicIntegrationCheck: BLOCK` => `SAW Verdict: BLOCK`.
+   - `SAW Verdict: PASS` only when `ChecksFailed=0` and no unresolved in-scope Critical/High findings and `ReturnLoopCheck: PASS` and `OrganicIntegrationCheck: PASS or N/A`.
+15. No-change edge case:
    - if no files changed, still run reviewer passes, set `ChecksTotal>=1` (scope validation), and include one-line `NoChangeReason`.
-12. Phase-end hard gate:
+16. Phase-end hard gate:
    - if this round closes a phase, require all Section 6 checks and artifacts.
    - missing phase-end checks/artifacts => `SAW Verdict: BLOCK`.
 

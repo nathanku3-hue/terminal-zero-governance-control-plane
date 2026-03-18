@@ -11,8 +11,10 @@ Coordinate session bootstrap, hierarchy confirmation, confidence-based routing, 
 1. When the user requests `/new`, "start session", or "what's next":
    - Read `AGENTS.md` (navigation hub) to understand system wiring
    - Load `.codex/skills/README.md` (skill registry)
+   - **Check kernel activation** (Section 0.1)
    - Call `$context-bootstrap` to load exec_memory_packet_latest.json
    - Load `docs/context/project_init_latest.md` (L1 hot memory)
+   - **Load planner entry surfaces** (Section 0.2)
    - Call `$workflow-status` to get current phase snapshot
 2. If `project_init_latest.md` is missing:
    - Trigger project init interrogation (Section 1)
@@ -24,12 +26,44 @@ Coordinate session bootstrap, hierarchy confirmation, confidence-based routing, 
    - Blocking issues (if any)
    - Next action
 
+### 0.1 Kernel Activation Check (Mandatory)
+1. Read `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md` at session start.
+2. Determine repo shape:
+   - Single-stream or multi-stream?
+   - Early (< 5 scope boundaries) or mature (>= 5)?
+3. Check which capabilities are activated for this repo:
+   - Bridge contract: always active
+   - Done checklist: always active
+   - Planner packet: always active
+   - Impact packet: active if mature
+   - Multi-stream contract: active if multi-stream
+   - Post-phase alignment: active if multi-stream
+   - Observability pack: active if mature
+   - Artifact pruning rules: active if > 20 untracked governance files
+4. Emit `KernelActivation: <list of active capabilities>`.
+5. If a capability is missing but should be active per activation trigger, emit `MissingArtifact: <capability>` and request creation before proceeding.
+
+### 0.2 Planner Entry Surfaces (Mandatory)
+1. Load planner entry surfaces in this order:
+   - `docs/context/planner_packet_current.md` (compact entry point)
+   - `docs/context/impact_packet_current.md` (if active)
+   - `docs/context/bridge_contract_current.md` (PM/planner bridge)
+   - `docs/context/done_checklist_current.md` (acceptance criteria)
+2. Only escalate to wider reads (phase briefs, decision log, full repo) if one of these conditions applies:
+   - Impact surface is unclear from planner packet + impact packet
+   - Interface ownership is unclear from owned files list
+   - Evidence conflicts between bridge truth and decision tail
+   - Bottleneck cannot be named from current context
+3. If escalation is needed, emit `EscalationTrigger: <condition>` and load the required wider surface.
+
 **Deep Dive References**:
 - System wiring and integration: `docs/workflow_wiring_detailed.md`
 - Operating principles: `docs/operating_principles.md`
 - Definition of done: `docs/definition_of_done.md`
 - Tech stack constraints: `docs/tech_stack.md`
 - Directory structure: `docs/directory_structure.md`
+- Kernel activation matrix: `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md`
+- Multi-stream execution checklist: `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`
 
 ## 1. Project Init Hierarchy Confirmation (Hard Stop)
 1. Call `$hierarchy-init` at project start or when a new domain appears.
