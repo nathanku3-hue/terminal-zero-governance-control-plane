@@ -1,4 +1,4 @@
-# Round Contract Template v1.2
+# Round Contract Template v1.3
 
 ## Purpose
 Use this contract at the start and end of every Worker ↔ Auditor round to prevent scope drift and keep outputs paste-ready for CEO decisions.
@@ -8,7 +8,9 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 - `DECISION_CLASS` is mandatory every round: `ONE_WAY` or `TWO_WAY`.
 - `EXECUTION_LANE` is mandatory every round: `STANDARD` or `FAST`.
 - `RISK_TIER` is mandatory every round: `LOW`, `MEDIUM`, or `HIGH`.
+- `PRODUCT_STAGE_NOW`, `PRODUCT_STAGE_INTENT`, `PRODUCT_STAGE_OUT_OF_SCOPE`, `PRODUCT_PROBLEM_THIS_ROUND`, `WHY_NOW`, `IF_WE_SKIP_THIS`, `PLANNED_SURFACE_NAME`, `PLANNED_SURFACE_TYPE`, `REPLACES_OR_MERGES_WITH`, `RETIRE_TRIGGER`, `MVP_NEXT_STAGE_GATE`, and `NEXT_SIMPLIFICATION_STEP` are mandatory every round.
 - `POSITIONING_LOCK`, `TASK_GRANULARITY_LIMIT`, `INTUITION_GATE`, and `INTUITION_GATE_RATIONALE` are mandatory every round.
+- `PLANNED_SURFACE_TYPE` must be `core`, `temporary`, or `replacement`.
 - `TASK_GRANULARITY_LIMIT` must be `1` or `2` atomic tasks per worker per round.
 - `OWNED_FILES`, `INTERFACE_INPUTS`, and `INTERFACE_OUTPUTS` are mandatory every round.
 - For large-change scope (`DECISION_CLASS=ONE_WAY`, `RISK_TIER=HIGH`, or `CHANGE_BUDGET` implies >2 files or >0 architecture changes), `LOGIC_SPINE_INDEX_ARTIFACT`, `CHANGE_MANIFEST_ARTIFACT`, `ALLOWED_BOUNDARY_REFS`, and `NON_GOAL_REFS` are mandatory.
@@ -69,6 +71,20 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 
 ### 1) Intent Lock
 - ORIGINAL_INTENT: `<one sentence problem statement>`
+
+### 1a) Product Direction Lock
+- PRODUCT_STAGE_NOW: `<current product/maturity stage>`
+- PRODUCT_STAGE_INTENT: `<target stage this round is serving>`
+- PRODUCT_STAGE_OUT_OF_SCOPE: `<stage change or ambition explicitly out of scope>`
+- PRODUCT_PROBLEM_THIS_ROUND: `<product/user/system problem being addressed right now>`
+- WHY_NOW: `<why this round matters now>`
+- IF_WE_SKIP_THIS: `<what product/system cost accumulates if this round is skipped>`
+- PLANNED_SURFACE_NAME: `<primary surface/artifact/component this round shapes>`
+- PLANNED_SURFACE_TYPE: `core` or `temporary` or `replacement`
+- REPLACES_OR_MERGES_WITH: `<existing surface replaced/merged, or none>`
+- RETIRE_TRIGGER: `<condition that retires the temporary/replacement surface>`
+- MVP_NEXT_STAGE_GATE: `<what proves this slice is sufficient to advance the MVP>`
+- NEXT_SIMPLIFICATION_STEP: `<how this round reduces complexity later>`
 
 ### 2) Deliverable Lock
 - DELIVERABLE_THIS_SCOPE: `<concrete output for this round only>`
@@ -278,6 +294,10 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 
 ### 1) Contract Compliance Check
 - ORIGINAL_INTENT present: `YES/NO`
+- PRODUCT_STAGE_NOW / PRODUCT_STAGE_INTENT / PRODUCT_STAGE_OUT_OF_SCOPE present: `YES/NO`
+- PRODUCT_PROBLEM_THIS_ROUND / WHY_NOW / IF_WE_SKIP_THIS present: `YES/NO`
+- PLANNED_SURFACE_NAME / PLANNED_SURFACE_TYPE / REPLACES_OR_MERGES_WITH / RETIRE_TRIGGER present and valid: `YES/NO`
+- MVP_NEXT_STAGE_GATE / NEXT_SIMPLIFICATION_STEP present: `YES/NO`
 - DELIVERABLE_THIS_SCOPE present: `YES/NO`
 - POSITIONING_LOCK present: `YES/NO`
 - TASK_GRANULARITY_LIMIT valid (`1/2`): `YES/NO`
@@ -364,6 +384,7 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 - CEO decision recorded.
 - Decision class/lane captured for round.
 - Risk tier captured for round.
+- Product-stage, product-problem, planned-surface, MVP gate, and simplification fields captured for round.
 - Positioning/task/intuition controls captured for round.
 - PM/CEO acknowledgment recorded when `INTUITION_GATE=HUMAN_REQUIRED`.
 - Delete-before-add evidence linked when additions exist.
@@ -389,7 +410,19 @@ Use this contract at the start and end of every Worker ↔ Auditor round to prev
 ```text
 ROUND: <round_id>
 ORIGINAL_INTENT: <...>
+PRODUCT_STAGE_NOW: <...>
+PRODUCT_STAGE_INTENT: <...>
+PRODUCT_STAGE_OUT_OF_SCOPE: <...>
+PRODUCT_PROBLEM_THIS_ROUND: <...>
+WHY_NOW: <...>
+IF_WE_SKIP_THIS: <...>
 DELIVERABLE_THIS_SCOPE: <...>
+PLANNED_SURFACE_NAME: <...>
+PLANNED_SURFACE_TYPE: <core|temporary|replacement>
+REPLACES_OR_MERGES_WITH: <...>
+RETIRE_TRIGGER: <...>
+MVP_NEXT_STAGE_GATE: <...>
+NEXT_SIMPLIFICATION_STEP: <...>
 POSITIONING_LOCK: <...>
 TASK_GRANULARITY_LIMIT: 1|2
 INTUITION_GATE: MACHINE_DEFAULT|HUMAN_REQUIRED
@@ -489,7 +522,19 @@ NEXT_DIRECTIVE: <...>
 ```text
 ROUND: 20260304_150000
 ORIGINAL_INTENT: Fix BOM encoding crash in JSON loader
+PRODUCT_STAGE_NOW: MVP bugfix hardening
+PRODUCT_STAGE_INTENT: Keep the loader stable enough to preserve the current MVP path
+PRODUCT_STAGE_OUT_OF_SCOPE: Broader loader redesign or new parsing features
+PRODUCT_PROBLEM_THIS_ROUND: BOM-encoded inputs crash an existing MVP workflow
+WHY_NOW: Real phase_end_logs inputs already trigger the failure path
+IF_WE_SKIP_THIS: Operators keep hitting a reproducible ingest failure on valid files
 DELIVERABLE_THIS_SCOPE: Change encoding parameter from utf-8 to utf-8-sig
+PLANNED_SURFACE_NAME: validate_loop_closure.py JSON loader path
+PLANNED_SURFACE_TYPE: core
+REPLACES_OR_MERGES_WITH: none
+RETIRE_TRIGGER: N/A core fix; stays until superseded by a future canonical loader rewrite
+MVP_NEXT_STAGE_GATE: BOM-encoded logs load without crash and tests stay green
+NEXT_SIMPLIFICATION_STEP: Keep the fix to a one-line loader adjustment with no new surface area
 POSITIONING_LOCK: Keep scope strictly to BOM decoding fix in existing loader path
 TASK_GRANULARITY_LIMIT: 1
 INTUITION_GATE: MACHINE_DEFAULT
@@ -569,7 +614,19 @@ NEXT_DIRECTIVE: Continue with W11 shadow runs
 ```text
 ROUND: 20260304_160000
 ORIGINAL_INTENT: Implement auditor calibration reporting system
+PRODUCT_STAGE_NOW: Promotion-readiness hardening
+PRODUCT_STAGE_INTENT: Make calibration reporting strong enough for the next enforce-promotion decision
+PRODUCT_STAGE_OUT_OF_SCOPE: New governance gates or UI/reporting platform work
+PRODUCT_PROBLEM_THIS_ROUND: PM/CEO need promotion-facing reporting without manual dossier assembly
+WHY_NOW: Enforce-promotion evidence is blocked unless calibration reporting is deterministic
+IF_WE_SKIP_THIS: Promotion decisions remain slower, more manual, and harder to audit
 DELIVERABLE_THIS_SCOPE: Calibration script with weekly/dossier modes, 28 tests
+PLANNED_SURFACE_NAME: auditor_calibration_report outputs
+PLANNED_SURFACE_TYPE: replacement
+REPLACES_OR_MERGES_WITH: ad hoc manual weekly and dossier assembly steps
+RETIRE_TRIGGER: Retire manual reporting path once scripted reports are the authoritative calibration surface
+MVP_NEXT_STAGE_GATE: Weekly and dossier outputs validate C0-C5 on real data with deterministic test coverage
+NEXT_SIMPLIFICATION_STEP: Collapse repeated manual calibration packaging into one scripted reporting path
 POSITIONING_LOCK: Deliver reporting pipeline only; no new governance gates in this round
 TASK_GRANULARITY_LIMIT: 2
 INTUITION_GATE: HUMAN_REQUIRED

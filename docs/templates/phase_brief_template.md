@@ -18,6 +18,15 @@
 - [Component 2]
 - [Component 3]
 
+## Product Direction
+
+- **PRODUCT_STAGE_NOW**: [current product/maturity stage]
+- **PRODUCT_STAGE_INTENT**: [target stage this phase is serving]
+- **PRODUCT_STAGE_OUT_OF_SCOPE**: [stage change or ambition explicitly out of scope]
+- **PRODUCT_PROBLEM_THIS_ROUND**: [product/user/system problem this phase addresses]
+- **WHY_NOW**: [why this phase matters now]
+- **IF_WE_SKIP_THIS**: [cost of skipping this phase]
+
 ---
 
 ## Workflow Profile
@@ -40,6 +49,15 @@
 1. [Objective 1]
 2. [Objective 2]
 3. [Objective 3]
+
+## Planned Surface Strategy
+
+- **PLANNED_SURFACE_NAME**: [primary surface/artifact/component this phase shapes]
+- **PLANNED_SURFACE_TYPE**: [core | temporary | replacement]
+- **REPLACES_OR_MERGES_WITH**: [existing surface replaced/merged, or none]
+- **RETIRE_TRIGGER**: [condition that retires the temporary/replacement surface]
+- **MVP_NEXT_STAGE_GATE**: [what proves this slice is sufficient to advance the MVP]
+- **NEXT_SIMPLIFICATION_STEP**: [how this phase reduces complexity later]
 
 ---
 
@@ -158,5 +176,5 @@
 
 ---
 
-**Template Version**: 2.0.0
-**Last Updated**: 2026-03-16
+**Template Version**: 2.1.0
+**Last Updated**: 2026-03-19

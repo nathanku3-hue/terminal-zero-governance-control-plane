@@ -62,12 +62,36 @@ def _strict_startup_args() -> tuple[str, ...]:
         "--no-interactive",
         "--original-intent",
         "Close C3 with W11 evidence.",
+        "--product-stage-now",
+        "MVP hardening",
+        "--product-stage-intent",
+        "Operationally stable governance control plane",
+        "--product-stage-out-of-scope",
+        "Cross-repo expansion and new kernel concepts",
+        "--product-problem-this-round",
+        "Startup needs an explicit product frame before execution starts.",
+        "--why-now",
+        "The loop is wired, but pre-flight still needs product-directed fields.",
+        "--if-we-skip-this",
+        "Rounds may stay mechanically correct but drift away from product leverage.",
         "--deliverable-this-scope",
         "Refresh cycle artifacts.",
         "--non-goals",
         "No architecture changes.",
         "--done-when",
         "Cycle status packet delivered.",
+        "--planned-surface-name",
+        "startup_intake_latest",
+        "--planned-surface-type",
+        "core",
+        "--replaces-or-merges-with",
+        "none",
+        "--retire-trigger",
+        "Retire only if startup interrogation is replaced by a canonical pre-flight contract flow.",
+        "--mvp-next-stage-gate",
+        "Startup artifacts are product-directed and reusable without broad rereads.",
+        "--next-simplification-step",
+        "Collapse repeated startup framing into canonical product-stage fields.",
         "--positioning-lock",
         "Keep execution pinned to startup helper output.",
         "--task-granularity-limit",
@@ -130,12 +154,36 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
         "--no-interactive",
         "--original-intent",
         "Close C3 by W11 qualification with no scope creep.",
+        "--product-stage-now",
+        "Late-stage rollout hardening",
+        "--product-stage-intent",
+        "Stable multi-repo SOP kernel with product-aware startup",
+        "--product-stage-out-of-scope",
+        "New governance concepts or broad repo expansion",
+        "--product-problem-this-round",
+        "Startup artifacts need explicit product framing before execution begins.",
+        "--why-now",
+        "Operator-path and rollout wiring are in place; startup needs the same product direction.",
+        "--if-we-skip-this",
+        "Rounds can execute without a clear product-stage frame and surface lifecycle plan.",
         "--deliverable-this-scope",
         "One audited cycle update with refreshed dossier and GO signal.",
         "--non-goals",
         "No new architecture, no prompt redesign.",
         "--done-when",
         "All per-cycle artifacts refreshed and auditor verdict recorded.",
+        "--planned-surface-name",
+        "round_contract_seed_latest",
+        "--planned-surface-type",
+        "replacement",
+        "--replaces-or-merges-with",
+        "Older startup-only framing notes and ad hoc kickoff summaries",
+        "--retire-trigger",
+        "Retire replacement wording once round contract and phase brief templates carry the same product fields.",
+        "--mvp-next-stage-gate",
+        "Pre-flight contract layer emits product-aware startup and round seed artifacts.",
+        "--next-simplification-step",
+        "Remove duplicate kickoff wording once product fields are canonical across startup and templates.",
         "--positioning-lock",
         "Keep execution constrained to startup intake and readiness artifacts.",
         "--task-granularity-limit",
@@ -191,6 +239,19 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
     assert payload["readiness_summary"]["ready_docs"] == 12
     assert payload["readiness_summary"]["status"] == "READY"
     assert payload["interrogation"]["original_intent"].startswith("Close C3")
+    assert payload["interrogation"]["product_stage_now"] == "Late-stage rollout hardening"
+    assert payload["interrogation"]["product_stage_intent"] == (
+        "Stable multi-repo SOP kernel with product-aware startup"
+    )
+    assert payload["interrogation"]["product_problem_this_round"].startswith(
+        "Startup artifacts need explicit product framing"
+    )
+    assert payload["interrogation"]["planned_surface_name"] == "round_contract_seed_latest"
+    assert payload["interrogation"]["planned_surface_type"] == "replacement"
+    assert payload["interrogation"]["mvp_next_stage_gate"].startswith(
+        "Pre-flight contract layer emits"
+    )
+    assert payload["interrogation"]["next_simplification_step"].startswith("Remove duplicate kickoff")
     assert payload["interrogation"]["positioning_lock"].startswith("Keep execution constrained")
     assert payload["interrogation"]["task_granularity_limit"] == 2
     assert payload["interrogation"]["risk_tier"] == "LOW"
@@ -254,11 +315,30 @@ def test_startup_helper_writes_outputs_and_reports_full_readiness(tmp_path: Path
     output_text = output_md.read_text(encoding="utf-8")
     assert "Paste-Ready Worker Kickoff" in output_text
     assert "WORKER_HEADER: (paste to sonnet web)" in output_text
+    assert "PRODUCT_STAGE_NOW: Late-stage rollout hardening" in output_text
+    assert "PLANNED_SURFACE_TYPE: replacement" in output_text
 
     seed_text = output_round_seed.read_text(encoding="utf-8")
     assert "Round Contract Seed" in seed_text
     assert "ORIGINAL_INTENT: Close C3 by W11 qualification with no scope creep." in seed_text
+    assert "PRODUCT_STAGE_NOW: Late-stage rollout hardening" in seed_text
+    assert "PRODUCT_STAGE_INTENT: Stable multi-repo SOP kernel with product-aware startup" in seed_text
+    assert (
+        "PRODUCT_PROBLEM_THIS_ROUND: Startup artifacts need explicit product framing before execution begins."
+        in seed_text
+    )
     assert "DELIVERABLE_THIS_SCOPE: One audited cycle update with refreshed dossier and GO signal." in seed_text
+    assert "PLANNED_SURFACE_NAME: round_contract_seed_latest" in seed_text
+    assert "PLANNED_SURFACE_TYPE: replacement" in seed_text
+    assert "REPLACES_OR_MERGES_WITH: Older startup-only framing notes and ad hoc kickoff summaries" in seed_text
+    assert (
+        "MVP_NEXT_STAGE_GATE: Pre-flight contract layer emits product-aware startup and round seed artifacts."
+        in seed_text
+    )
+    assert (
+        "NEXT_SIMPLIFICATION_STEP: Remove duplicate kickoff wording once product fields are canonical across startup and templates."
+        in seed_text
+    )
     assert "TASK_GRANULARITY_LIMIT: 2" in seed_text
     assert "INTUITION_GATE: MACHINE_DEFAULT" in seed_text
     assert "RISK_TIER: LOW" in seed_text
@@ -520,6 +600,8 @@ def test_startup_helper_fails_when_interrogation_fields_missing(tmp_path: Path) 
 
     assert result.returncode == 1
     assert "Missing or invalid interrogation fields" in result.stderr
+    assert "product_stage_now" in result.stderr
+    assert "planned_surface_type" in result.stderr
 
 
 def test_startup_helper_requires_risk_tier_and_done_when_checks(tmp_path: Path) -> None:
@@ -625,6 +707,20 @@ def test_startup_helper_fails_for_invalid_task_granularity_limit(tmp_path: Path)
 
     assert result.returncode == 1
     assert "task_granularity_limit(invalid; use 1|2)" in result.stderr
+
+
+def test_startup_helper_rejects_invalid_planned_surface_type(tmp_path: Path) -> None:
+    _touch_files(tmp_path)
+
+    result = _run(
+        tmp_path,
+        *_strict_startup_args(),
+        "--planned-surface-type",
+        "experimental",
+    )
+
+    assert result.returncode == 1
+    assert "planned_surface_type(invalid; use core|temporary|replacement)" in result.stderr
 
 
 def test_startup_helper_human_required_without_ack_fails(tmp_path: Path) -> None:

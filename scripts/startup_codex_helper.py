@@ -152,6 +152,21 @@ ALLOWED_UNKNOWN_EXPERT_DOMAIN_POLICIES: tuple[str, ...] = (
     "ESCALATE_TO_PM",
     "HOLD_AND_REQUEST_CLARIFICATION",
 )
+ALLOWED_PLANNED_SURFACE_TYPES: tuple[str, ...] = ("core", "temporary", "replacement")
+PRODUCT_INTERROGATION_FIELDS: tuple[str, ...] = (
+    "product_stage_now",
+    "product_stage_intent",
+    "product_stage_out_of_scope",
+    "product_problem_this_round",
+    "why_now",
+    "if_we_skip_this",
+    "planned_surface_name",
+    "planned_surface_type",
+    "replaces_or_merges_with",
+    "retire_trigger",
+    "mvp_next_stage_gate",
+    "next_simplification_step",
+)
 PROFILE_SELECTION_RANKING_REL_PATH = "docs/context/profile_selection_ranking_latest.json"
 
 
@@ -488,6 +503,7 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
 
     for field in (
         "original_intent",
+        *PRODUCT_INTERROGATION_FIELDS,
         "deliverable_this_scope",
         "non_goals",
         "done_when",
@@ -522,6 +538,12 @@ def _validate_interrogation(interrogation: dict[str, Any]) -> list[str]:
     risk_tier = str(interrogation.get("risk_tier", "")).strip()
     if risk_tier and risk_tier not in {"LOW", "MEDIUM", "HIGH"}:
         errors.append("risk_tier(invalid; use LOW|MEDIUM|HIGH)")
+
+    planned_surface_type = str(interrogation.get("planned_surface_type", "")).strip().lower()
+    if planned_surface_type and planned_surface_type not in ALLOWED_PLANNED_SURFACE_TYPES:
+        errors.append("planned_surface_type(invalid; use core|temporary|replacement)")
+    elif planned_surface_type:
+        interrogation["planned_surface_type"] = planned_surface_type
 
     intuition_gate = str(interrogation.get("intuition_gate", "")).strip()
     if intuition_gate and intuition_gate not in {"MACHINE_DEFAULT", "HUMAN_REQUIRED"}:
@@ -786,9 +808,21 @@ def _render_markdown(payload: dict[str, Any]) -> str:
             "## Interrogation Result",
             "",
             f"- ORIGINAL_INTENT: {interrogation['original_intent']}",
+            f"- PRODUCT_STAGE_NOW: {interrogation['product_stage_now']}",
+            f"- PRODUCT_STAGE_INTENT: {interrogation['product_stage_intent']}",
+            f"- PRODUCT_STAGE_OUT_OF_SCOPE: {interrogation['product_stage_out_of_scope']}",
+            f"- PRODUCT_PROBLEM_THIS_ROUND: {interrogation['product_problem_this_round']}",
+            f"- WHY_NOW: {interrogation['why_now']}",
+            f"- IF_WE_SKIP_THIS: {interrogation['if_we_skip_this']}",
             f"- DELIVERABLE_THIS_SCOPE: {interrogation['deliverable_this_scope']}",
             f"- NON_GOALS: {interrogation['non_goals']}",
             f"- DONE_WHEN: {interrogation['done_when']}",
+            f"- PLANNED_SURFACE_NAME: {interrogation['planned_surface_name']}",
+            f"- PLANNED_SURFACE_TYPE: {interrogation['planned_surface_type']}",
+            f"- REPLACES_OR_MERGES_WITH: {interrogation['replaces_or_merges_with']}",
+            f"- RETIRE_TRIGGER: {interrogation['retire_trigger']}",
+            f"- MVP_NEXT_STAGE_GATE: {interrogation['mvp_next_stage_gate']}",
+            f"- NEXT_SIMPLIFICATION_STEP: {interrogation['next_simplification_step']}",
             f"- DECISION_CLASS: {interrogation['decision_class']}",
             f"- EXECUTION_LANE: {interrogation['execution_lane']}",
             f"- RISK_TIER: {interrogation['risk_tier']}",
@@ -842,9 +876,21 @@ def _render_markdown(payload: dict[str, Any]) -> str:
             f"HANDOFF_INSTRUCTION: {handoff['instruction']}",
             f"ROUND_ID: startup_{payload['generated_at_utc'].replace(':', '').replace('-', '')}",
             f"ORIGINAL_INTENT: {interrogation['original_intent']}",
+            f"PRODUCT_STAGE_NOW: {interrogation['product_stage_now']}",
+            f"PRODUCT_STAGE_INTENT: {interrogation['product_stage_intent']}",
+            f"PRODUCT_STAGE_OUT_OF_SCOPE: {interrogation['product_stage_out_of_scope']}",
+            f"PRODUCT_PROBLEM_THIS_ROUND: {interrogation['product_problem_this_round']}",
+            f"WHY_NOW: {interrogation['why_now']}",
+            f"IF_WE_SKIP_THIS: {interrogation['if_we_skip_this']}",
             f"DELIVERABLE_THIS_SCOPE: {interrogation['deliverable_this_scope']}",
             f"NON_GOALS: {interrogation['non_goals']}",
             f"DONE_WHEN: {interrogation['done_when']}",
+            f"PLANNED_SURFACE_NAME: {interrogation['planned_surface_name']}",
+            f"PLANNED_SURFACE_TYPE: {interrogation['planned_surface_type']}",
+            f"REPLACES_OR_MERGES_WITH: {interrogation['replaces_or_merges_with']}",
+            f"RETIRE_TRIGGER: {interrogation['retire_trigger']}",
+            f"MVP_NEXT_STAGE_GATE: {interrogation['mvp_next_stage_gate']}",
+            f"NEXT_SIMPLIFICATION_STEP: {interrogation['next_simplification_step']}",
             f"DECISION_CLASS: {interrogation['decision_class']}",
             f"EXECUTION_LANE: {interrogation['execution_lane']}",
             f"RISK_TIER: {interrogation['risk_tier']}",
@@ -917,7 +963,10 @@ def _render_init_execution_card(
 
     kickoff_ref = _relative_or_absolute(output_md, repo_root=repo_root)
     required_fields = (
-        "ORIGINAL_INTENT, DELIVERABLE_THIS_SCOPE, NON_GOALS, DONE_WHEN, "
+        "ORIGINAL_INTENT, PRODUCT_STAGE_*, PRODUCT_PROBLEM_THIS_ROUND, WHY_NOW, "
+        "IF_WE_SKIP_THIS, DELIVERABLE_THIS_SCOPE, NON_GOALS, DONE_WHEN, "
+        "PLANNED_SURFACE_*, REPLACES_OR_MERGES_WITH, RETIRE_TRIGGER, "
+        "MVP_NEXT_STAGE_GATE, NEXT_SIMPLIFICATION_STEP, "
         "DECISION_CLASS, EXECUTION_LANE, RISK_TIER, DONE_WHEN_CHECKS, "
         "POSITIONING_LOCK, TASK_GRANULARITY_LIMIT, REFACTOR_* controls, "
         "COUNTEREXAMPLE_TEST_*, MOCK_POLICY_*, OWNED_FILES, INTERFACE_* fields, "
@@ -937,6 +986,12 @@ def _render_init_execution_card(
             f"{profile_selection_advisory['status']} -> "
             f"{profile_selection_advisory['recommended_profile'] or 'none'}"
         ),
+        f"- ProductStageNow: {interrogation['product_stage_now']}",
+        f"- ProductStageIntent: {interrogation['product_stage_intent']}",
+        f"- ProductProblemThisRound: {interrogation['product_problem_this_round']}",
+        f"- PlannedSurface: {interrogation['planned_surface_name']} ({interrogation['planned_surface_type']})",
+        f"- MvpNextStageGate: {interrogation['mvp_next_stage_gate']}",
+        f"- NextSimplificationStep: {interrogation['next_simplification_step']}",
         f"- RiskTier: {interrogation['risk_tier']}",
         f"- DoneWhenChecks: {_display_value(interrogation['done_when_checks'])}",
         f"- RequiredContractFields: {required_fields}",
@@ -977,9 +1032,21 @@ def _render_round_contract_seed(payload: dict[str, Any]) -> str:
         "## Prefilled Fields",
         "",
         f"- ORIGINAL_INTENT: {interrogation['original_intent']}",
+        f"- PRODUCT_STAGE_NOW: {interrogation['product_stage_now']}",
+        f"- PRODUCT_STAGE_INTENT: {interrogation['product_stage_intent']}",
+        f"- PRODUCT_STAGE_OUT_OF_SCOPE: {interrogation['product_stage_out_of_scope']}",
+        f"- PRODUCT_PROBLEM_THIS_ROUND: {interrogation['product_problem_this_round']}",
+        f"- WHY_NOW: {interrogation['why_now']}",
+        f"- IF_WE_SKIP_THIS: {interrogation['if_we_skip_this']}",
         f"- DELIVERABLE_THIS_SCOPE: {interrogation['deliverable_this_scope']}",
         f"- NON_GOALS: {interrogation['non_goals']}",
         f"- DONE_WHEN: {interrogation['done_when']}",
+        f"- PLANNED_SURFACE_NAME: {interrogation['planned_surface_name']}",
+        f"- PLANNED_SURFACE_TYPE: {interrogation['planned_surface_type']}",
+        f"- REPLACES_OR_MERGES_WITH: {interrogation['replaces_or_merges_with']}",
+        f"- RETIRE_TRIGGER: {interrogation['retire_trigger']}",
+        f"- MVP_NEXT_STAGE_GATE: {interrogation['mvp_next_stage_gate']}",
+        f"- NEXT_SIMPLIFICATION_STEP: {interrogation['next_simplification_step']}",
         f"- POSITIONING_LOCK: {interrogation['positioning_lock']}",
         f"- TASK_GRANULARITY_LIMIT: {interrogation['task_granularity_limit']}",
         f"- DECISION_CLASS: {interrogation['decision_class']}",
@@ -1091,6 +1158,13 @@ def _print_terminal_summary(
         + str(profile_selection_advisory["recommended_profile"] or "none")
     )
     print(f"ORIGINAL_INTENT: {interrogation['original_intent']}")
+    print(f"PRODUCT_STAGE_NOW: {interrogation['product_stage_now']}")
+    print(f"PRODUCT_STAGE_INTENT: {interrogation['product_stage_intent']}")
+    print(f"PRODUCT_PROBLEM_THIS_ROUND: {interrogation['product_problem_this_round']}")
+    print(f"PLANNED_SURFACE_NAME: {interrogation['planned_surface_name']}")
+    print(f"PLANNED_SURFACE_TYPE: {interrogation['planned_surface_type']}")
+    print(f"MVP_NEXT_STAGE_GATE: {interrogation['mvp_next_stage_gate']}")
+    print(f"NEXT_SIMPLIFICATION_STEP: {interrogation['next_simplification_step']}")
     print(f"DELIVERABLE_THIS_SCOPE: {interrogation['deliverable_this_scope']}")
     print(f"NON_GOALS: {interrogation['non_goals']}")
     print(f"DONE_WHEN: {interrogation['done_when']}")
@@ -1157,9 +1231,26 @@ def parse_args() -> argparse.Namespace:
         help="Markdown output path for prefilled round contract seed artifact.",
     )
     parser.add_argument("--original-intent", type=str, default="")
+    parser.add_argument("--product-stage-now", type=str, default="")
+    parser.add_argument("--product-stage-intent", type=str, default="")
+    parser.add_argument("--product-stage-out-of-scope", type=str, default="")
+    parser.add_argument("--product-problem-this-round", type=str, default="")
+    parser.add_argument("--why-now", type=str, default="")
+    parser.add_argument("--if-we-skip-this", type=str, default="")
     parser.add_argument("--deliverable-this-scope", type=str, default="")
     parser.add_argument("--non-goals", type=str, default="")
     parser.add_argument("--done-when", type=str, default="")
+    parser.add_argument("--planned-surface-name", type=str, default="")
+    parser.add_argument(
+        "--planned-surface-type",
+        type=str,
+        default="",
+        help="Planned surface classification: core, temporary, or replacement.",
+    )
+    parser.add_argument("--replaces-or-merges-with", type=str, default="")
+    parser.add_argument("--retire-trigger", type=str, default="")
+    parser.add_argument("--mvp-next-stage-gate", type=str, default="")
+    parser.add_argument("--next-simplification-step", type=str, default="")
     parser.add_argument("--positioning-lock", type=str, default="")
     parser.add_argument("--task-granularity-limit", type=str, default="")
     parser.add_argument("--decision-class", type=str, default="")
@@ -1295,6 +1386,36 @@ def main() -> int:
             prompt="ORIGINAL_INTENT: ",
             no_interactive=args.no_interactive,
         ),
+        "product_stage_now": _prompt_or_value(
+            current=args.product_stage_now,
+            prompt="PRODUCT_STAGE_NOW: ",
+            no_interactive=args.no_interactive,
+        ),
+        "product_stage_intent": _prompt_or_value(
+            current=args.product_stage_intent,
+            prompt="PRODUCT_STAGE_INTENT: ",
+            no_interactive=args.no_interactive,
+        ),
+        "product_stage_out_of_scope": _prompt_or_value(
+            current=args.product_stage_out_of_scope,
+            prompt="PRODUCT_STAGE_OUT_OF_SCOPE: ",
+            no_interactive=args.no_interactive,
+        ),
+        "product_problem_this_round": _prompt_or_value(
+            current=args.product_problem_this_round,
+            prompt="PRODUCT_PROBLEM_THIS_ROUND: ",
+            no_interactive=args.no_interactive,
+        ),
+        "why_now": _prompt_or_value(
+            current=args.why_now,
+            prompt="WHY_NOW: ",
+            no_interactive=args.no_interactive,
+        ),
+        "if_we_skip_this": _prompt_or_value(
+            current=args.if_we_skip_this,
+            prompt="IF_WE_SKIP_THIS: ",
+            no_interactive=args.no_interactive,
+        ),
         "deliverable_this_scope": _prompt_or_value(
             current=args.deliverable_this_scope,
             prompt="DELIVERABLE_THIS_SCOPE: ",
@@ -1308,6 +1429,36 @@ def main() -> int:
         "done_when": _prompt_or_value(
             current=args.done_when,
             prompt="DONE_WHEN: ",
+            no_interactive=args.no_interactive,
+        ),
+        "planned_surface_name": _prompt_or_value(
+            current=args.planned_surface_name,
+            prompt="PLANNED_SURFACE_NAME: ",
+            no_interactive=args.no_interactive,
+        ),
+        "planned_surface_type": _prompt_or_value(
+            current=args.planned_surface_type,
+            prompt="PLANNED_SURFACE_TYPE (core|temporary|replacement): ",
+            no_interactive=args.no_interactive,
+        ),
+        "replaces_or_merges_with": _prompt_or_value(
+            current=args.replaces_or_merges_with,
+            prompt="REPLACES_OR_MERGES_WITH (or none): ",
+            no_interactive=args.no_interactive,
+        ),
+        "retire_trigger": _prompt_or_value(
+            current=args.retire_trigger,
+            prompt="RETIRE_TRIGGER: ",
+            no_interactive=args.no_interactive,
+        ),
+        "mvp_next_stage_gate": _prompt_or_value(
+            current=args.mvp_next_stage_gate,
+            prompt="MVP_NEXT_STAGE_GATE: ",
+            no_interactive=args.no_interactive,
+        ),
+        "next_simplification_step": _prompt_or_value(
+            current=args.next_simplification_step,
+            prompt="NEXT_SIMPLIFICATION_STEP: ",
             no_interactive=args.no_interactive,
         ),
         "positioning_lock": _prompt_or_value(
