@@ -6,6 +6,38 @@ Run these commands from the repository root. The examples below assume PowerShel
 
 Historical quant/data/benchmark commands are intentionally out of this guide. They live in `docs/archive/legacy_quant_runbook.md`.
 
+## Current Truth Surfaces (Read First)
+
+Before running any loop commands, resolve the entry model against the target working repo for this round. In `quant_current_scope`, do not assume these files exist locally under `docs/context/`; they are current truth surfaces only when `KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
+
+**Root SOP governance:**
+- `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md` — when each kernel capability becomes mandatory
+- `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md` — 11-section checklist for multi-stream execution readiness
+
+**Current truth surfaces (target working repo, when active and instantiated):**
+- `planner_packet_current.md` — compact entry point (current context, active brief, bridge truth, decision tail, blocked next step, active bottleneck)
+- `impact_packet_current.md` — impact view (changed files, owned files, touched interfaces, failing checks)
+- `bridge_contract_current.md` — PM/planner bridge (SYSTEM_DELTA, PM_DELTA, OPEN_DECISION, RECOMMENDED_NEXT_STEP)
+- `done_checklist_current.md` — machine-checkable done criteria
+- `multi_stream_contract_current.md` — cross-stream coordination map (Backend, Frontend/UI, Data, Docs/Ops)
+- `post_phase_alignment_current.md` — post-phase stream status update
+- `observability_pack_current.md` — drift detection markers
+
+**Entry order:**
+1. Check `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md`.
+2. Check `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
+3. Read `planner_packet_current.md` if it is active and instantiated in the target working repo.
+4. Read `impact_packet_current.md` if it is active and instantiated.
+5. Read `bridge_contract_current.md` if it is active and instantiated.
+6. Read `done_checklist_current.md` if it is active and instantiated.
+7. Read `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md` only when they are active and instantiated.
+
+**When to escalate:**
+- Widen reads to phase briefs, decision logs, or the full repo only if an active required surface is missing, impact is still unclear after planner + impact, interface ownership is unclear, bridge truth conflicts with the decision tail, or the active bottleneck still cannot be named.
+
+**What changes after execution:**
+- Refresh the active instantiated surfaces you consumed or changed in the target working repo: `planner_packet_current.md`, `impact_packet_current.md`, `bridge_contract_current.md`, `done_checklist_current.md`, `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md`.
+
 ## Recommended command sequence
 
 ```powershell

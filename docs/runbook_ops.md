@@ -16,6 +16,30 @@
 - PowerShell examples assume a repo-local `.venv`.
 - Generated loop artifacts are written under `docs/context/`.
 
+## Current Truth Surfaces
+
+Before running the in-loop command, resolve the entry model against the target working repo for this round. In `quant_current_scope`, do not assume these files exist locally under `docs/context/`; they are current truth surfaces only when `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
+
+- Check `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md`.
+- Check `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
+- Current truth surfaces, when active and instantiated in the target working repo: `planner_packet_current.md`, `impact_packet_current.md`, `bridge_contract_current.md`, `done_checklist_current.md`, `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md`.
+
+## Entry Order
+
+1. Read `planner_packet_current.md` if it is active and instantiated in the target working repo.
+2. Read `impact_packet_current.md` if it is active and instantiated.
+3. Read `bridge_contract_current.md` if it is active and instantiated.
+4. Read `done_checklist_current.md` if it is active and instantiated.
+5. Read `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md` only when they are active and instantiated.
+
+## When to Escalate
+
+- Widen reads to phase briefs, decision logs, or the full repo only if an active required surface is missing, impact is still unclear after planner + impact, interface ownership is unclear, bridge truth conflicts with the decision tail, or the active bottleneck still cannot be named.
+
+## What Changes After Execution
+
+- Refresh the active instantiated surfaces you consumed or changed in the target working repo: `planner_packet_current.md`, `impact_packet_current.md`, `bridge_contract_current.md`, `done_checklist_current.md`, `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md`.
+
 ## In-Loop Inputs
 
 - `docs/context/next_round_handoff_latest.md` is the current execution handoff.

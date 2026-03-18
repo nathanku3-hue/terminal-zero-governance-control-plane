@@ -31,13 +31,46 @@
 ## 2. Directory Map
 
 - `scripts/` - Control plane orchestration only
-- `docs/context/` - Authoritative `_latest` artifacts (atomic writes required)
+- `docs/context/` - Authoritative `_latest` artifacts for this repo (atomic writes required); current truth surfaces are only read here when this repo is the active working repo (see Section 2.1)
 - `.codex/skills/` - Canonical skill definitions (source of truth)
 - `skills/` - Project deliverables (not canonical)
 - `tests/` - Test suites
 - `data/`, `strategies/`, `views/` - Legacy quant-era (read-only unless brief authorizes)
 
 → [Full directory structure with ownership rules](docs/directory_structure.md)
+
+### 2.1 Current Truth Surfaces (Mandatory Reading)
+
+Before starting work, resolve the loop entry model against the target working repo for this round. In `quant_current_scope`, do not assume these files exist locally under `docs/context/`; they are current truth surfaces only when `KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
+
+**Root SOP governance:**
+- `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md` — when each kernel capability becomes mandatory
+- `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md` — 11-section checklist for multi-stream execution readiness
+- `E:\code\SOP\ENDGAME.md` — target state for SOP governance control plane
+
+**Current truth surfaces (target working repo, when active and instantiated):**
+- `planner_packet_current.md` — compact fresh-context packet for planner (current context, active brief, bridge truth, decision tail, blocked next step, active bottleneck)
+- `impact_packet_current.md` — impact view (changed files, owned files, touched interfaces, failing checks)
+- `bridge_contract_current.md` — translates recent execution truth into PM/planner next-step language (SYSTEM_DELTA, PM_DELTA, OPEN_DECISION, RECOMMENDED_NEXT_STEP, DO_NOT_REDECIDE)
+- `done_checklist_current.md` — machine-checkable done criteria for current phase
+- `multi_stream_contract_current.md` — cross-stream coordination map (Backend, Frontend/UI, Data, Docs/Ops)
+- `post_phase_alignment_current.md` — post-phase stream status update and bottleneck analysis
+- `observability_pack_current.md` — drift detection markers (high-risk attempts, stuck sessions, skill under-triggering, budget pressure, compaction/hallucination pressure)
+
+**Entry order:**
+1. Check `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md`.
+2. Check `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
+3. Read `planner_packet_current.md` if it is active and instantiated in the target working repo.
+4. Read `impact_packet_current.md` if it is active and instantiated.
+5. Read `bridge_contract_current.md` if it is active and instantiated.
+6. Read `done_checklist_current.md` if it is active and instantiated.
+7. Read `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md` only when they are active and instantiated.
+
+**When to escalate:**
+- Widen reads to phase briefs, decision logs, or the full repo only if an active required surface is missing, impact is still unclear after planner + impact, interface ownership is unclear, bridge truth conflicts with the decision tail, or the active bottleneck still cannot be named.
+
+**What changes after execution:**
+- Refresh the active instantiated surfaces you consumed or changed in the target working repo: `planner_packet_current.md`, `impact_packet_current.md`, `bridge_contract_current.md`, `done_checklist_current.md`, `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md`.
 
 ## 3. Workflow Wiring (Core Navigation)
 
@@ -49,9 +82,24 @@ Read AGENTS.md (this file)
     ↓
 Load .codex/skills/README.md (skill registry)
     ↓
+Check KERNEL_ACTIVATION_MATRIX.md (which capabilities are active)
+    ↓
+Check SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md (which multi-stream surfaces are expected)
+    ↓
 User invokes /new or "start session"
     ↓
 $project-guider activated
+    ↓
+Resolve current truth surfaces in target working repo:
+  - planner_packet_current.md (when active and instantiated)
+  - impact_packet_current.md (when active and instantiated)
+  - bridge_contract_current.md (when active and instantiated)
+  - done_checklist_current.md (when active and instantiated)
+  - multi_stream_contract_current.md (when active and instantiated)
+  - post_phase_alignment_current.md (when active and instantiated)
+  - observability_pack_current.md (when active and instantiated)
+    ↓
+Escalate to wider reads only if required active surfaces are missing or the entry surfaces are insufficient
     ↓
 Load context: project_init_latest.md + exec_memory_packet_latest.json
     ↓
@@ -64,6 +112,15 @@ If red → StatusAlert: BLOCKED (ask user to resolve or proceed)
 Route to appropriate skill based on task type
     ↓
 Execute skill workflow
+    ↓
+Refresh current truth surfaces:
+  - planner_packet_current.md (when active)
+  - impact_packet_current.md (when active)
+  - bridge_contract_current.md (when active)
+  - done_checklist_current.md (when active)
+  - multi_stream_contract_current.md (when active)
+  - post_phase_alignment_current.md (when active)
+  - observability_pack_current.md (when active)
     ↓
 Emit validation tokens (PASS/BLOCK/DRIFT/INSUFFICIENT)
     ↓
