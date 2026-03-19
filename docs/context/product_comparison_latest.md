@@ -40,7 +40,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `Any operator promise that implies unreviewed extensions are safe by default`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `Extension surfaces must remain explicit and allowlist-based as implementation proceeds.`
 
 ### PRODUCT_2: `OpenHands`
@@ -61,7 +61,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `A product feel that encourages operators to hand over authority invisibly`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `Automation convenience must not erode human approval or auditor review boundaries.`
 
 ### PRODUCT_3: `Aider`
@@ -82,7 +82,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `Any product framing where coding velocity is mistaken for governance quality`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `Keep repair loops subordinate to governance and closure criteria instead of treating them as self-justifying.`
 
 ### PRODUCT_4: `LangChain`
@@ -104,7 +104,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `Graph-first product complexity that exceeds operator maturity`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `Avoid importing graph machinery that exceeds the current policy and operator maturity.`
 
 ### PRODUCT_5: `Promptfoo`
@@ -125,7 +125,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `A product feel where scores silently rewrite behavior`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `Benchmark feedback must stay evidence-producing rather than policy-mutating by itself.`
 
 ### PRODUCT_6: `Inspect`
@@ -147,7 +147,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `NONE`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `NONE`
 
 ### PRODUCT_7: `OpenAI`
@@ -167,7 +167,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
   - `REJECT`:
     - `NONE`
 - `EVIDENCE_PATHS`:
-  - `../phase5_pm_architecture_handoff.md`
+  - `../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md`
 - `OPEN_RISKS`: `Keep the seed lean and repo-specific rather than growing a second evaluation control plane.`
 
 ## Round 1 Synthesis
@@ -501,6 +501,6 @@ Current state: combines the original Phase 5 reference snapshot with external ec
 - `WHAT_WE_ARE_NOT_BUILDING`: `Not a zero-human autopilot. Not a permissionless execution layer. Not a giant plugin marketplace or personality zoo. Not a monolithic handbook masquerading as a harness. Not a second authority plane where dashboards, chat surfaces, or reviewers silently override PM/CEO governance.`
 
 ## Notes
-- `SOURCE_SNAPSHOT`: `The original Phase 5 handoff snapshot remains in ../phase5_pm_architecture_handoff.md.`
+- `SOURCE_SNAPSHOT`: `The original Phase 5 handoff snapshot remains in ../../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md.`
 - `WORKING_RULE`: `When a source has strong UX but weak governance, copy the UX shape and modify the authority semantics. When a source has strong technical seams but permissive trust defaults, copy the seam and reject the trust default.`
 - This artifact does not create a new gate or authority path.
