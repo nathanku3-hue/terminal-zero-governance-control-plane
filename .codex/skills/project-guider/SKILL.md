@@ -45,10 +45,10 @@ Coordinate session bootstrap, hierarchy confirmation, confidence-based routing, 
 
 ### 0.2 Planner Entry Surfaces (Mandatory)
 1. Load planner entry surfaces in this order:
-   - `docs/context/planner_packet_current.md` (compact entry point)
-   - `docs/context/impact_packet_current.md` (if active)
-   - `docs/context/bridge_contract_current.md` (PM/planner bridge)
-   - `docs/context/done_checklist_current.md` (acceptance criteria)
+   - `planner_packet_current.md` in the target working repo (compact entry point, when active and instantiated)
+   - `impact_packet_current.md` in the target working repo (if active and instantiated)
+   - `bridge_contract_current.md` in the target working repo (PM/planner bridge, when active and instantiated)
+   - `done_checklist_current.md` in the target working repo (acceptance criteria, when active and instantiated)
 2. Only escalate to wider reads (phase briefs, decision log, full repo) if one of these conditions applies:
    - Impact surface is unclear from planner packet + impact packet
    - Interface ownership is unclear from owned files list

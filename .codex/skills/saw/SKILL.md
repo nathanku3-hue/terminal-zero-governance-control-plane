@@ -43,9 +43,9 @@ When the round closes a phase, execute Section 6 in the same round before publis
 5. Inherited out-of-scope Critical/High findings: carry in `Open Risks` with `Owner` + `TargetDate` + target milestone. User acceptance is allowed before milestone close.
 6. **Worker to PM/Planner Return Loop Check (Mandatory):**
    - After bounded execution, verify that execution truth was converted into planner truth:
-     - `docs/context/impact_packet_current.md` refreshed (changed files, owned files, touched interfaces, failing checks)
-     - `docs/context/bridge_contract_current.md` refreshed (SYSTEM_DELTA, PM_DELTA, OPEN_DECISION, RECOMMENDED_NEXT_STEP, DO_NOT_REDECIDE)
-     - `docs/context/post_phase_alignment_current.md` refreshed when multi-stream or system-shaping work completes
+     - `impact_packet_current.md` refreshed in the target working repo when active (changed files, owned files, touched interfaces, failing checks)
+     - `bridge_contract_current.md` refreshed in the target working repo when active (SYSTEM_DELTA, PM_DELTA, OPEN_DECISION, RECOMMENDED_NEXT_STEP, DO_NOT_REDECIDE)
+     - `post_phase_alignment_current.md` refreshed in the target working repo when multi-stream or system-shaping work completes
    - If any required artifact is missing or stale, emit `ReturnLoopCheck: BLOCK` and add to `Open Risks`.
    - If all required artifacts are refreshed, emit `ReturnLoopCheck: PASS`.
 7. **Organic Integration Check (Mandatory when new surface added):**

@@ -50,6 +50,7 @@ python -m pytest -q
 - Use SemVer tags in the form `vX.Y.Z`.
 - Tag version must match `project.version` in `pyproject.toml`.
 - First public release should use the current project version as the initial public tag (for example, `v0.1.0` when `pyproject.toml` is `0.1.0`).
+- Public-beta framing may live in the GitHub release title/body while the tag remains stable SemVer (`v0.1.0` instead of a prerelease suffix) when maintainers want a cleaner package/version boundary.
 
 ## Release Notes Source
 

@@ -16,9 +16,9 @@ Use this skill when one or more are true:
 
 ## 2. Execution Contract
 1. Load planner entry surfaces:
-   - `docs/context/planner_packet_current.md` (current context, active brief, bridge truth, decision tail, blocked next step, active bottleneck)
-   - `docs/context/impact_packet_current.md` (changed files, owned files, touched interfaces, failing checks)
-   - `docs/context/done_checklist_current.md` (acceptance criteria)
+   - `planner_packet_current.md` in the target working repo (current context, active brief, bridge truth, decision tail, blocked next step, active bottleneck, when active and instantiated)
+   - `impact_packet_current.md` in the target working repo (changed files, owned files, touched interfaces, failing checks, when active and instantiated)
+   - `done_checklist_current.md` in the target working repo (acceptance criteria, when active and instantiated)
 2. Confirm active stream and active stage from project hierarchy (`L1/L2/L3`).
 3. Convert scope into 3-5 concrete tasks:
    - each task has `TaskID` (`TSK-01`, `TSK-02`, ...),
@@ -30,7 +30,7 @@ Use this skill when one or more are true:
    - unit/integration checks relevant to touched modules,
    - runtime smoke checks for affected workflows.
 6. Refresh impact packet:
-   - Update `docs/context/impact_packet_current.md` with changed files, owned files, touched interfaces, failing checks.
+   - Update `impact_packet_current.md` in the target working repo when that surface is active, with changed files, owned files, touched interfaces, failing checks.
 7. Report:
    - what changed,
    - proof it works,

@@ -11,6 +11,12 @@ Its job is simple:
 This is not a hosted agent platform or consumer app.
 It is a repo-native governance system for running AI-assisted engineering work with explicit boundaries, closure, and handoff.
 
+## Release Status
+
+- Current public release surface: `v0.1.0` Public Beta
+- This repository is the shipped beta boundary for the control-plane product surface.
+- Root `SOP/` docs remain canonical kernel/program/history docs for maintainers.
+
 ## What Problem This System Solves
 
 Most AI engineering systems fail for one of six top-level reasons:
