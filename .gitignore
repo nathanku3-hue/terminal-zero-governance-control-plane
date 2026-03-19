@@ -16,6 +16,7 @@ e2e_test/
 # Generated artifacts - ephemeral state files
 docs/context/*_latest.json
 docs/context/*_latest.md
+!docs/context/product_comparison_latest.md
 docs/context/auditor_calibration_report.json
 docs/context/auditor_calibration_report.md
 docs/context/auditor_promotion_dossier.json

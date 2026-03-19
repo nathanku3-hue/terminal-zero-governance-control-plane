@@ -86,6 +86,7 @@ Startup Rule (enforced):
 - Repo-specific truth protocol is documented in `docs/repo_init_truth_protocol.md` (no universal truth engine assumption).
 - High-semantic-risk pre-coding falsification uses `docs/templates/domain_falsification_pack.md` (working copy: `docs/context/domain_falsification_pack_latest.md`).
 - Advisory optimality review uses `docs/optimality_review_protocol.md` and `docs/templates/optimality_review_brief.md` (working copy: `docs/context/optimality_review_brief_latest.md`).
+- Cross-product or vendor/tool adoption comparisons use `docs/templates/product_comparison_template.md` (working copy: `docs/context/product_comparison_latest.md`) to make explicit `COPY`, `MODIFY_ON_TOP`, and `REJECT` calls; this remains advisory-only and does not change authority or closure behavior.
 - The same brief may run in multi-option compare mode (`OPTION_A/B/C`) for high-impact decisions; it remains advisory-only and does not change authority or closure behavior.
 - At milestone close, operators may also write `docs/context/milestone_optimality_review_latest.md` from the same template to record whether the overall system shape got simpler or more complex; this remains advisory-only.
 - `MILESTONE_OPTIMALITY_REVIEW_LATEST.md` is an optional convenience-only repo-root mirror; it stays a thin PM summary and the `docs/context` milestone brief remains the authoritative source.
