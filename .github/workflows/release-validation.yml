@@ -1,0 +1,395 @@
+name: Release Validation
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      run_wheel_smoke:
+        description: "Run wheel install smoke test"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  # Job 1: CLI Smoke Test (cross-platform)
+  cli-smoke:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install package (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Verify sop CLI exists (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\sop --help
+          .\.venv\Scripts\sop version
+
+      - name: Verify sop CLI exists (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/sop --help
+          ./.venv/bin/sop version
+
+      - name: Run sop init smoke (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\sop init smoke-test-project
+          if (-not (Test-Path smoke-test-project\docs\context)) { exit 1 }
+          if (-not (Test-Path smoke-test-project\.sop\config.yaml)) { exit 1 }
+          if (-not (Test-Path smoke-test-project\README.md)) { exit 1 }
+          Write-Host "sop init smoke: PASS"
+
+      - name: Run sop init smoke (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/sop init smoke-test-project
+          test -d smoke-test-project/docs/context || exit 1
+          test -f smoke-test-project/.sop/config.yaml || exit 1
+          test -f smoke-test-project/README.md || exit 1
+          echo "sop init smoke: PASS"
+
+  # Job 2: Backward Compatibility Smoke
+  backward-compat:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install package (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Verify script entrypoints (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python scripts\startup_codex_helper.py --help
+          .\.venv\Scripts\python scripts\run_loop_cycle.py --help
+          .\.venv\Scripts\python scripts\validate_loop_closure.py --help
+          .\.venv\Scripts\python scripts\print_takeover_entrypoint.py --help
+          .\.venv\Scripts\python scripts\supervise_loop.py --help
+          echo "Backward compat smoke: PASS"
+
+      - name: Verify script entrypoints (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python scripts/startup_codex_helper.py --help
+          ./.venv/bin/python scripts/run_loop_cycle.py --help
+          ./.venv/bin/python scripts/validate_loop_closure.py --help
+          ./.venv/bin/python scripts/print_takeover_entrypoint.py --help
+          ./.venv/bin/python scripts/supervise_loop.py --help
+          echo "Backward compat smoke: PASS"
+
+  # Job 3: Semver Validation
+  semver-check:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate semver format
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Tag: $TAG"
+
+          # Check semver format: vX.Y.Z or vX.Y.Z-prerelease
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "ERROR: Tag '$TAG' does not follow semver format (vX.Y.Z or vX.Y.Z-prerelease)"
+            exit 1
+          fi
+          echo "✓ Semver format: PASS"
+
+      - name: Validate tag matches pyproject.toml
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PYPROJECT_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+
+          echo "Tag version (without v): $TAG"
+          echo "pyproject.toml version: $PYPROJECT_VERSION"
+
+          if [[ "$TAG" != "$PYPROJECT_VERSION" ]]; then
+            echo "ERROR: Tag version '$TAG' does not match pyproject.toml version '$PYPROJECT_VERSION'"
+            exit 1
+          fi
+          echo "✓ Version match: PASS"
+
+      - name: Validate CHANGELOG entry exists
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+
+          if [[ ! -f "CHANGELOG.md" ]]; then
+            echo "ERROR: CHANGELOG.md not found"
+            exit 1
+          fi
+
+          if ! grep -q "## \[$VERSION\]" CHANGELOG.md && ! grep -q "## $VERSION" CHANGELOG.md; then
+            echo "ERROR: CHANGELOG.md does not contain entry for version '$VERSION'"
+            echo "Expected to find '## [$VERSION]' or '## $VERSION' in CHANGELOG.md"
+            echo ""
+            echo "Current CHANGELOG.md headers:"
+            grep -E "^## \[|^## [0-9]" CHANGELOG.md | head -5
+            exit 1
+          fi
+          echo "✓ CHANGELOG entry: PASS"
+
+  # Job 4: Release Gate (fast checks)
+  release-gate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install package (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Run fast checks (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\python scripts\run_fast_checks.py --repo-root .
+
+      - name: Run fast checks (Linux)
+        if: runner.os != 'Windows'
+        run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root .
+
+  # Job 4: Full Test Suite
+  test-suite:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install development dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints-dev.txt ".[dev]"
+
+      - name: Install development dependencies (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
+
+      - name: Run full test suite (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\python -m pytest -q
+
+      - name: Run full test suite (Linux)
+        if: runner.os != 'Windows'
+        run: ./.venv/bin/python -m pytest -q
+
+  # Job 5: Wheel Install Smoke (optional, manual trigger)
+  wheel-smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_wheel_smoke == true }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install build tools
+        run: python -m pip install --upgrade pip build
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Create fresh virtual environment
+        run: python -m venv wheel-test-env
+
+      - name: Install wheel (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\wheel-test-env\Scripts\python -m pip install --upgrade pip
+          $wheel = Get-ChildItem dist\*.whl | Select-Object -First 1
+          .\wheel-test-env\Scripts\python -m pip install $wheel.FullName
+
+      - name: Install wheel (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./wheel-test-env/bin/python -m pip install --upgrade pip
+          wheel=$(ls dist/*.whl | head -1)
+          ./wheel-test-env/bin/python -m pip install "$wheel"
+
+      - name: Verify wheel install (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Test CLI entrypoint
+          .\wheel-test-env\Scripts\sop --help
+          .\wheel-test-env\Scripts\sop version
+
+          # Test script dispatch: sop validate exercises the startup -> validate script path
+          # Exit code 1 = NOT_READY (proves dispatch worked), 2 = error
+          .\wheel-test-env\Scripts\sop validate --repo-root .
+          if ($LASTEXITCODE -eq 2) { exit 1 }
+          Write-Host "Script dispatch: PASS"
+
+          # Test init
+          .\wheel-test-env\Scripts\sop init wheel-smoke-test
+          if (-not (Test-Path wheel-smoke-test\docs\context)) { exit 1 }
+          Write-Host "Wheel smoke: PASS"
+
+      - name: Verify wheel install (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          # Test CLI entrypoint
+          ./wheel-test-env/bin/sop --help
+          ./wheel-test-env/bin/sop version
+
+          # Test script dispatch: sop validate exercises the startup -> validate script path
+          # Exit code 1 = NOT_READY (proves dispatch worked), 2 = error
+          ./wheel-test-env/bin/sop validate --repo-root . || [ $? -eq 1 ]
+          echo "Script dispatch: PASS"
+
+          # Test init
+          ./wheel-test-env/bin/sop init wheel-smoke-test
+          test -d wheel-smoke-test/docs/context || exit 1
+          echo "Wheel smoke: PASS"
+
+  # Job 6: Publish to PyPI (only on tag push after validation passes)
+  publish-pypi:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    # Only run on tag push, after all validation jobs pass
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [cli-smoke, backward-compat, semver-check, release-gate, test-suite]
+    permissions:
+      contents: read
+      id-token: write  # Required for trusted publisher
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Verify wheel contains scripts
+        shell: bash
+        run: |
+          WHEEL_FILE=$(ls dist/*.whl | head -1)
+          if unzip -l "$WHEEL_FILE" | grep -q "sop/scripts/"; then
+            echo "✓ Scripts found in wheel"
+          else
+            echo "✗ Scripts NOT found in wheel"
+            unzip -l "$WHEEL_FILE" | grep "sop/"
+            exit 1
+          fi
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Trusted Publisher must be configured on PyPI:
+        # https://pypi.org/manage/project/terminal-zero-governance/settings/publishing/
+        # - Owner: <your-github-org>
+        # - Repository: <repo-name>
+        # - Workflow: release-validation.yml
+        # - Environment: (leave blank for now)

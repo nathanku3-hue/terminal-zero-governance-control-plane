@@ -14,47 +14,81 @@ on:
 jobs:
   fast-checks:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.strict_promotion_checks != true }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Create virtual environment
         run: python -m venv .venv
 
-      - name: Install runtime dependencies
+      - name: Install runtime dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install runtime dependencies (Linux)
+        if: runner.os != 'Windows'
         run: |
           ./.venv/bin/python -m pip install --upgrade pip
           ./.venv/bin/python -m pip install -c constraints.txt .
 
-      - name: Run fast checks
+      - name: Run fast checks (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\python scripts\run_fast_checks.py --repo-root .
+
+      - name: Run fast checks (Linux)
+        if: runner.os != 'Windows'
         run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root .
 
   fast-checks-strict-promotion:
     name: Fast Checks (Strict Promotion, Manual Only)
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.strict_promotion_checks == true }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Create virtual environment
         run: python -m venv .venv
 
-      - name: Install runtime dependencies
+      - name: Install runtime dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install runtime dependencies (Linux)
+        if: runner.os != 'Windows'
         run: |
           ./.venv/bin/python -m pip install --upgrade pip
           ./.venv/bin/python -m pip install -c constraints.txt .
 
-      - name: Run strict fast checks
+      - name: Run strict fast checks (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\python scripts\run_fast_checks.py --repo-root . --fail-on-hold
+
+      - name: Run strict fast checks (Linux)
+        if: runner.os != 'Windows'
         run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root . --fail-on-hold

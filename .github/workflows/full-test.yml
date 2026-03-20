@@ -7,23 +7,40 @@ on:
 
 jobs:
   full-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Create virtual environment
         run: python -m venv .venv
 
-      - name: Install development dependencies
+      - name: Install development dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints-dev.txt ".[dev]"
+
+      - name: Install development dependencies (Linux)
+        if: runner.os != 'Windows'
         run: |
           ./.venv/bin/python -m pip install --upgrade pip
           ./.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
 
-      - name: Run full test suite
+      - name: Run full test suite (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\python -m pytest -q
+
+      - name: Run full test suite (Linux)
+        if: runner.os != 'Windows'
         run: ./.venv/bin/python -m pytest -q

@@ -1664,6 +1664,15 @@ def test_run_loop_cycle_disables_hold_when_allow_hold_is_false(
     assert persisted["final_exit_code"] == 1
 
 
+def _powershell_available() -> bool:
+    """Check if PowerShell is available on this system."""
+    if POWERSHELL_EXE.exists():
+        return True
+    # Check for pwsh on Linux/macOS
+    return shutil.which("pwsh") is not None
+
+
+@pytest.mark.skipif(not _powershell_available(), reason="PowerShell not available")
 def test_run_loop_cycle_with_phase_end_handover_execution(
     tmp_path: Path, monkeypatch
 ) -> None:

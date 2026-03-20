@@ -1,0 +1,1 @@
+"""SOP kernel templates package."""

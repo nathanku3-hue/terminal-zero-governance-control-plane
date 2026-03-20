@@ -3,7 +3,7 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "terminal-zero-governance-control-plane"
+name = "terminal-zero-governance"
 version = "0.1.0"
 description = "Script-driven AI engineering governance control plane."
 readme = "README.md"
@@ -19,8 +19,14 @@ dev = [
   "pytest>=8,<10",
 ]
 
-[tool.setuptools]
-py-modules = []
+[project.scripts]
+sop = "sop.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sop = ["py.typed", "scripts/**", "templates/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

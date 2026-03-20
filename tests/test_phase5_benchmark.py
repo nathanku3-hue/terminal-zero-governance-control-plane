@@ -4,6 +4,7 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 try:
@@ -31,9 +32,18 @@ except ModuleNotFoundError:
     from validate_baseline import validate_baseline_payload
 
 
+# Benchmark suite files are gitignored (experimental Phase 5 work)
+# Skip tests that require these files when they don't exist
+BENCHMARK_SUITE_PATH = Path(__file__).resolve().parents[1] / "benchmark" / "suites" / "sql_accuracy.yaml"
+requires_benchmark_suite = pytest.mark.skipif(
+    not BENCHMARK_SUITE_PATH.exists(),
+    reason="benchmark/suites/sql_accuracy.yaml is gitignored (experimental)"
+)
+
+
+@requires_benchmark_suite
 def test_sql_accuracy_suite_uses_scoped_promptfoo_tests() -> None:
-    suite_path = Path(__file__).resolve().parents[1] / "benchmark" / "suites" / "sql_accuracy.yaml"
-    suite = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+    suite = yaml.safe_load(BENCHMARK_SUITE_PATH.read_text(encoding="utf-8"))
 
     assert suite["providers"][0]["id"] == "anthropic:claude-opus-4-6"
     assert len(suite["prompts"]) == 5
@@ -42,10 +52,9 @@ def test_sql_accuracy_suite_uses_scoped_promptfoo_tests() -> None:
     assert all(isinstance(test["prompts"], list) and len(test["prompts"]) == 1 for test in suite["tests"])
 
 
+@requires_benchmark_suite
 def test_load_suite_provider_id_returns_provider() -> None:
-    suite_path = Path(__file__).resolve().parents[1] / "benchmark" / "suites" / "sql_accuracy.yaml"
-
-    assert load_suite_provider_id(suite_path) == "anthropic:claude-opus-4-6"
+    assert load_suite_provider_id(BENCHMARK_SUITE_PATH) == "anthropic:claude-opus-4-6"
 
 
 def test_parse_promptfoo_outputs_rejects_missing_results_object() -> None:

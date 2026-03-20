@@ -13,9 +13,28 @@ It is a repo-native governance system for running AI-assisted engineering work w
 
 ## Release Status
 
-- Current public release surface: `v0.1.0` Public Beta
-- This repository is the shipped beta boundary for the control-plane product surface.
+- Current release: targeting **1.0**
+- This repository is the shipped product boundary for the control-plane surface.
 - Root `SOP/` docs remain canonical kernel/program/history docs for maintainers.
+
+## 1.0 Release Boundary
+
+**Shipped:**
+- `sop` CLI and subcommands (`startup`, `run`, `validate`, `takeover`, `supervise`, `init`)
+- Kernel templates for truth surfaces
+- Startup → run → validate → takeover loop
+- PyPI install path (`pip install terminal-zero-governance`)
+
+**Supported platforms:**
+- Python 3.12+
+- Windows, Linux
+
+**Not promised (future work):**
+- Hosted service
+- npm/npx scaffolding
+- GitHub Action
+- VS Code extension
+- Zero-human autopilot
 
 ## What Problem This System Solves
 
@@ -351,69 +370,87 @@ This repository is not:
 - Local operator flow: `OPERATOR_LOOP_GUIDE.md`
 - Internal procedures: `docs/loop_operating_contract.md`, `docs/runbook_ops.md`, `docs/operator_reference.md`
 
-## Canonical Entrypoints
+## Entrypoints
 
-- `scripts/startup_codex_helper.py` — initialize a round and produce startup artifacts
-- `scripts/run_loop_cycle.py` — execute one bounded loop pass
-- `scripts/validate_loop_closure.py` — evaluate readiness / closure state
-- `scripts/print_takeover_entrypoint.py` — print deterministic takeover guidance
-- `scripts/supervise_loop.py` — optional loop-health monitoring
+### Primary (sop CLI)
+
+```bash
+sop startup --repo-root .      # Initialize a round
+sop run --repo-root .          # Execute one loop cycle
+sop validate --repo-root .     # Check closure readiness
+sop takeover --repo-root .     # Print takeover guidance
+sop supervise --max-cycles 1   # Loop health monitoring
+sop init <target-dir>          # Bootstrap new governed repo
+```
+
+Install: `pip install terminal-zero-governance`
+
+### Compatibility (scripts)
+
+For existing workflows or local development:
+
+```bash
+python scripts/startup_codex_helper.py --repo-root .
+python scripts/run_loop_cycle.py --repo-root .
+python scripts/validate_loop_closure.py --repo-root .
+python scripts/print_takeover_entrypoint.py --repo-root .
+python scripts/supervise_loop.py --repo-root .
+```
+
+These are preserved for backward compatibility. New users should prefer `sop`.
 
 ## Quickstart
 
-### 1. Create and activate a virtual environment
-
-**Windows PowerShell**
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-**macOS / Linux**
+### 1. Install
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+pip install terminal-zero-governance
 ```
 
-### 2. Install dependencies
+Or from source:
 
-```powershell
-python -m pip install --upgrade pip
-python -m pip install -c constraints.txt .
-python -m pip install -c constraints-dev.txt ".[dev]"
+```bash
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1   # Windows
+pip install -e .
 ```
 
-### 3. Verify the entrypoints
+### 2. Verify
 
-```powershell
-python scripts/startup_codex_helper.py --help
-python scripts/run_loop_cycle.py --help
-python scripts/validate_loop_closure.py --help
-python scripts/print_takeover_entrypoint.py --help
+```bash
+sop --help
+sop version
 ```
 
-### 4. Run the operator flow
+### 3. Initialize a new governed repository
 
-```powershell
-python scripts/startup_codex_helper.py --repo-root .
-python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true
-python scripts/validate_loop_closure.py --repo-root .
-python scripts/print_takeover_entrypoint.py --repo-root .
+```bash
+sop init my-project
+cd my-project
+```
+
+### 4. Run the main loop
+
+```bash
+sop startup --repo-root .
+sop run --repo-root . --skip-phase-end
+sop validate --repo-root .
+sop takeover --repo-root .
 ```
 
 ### 5. Optional supervision
 
-```powershell
-python scripts/supervise_loop.py --repo-root . --max-cycles 1 --check-interval-seconds 0
+```bash
+sop supervise --max-cycles 1
 ```
 
-### 6. Run tests
+### 6. Run tests (from source)
 
-```powershell
+```bash
 python -m pytest -q
 ```
+
+**New user?** See `USER_GUIDE.md` for a complete walkthrough.
 
 ## Platform Assumptions
 
@@ -433,9 +470,14 @@ python -m pytest -q
 
 ## Documentation Routing
 
+### New Users (Start Here)
+
+- `USER_GUIDE.md` — complete walkthrough for new users
+
 ### Public / External
 
-- `README.md`
+- `README.md` (this file)
+- `USER_GUIDE.md`
 - `CHANGELOG.md`
 - `RELEASING.md`
 - `CONTRIBUTING.md`
