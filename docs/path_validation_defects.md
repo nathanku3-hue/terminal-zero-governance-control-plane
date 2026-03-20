@@ -27,13 +27,13 @@ These two fixes resolve the core ambiguity for D1, D2, D3.
 
 ## Resolved Defects
 
-### D4: `references/phase_end_handover_template.md` — RESOLVED
+### D4: `references/phase_end_handover_template.md` - RESOLVED
 **File**: `.codex/skills/saw/SKILL.md:142`
 **Text**: `use references/phase_end_handover_template.md`
 **Resolution**: Created `references/phase_end_handover_template.md` with all SAW-required sections including Next Phase Roadmap and NewContextPacket footer.
 **Date**: 2026-03-16
 
-### D5: `docs/architect/profile_outcomes.csv` — RESOLVED
+### D5: `docs/architect/profile_outcomes.csv` - RESOLVED
 **File**: `.codex/skills/architect-review/SKILL.md:45-46`
 **Text**: `append outcome rows to docs/architect/profile_outcomes.csv` + validator command
 **Resolution**: Created `docs/architect/profile_outcomes.csv` with header row and sample calibration data.

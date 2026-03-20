@@ -50,7 +50,7 @@ def _weekly_markdown(*, c2_status: str = "PASS", recommendation: str | None = "G
         "\n"
         "| Criterion | Business Meaning | Status | Progress | Target |\n"
         "|---|---|---|---|---|\n"
-        "| **C0: System Health** | No infrastructure failures | ✅ | 0 failures | 0 failures |\n"
+        "| **C0: System Health** | No infrastructure failures | [OK] | 0 failures | 0 failures |\n"
         "| **C1: Operational Readiness** | PM signoff recorded in decision log | PASS | APPROVED | D-174 |\n"
         f"| **C2: Evidence Volume** | Enough data to measure quality | {c2_status} | 30/30 items | 30+ items |\n"
         "| **C3: Consistency** | Sustained quality over time | PASS | 2/2 weeks | 2+ consecutive weeks |\n"

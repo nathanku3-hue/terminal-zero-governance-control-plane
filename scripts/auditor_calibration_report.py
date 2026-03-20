@@ -535,7 +535,7 @@ def main() -> None:
             f"|-----------|-----|-------|"
         ])
         for crit_id, crit in criteria.items():
-            met_str = "✅" if crit["met"] is True else ("❌" if crit["met"] is False else "⚠️")
+            met_str = "[OK]" if crit["met"] is True else ("[FAIL]" if crit["met"] is False else "[WARN]")
             md_lines.append(f"| {crit_id} | {met_str} | {crit['value']} |")
         md_lines.append("")
 

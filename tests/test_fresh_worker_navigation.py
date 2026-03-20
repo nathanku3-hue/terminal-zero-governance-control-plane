@@ -249,8 +249,8 @@ class TestRealRepoSmoke:
 
         # D4 and D5 should be in Resolved Defects section
         assert "## Resolved Defects" in content, "Missing Resolved Defects section"
-        assert "D4: `references/phase_end_handover_template.md` — RESOLVED" in content, "D4 not marked as resolved"
-        assert "D5: `docs/architect/profile_outcomes.csv` — RESOLVED" in content, "D5 not marked as resolved"
+        assert "D4: `references/phase_end_handover_template.md` - RESOLVED" in content, "D4 not marked as resolved"
+        assert "D5: `docs/architect/profile_outcomes.csv` - RESOLVED" in content, "D5 not marked as resolved"
 
         # Open Defects section should show None
         assert "## Open Defects" in content, "Missing Open Defects section"

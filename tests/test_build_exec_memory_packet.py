@@ -845,7 +845,7 @@ def test_markdown_shows_budget_status(tmp_path: Path) -> None:
 
     md_content = md_path.read_text(encoding="utf-8")
     # Should show OVER status for at least one budget
-    assert "❌ OVER" in md_content
+    assert "[FAIL] OVER" in md_content
 
 
 def test_replanning_summary_tracks_gap_sources_and_next_action(tmp_path: Path) -> None:

@@ -313,12 +313,12 @@ def main():
 
     # Report results
     if all_errors:
-        print(f"\n❌ Validation FAILED with {len(all_errors)} error(s):\n")
+        print(f"\n[FAIL] Validation FAILED with {len(all_errors)} error(s):\n")
         for error in all_errors:
             print(f"  - {error}")
         sys.exit(1)
     else:
-        print(f"\n✓ Validation PASSED: {skill_name} manifest is valid")
+        print(f"\n[OK] Validation PASSED: {skill_name} manifest is valid")
         sys.exit(0)
 
 

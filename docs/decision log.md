@@ -2222,3 +2222,22 @@ After regenerating and validating the full `docs/context/*_latest*.json` and `do
 
 - Rollback note:
   - Revert commit `e5e7a77` to remove the integration test guard, and remove this D-179 entry.
+
+### v0.1.0 Release Readiness Planning (2026-03-20)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-180 | governance/release | First public release needed structured pre-tag, post-push, and post-release hardening phases to ensure docs alignment, publish verification, and auditable release evidence | Created `docs/context/release_readiness_checklist.md` with three-phase structure: C1 (pre-tag cleanup), C2 (tag push and verification), C3 (post-release hardening). C1 gates on explicit `RELEASING.md:38` criteria including README/CHANGELOG drift fixes. C2 captures push-trigger-verify semantics per `RELEASING.md:93,111`. C3 defers wheel-smoke, manifest, and outcome-capture hardening until after first release proves the pattern. | Ensures first release meets documented cut criteria, avoids shipping stale docs, and defers hardening investment until real release experience validates the need. |
+
+Phase definitions:
+
+- **C1 (pre-tag):** Trusted Publisher setup, release notes owner, CODEOWNERS confirmation, README roadmap drift (line 345), CHANGELOG publish drift (line 60), worktree clean, tests pass, CLI smoke.
+- **C2 (post-push):** Tag push triggers workflow; verify all validation jobs pass; verify PyPI publish; verify install from PyPI; run wheel-smoke manually once; create GitHub release.
+- **C3 (post-release):** Promote wheel-smoke to mandatory; add release manifest emission; wire shipped-outcome capture; accept macOS as best-effort.
+
+- Evidence:
+  - `docs/context/release_readiness_checklist.md` created
+  - Worktree status: 11 modified files (validator scripts, tests) — must commit or stash before C1.6
+  - Doc drift confirmed: `README.md:345` shows "W2 partial" vs actual COMPLETE; `CHANGELOG.md:60` shows "via workflow_run" vs actual `needs:` gate
+- Rollback note:
+  - Delete `docs/context/release_readiness_checklist.md` and remove this D-180 entry.

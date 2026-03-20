@@ -31,7 +31,7 @@ CRITERION_CODE_REGEX = re.compile(
     rf"\b(?P<code>{CRITERION_CODE_PATTERN})\b", re.IGNORECASE
 )
 CRITERION_PAIR_PATTERN = re.compile(
-    rf"\b(?P<code>{CRITERION_CODE_PATTERN})\s*[:=]\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|✅|❌|⚠️?|⚠)\b",
+    rf"\b(?P<code>{CRITERION_CODE_PATTERN})\s*[:=]\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|[OK]|[FAIL]|[WARN]?|[WARN])\b",
     re.IGNORECASE,
 )
 CRITERION_LINE_PATTERN = re.compile(
@@ -39,7 +39,7 @@ CRITERION_LINE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 STATUS_AT_START_PATTERN = re.compile(
-    r"^\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|✅|❌|⚠️?|⚠)\s*(?P<rest>.*)$",
+    r"^\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|[OK]|[FAIL]|[WARN]?|[WARN])\s*(?P<rest>.*)$",
     re.IGNORECASE,
 )
 ACTION_LINE_PATTERN = re.compile(
@@ -115,11 +115,11 @@ def _normalize_status_token(raw: str) -> str | None:
     if "/" in upper and any(token in upper for token in ("PASS", "FAIL", "MANUAL_CHECK")):
         return None
 
-    if "❌" in cleaned:
+    if "[FAIL]" in cleaned:
         return "FAIL"
-    if "✅" in cleaned:
+    if "[OK]" in cleaned:
         return "PASS"
-    if "⚠" in cleaned:
+    if "[WARN]" in cleaned:
         return "MANUAL_CHECK"
 
     if re.search(r"\bMANUAL[\s_]?CHECK\b", upper):

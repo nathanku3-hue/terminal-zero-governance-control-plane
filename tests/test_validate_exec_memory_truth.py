@@ -360,4 +360,4 @@ def test_validation_writes_output_files(tmp_path: Path) -> None:
     assert "validated_at_utc" in status
 
     md_content = output_md.read_text(encoding="utf-8")
-    assert "✅ PASS" in md_content
+    assert "[OK] PASS" in md_content

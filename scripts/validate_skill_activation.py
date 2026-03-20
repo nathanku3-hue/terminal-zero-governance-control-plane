@@ -246,10 +246,10 @@ def main() -> int:
     is_valid, errors = validate_skill_activation(skill_activation_json, repo_root)
 
     if is_valid:
-        print(f"✓ Skill activation valid: {skill_activation_json}")
+        print(f"[OK] Skill activation valid: {skill_activation_json}")
         return 0
     else:
-        print(f"✗ Skill activation validation failed:", file=sys.stderr)
+        print(f"[FAIL] Skill activation validation failed:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         return 1

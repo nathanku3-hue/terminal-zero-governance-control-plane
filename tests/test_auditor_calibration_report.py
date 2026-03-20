@@ -468,7 +468,7 @@ def test_dossier_c1_derives_pass_from_d174_decision_log(tmp_path: Path) -> None:
     assert report["promotion_criteria"]["c1_24b_close"]["met"] is True
     assert report["promotion_criteria"]["c1_24b_close"]["value"] == "APPROVED"
     assert report["promotion_criteria"]["c1_24b_close"]["decision_id"] == "D-174"
-    assert "| c1_24b_close | ✅ | APPROVED |" in md_content
+    assert "| c1_24b_close | [OK] | APPROVED |" in md_content
 
 
 def test_dossier_c3_non_consecutive_weeks_fail(tmp_path: Path) -> None:
