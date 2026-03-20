@@ -190,7 +190,7 @@ jobs:
           fi
           echo "✓ CHANGELOG entry: PASS"
 
-  # Job 4: Release Gate (fast checks)
+  # Job 4: Release Gate (release packaging sanity)
   release-gate:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -222,13 +222,31 @@ jobs:
           ./.venv/bin/python -m pip install --upgrade pip
           ./.venv/bin/python -m pip install -c constraints.txt .
 
-      - name: Run fast checks (Windows)
+      - name: Install build tools (Windows)
         if: runner.os == 'Windows'
-        run: .\.venv\Scripts\python scripts\run_fast_checks.py --repo-root .
+        run: .\.venv\Scripts\python -m pip install build
 
-      - name: Run fast checks (Linux)
+      - name: Install build tools (Linux)
         if: runner.os != 'Windows'
-        run: ./.venv/bin/python scripts/run_fast_checks.py --repo-root .
+        run: ./.venv/bin/python -m pip install build
+
+      - name: Build wheel (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\python -m build --wheel
+
+      - name: Build wheel (Linux)
+        if: runner.os != 'Windows'
+        run: ./.venv/bin/python -m build --wheel
+
+      - name: Verify packaged runtime resources (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -c "import pathlib, zipfile; wheel = next(pathlib.Path('dist').glob('*.whl')); names = zipfile.ZipFile(wheel).namelist(); required = ['sop/scripts/', 'sop/templates/']; missing = [prefix for prefix in required if not any(name.startswith(prefix) for name in names)]; print(f'wheel={wheel}'); print(f'missing={missing}'); raise SystemExit(1 if missing else 0)"
+
+      - name: Verify packaged runtime resources (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -c "import pathlib, zipfile; wheel = next(pathlib.Path('dist').glob('*.whl')); names = zipfile.ZipFile(wheel).namelist(); required = ['sop/scripts/', 'sop/templates/']; missing = [prefix for prefix in required if not any(name.startswith(prefix) for name in names)]; print(f'wheel={wheel}'); print(f'missing={missing}'); raise SystemExit(1 if missing else 0)"
 
   # Job 4: Full Test Suite
   test-suite:
