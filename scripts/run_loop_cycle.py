@@ -364,12 +364,8 @@ def _validate_repo_root_argument(repo_root_arg: Path) -> str | None:
         if not is_valid:
             return f"Invalid --repo-root path: {error}"
 
-    resolved_repo_root = repo_root_arg.resolve()
-    if resolved_repo_root.parent.name == resolved_repo_root.name:
-        return (
-            "Repo root must not be nested under a same-name directory "
-            f"({resolved_repo_root})."
-        )
+    # Note: We allow nested same-name directories (e.g., GitHub Actions clones
+    # into repo-name/repo-name) since this is a common CI pattern.
     return None
 
 

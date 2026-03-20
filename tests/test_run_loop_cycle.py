@@ -2262,20 +2262,33 @@ def test_run_loop_cycle_rejects_noncanonical_loop_summary_output_override(tmp_pa
     assert not (repo_root / "docs" / "context" / "custom_loop_cycle_summary.json").exists()
 
 
-def test_run_loop_cycle_rejects_nested_same_name_repo_root(tmp_path: Path) -> None:
+def test_run_loop_cycle_allows_nested_same_name_repo_root(tmp_path: Path, monkeypatch) -> None:
+    """Verify that nested same-name directories are allowed (GitHub Actions pattern)."""
     outer_repo_root = tmp_path / "quant_current_scope"
     nested_repo_root = outer_repo_root / outer_repo_root.name
+    scripts_dir = nested_repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
 
     args = run_loop_cycle.parse_args(
         [
             "--repo-root",
             str(nested_repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
             "--skip-phase-end",
         ]
     )
-    exit_code, payload, markdown = run_loop_cycle.run_cycle(args)
 
-    assert exit_code == 2
-    assert payload["final_result"] == "ERROR"
-    assert "same-name directory" in payload["message"]
-    assert "FinalExitCode: 2" in markdown
+    # Mock the Python script calls
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0),
+    )
+
+    exit_code, payload, _ = run_loop_cycle.run_cycle(args)
+
+    # Should succeed (not reject nested same-name directories)
+    assert exit_code == 0
+    assert payload["final_result"] == "PASS"

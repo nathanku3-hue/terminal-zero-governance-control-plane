@@ -1,8 +1,8 @@
 # Auditor Calibration Report (WEEKLY)
 
-**Generated:** 2026-03-16T13:37:26.082508+00:00
+**Generated:** 2026-03-20T07:56:33.046139+00:00
 **Runs included:** 17
-**Time range:** 2026-03-03T00:00:00Z to N/A
+**Time range:** N/A to N/A
 
 ## Summary
 
@@ -21,11 +21,11 @@
 |--------|-------|
 | Ledger loaded | True |
 | C/H total | 58 |
-| C/H annotated | 58 |
-| C/H unannotated | 0 |
+| C/H annotated | 53 |
+| C/H unannotated | 5 |
 | C/H FP count | 0 |
 | FP rate | 0.00% |
-| Annotation coverage | 100.00% |
+| Annotation coverage | 91.38% |
 
 ## Per-Rule Breakdown
 

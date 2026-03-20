@@ -1,8 +1,8 @@
 # Auditor Calibration Report (DOSSIER)
 
-**Generated:** 2026-03-16T13:37:26.182638+00:00
+**Generated:** 2026-03-20T07:56:33.140869+00:00
 **Runs included:** 17
-**Time range:** 2026-03-03T00:00:00Z to 2026-03-17T00:00:00Z
+**Time range:** N/A to N/A
 
 ## Summary
 
@@ -21,11 +21,11 @@
 |--------|-------|
 | Ledger loaded | True |
 | C/H total | 58 |
-| C/H annotated | 58 |
-| C/H unannotated | 0 |
+| C/H annotated | 53 |
+| C/H unannotated | 5 |
 | C/H FP count | 0 |
 | FP rate | 0.00% |
-| Annotation coverage | 100.00% |
+| Annotation coverage | 91.38% |
 
 ## Per-Rule Breakdown
 
@@ -50,10 +50,10 @@
 
 | Criterion | Met | Value |
 |-----------|-----|-------|
-| c0_infra_health | ✅ | 0 failures |
-| c1_24b_close | ✅ | APPROVED |
-| c2_min_items | ✅ | 72 >= 30 |
-| c3_min_weeks | ✅ | 2 consecutive weeks >= 2 |
-| c4_fp_rate | ✅ | 0.00% |
-| c4b_annotation_coverage | ✅ | 100.00% |
-| c5_all_v2 | ✅ | 1 versions: ['2.0.0'] |
+| c0_infra_health | [OK] | 0 failures |
+| c1_24b_close | [OK] | APPROVED |
+| c2_min_items | [OK] | 72 >= 30 |
+| c3_min_weeks | [OK] | 2 consecutive weeks >= 2 |
+| c4_fp_rate | [OK] | 0.00% |
+| c4b_annotation_coverage | [FAIL] | 91.38% |
+| c5_all_v2 | [OK] | 1 versions: ['2.0.0'] |

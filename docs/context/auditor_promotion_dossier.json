@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
   "report_type": "dossier",
-  "generated_at_utc": "2026-03-16T13:37:26.182638+00:00",
+  "generated_at_utc": "2026-03-20T07:56:33.140869+00:00",
   "data_range": {
-    "from_utc": "2026-03-03T00:00:00Z",
-    "to_utc": "2026-03-17T00:00:00Z",
+    "from_utc": null,
+    "to_utc": null,
     "runs_included": 17
   },
   "totals": {
@@ -18,11 +18,11 @@
   "fp_analysis": {
     "ledger_loaded": true,
     "ch_total": 58,
-    "ch_annotated": 58,
-    "ch_unannotated": 0,
+    "ch_annotated": 53,
+    "ch_unannotated": 5,
     "ch_fp_count": 0,
     "fp_rate": 0.0,
-    "annotation_coverage_ch": 1.0
+    "annotation_coverage_ch": 0.9137931034482759
   },
   "per_rule_breakdown": {
     "AUD-R001": {
@@ -130,8 +130,8 @@
       "value": "0.00%"
     },
     "c4b_annotation_coverage": {
-      "met": true,
-      "value": "100.00%"
+      "met": false,
+      "value": "91.38%"
     },
     "c5_all_v2": {
       "met": true,
