@@ -2237,7 +2237,7 @@ Phase definitions:
 
 - Evidence:
   - `docs/context/release_readiness_checklist.md` created
-  - Worktree status: 11 modified files (validator scripts, tests) — must commit or stash before C1.6
+  - Worktree status: clean after release-readiness doc cleanup; recheck immediately before C1.6 if new local changes appear
   - Doc drift confirmed: `README.md:345` shows "W2 partial" vs actual COMPLETE; `CHANGELOG.md:60` shows "via workflow_run" vs actual `needs:` gate
 - Rollback note:
-  - Delete `docs/context/release_readiness_checklist.md` and remove this D-180 entry.
+  - Delete `docs/context/release_readiness_checklist.md` and remove this D-181 entry.
