@@ -2233,11 +2233,18 @@ Phase definitions:
 
 - **C1 (pre-tag):** Trusted Publisher setup, release notes owner, CODEOWNERS confirmation, README roadmap drift (line 345), CHANGELOG publish drift (line 60), worktree clean, tests pass, CLI smoke.
 - **C2 (post-push):** Tag push triggers workflow; verify all validation jobs pass; verify PyPI publish; verify install from PyPI; run wheel-smoke manually once; create GitHub release.
-- **C3 (post-release):** Promote wheel-smoke to mandatory; add release manifest emission; wire shipped-outcome capture; accept macOS as best-effort.
-
-- Evidence:
-  - `docs/context/release_readiness_checklist.md` created
-  - Worktree status: clean after release-readiness doc cleanup; recheck immediately before C1.6 if new local changes appear
-  - Doc drift confirmed: `README.md:345` shows "W2 partial" vs actual COMPLETE; `CHANGELOG.md:60` shows "via workflow_run" vs actual `needs:` gate
-- Rollback note:
-  - Delete `docs/context/release_readiness_checklist.md` and remove this D-181 entry.
+| D-182 | governance/test-coverage | Real phase_end_handover contract test skipped in commit ada0297 for CI compatibility; reduction in coverage but not a release blocker | Accept ada0297 for v0.1.0 public beta. Lower-level execution test exists at line 1682; dedicated real-script coverage exists in test_phase_end_handover.py. Record v0.1.1 follow-up to restore non-flaky integration test. | Enables v0.1.0 release while maintaining sufficient test coverage. Release worktree baseline passes (473 passed, 33 skipped). |
+  2245→
+  2246→Phase definitions:
+  2247→
+  2248→- **C1 (pre-tag):** Trusted Publisher setup, release notes owner, CODEOWNERS confirmation, README roadmap drift (line 345), CHANGELOG publish drift (line 60), worktree clean, tests pass, CLI smoke.
+  2249→- **C2 (post-push):** Tag push triggers workflow; verify all validation jobs pass; verify PyPI publish; verify install from PyPI; run wheel-smoke manually once; create GitHub release.
+  2250→- **C3 (post-release):** Promote wheel-smoke to mandatory; add release manifest emission; wire shipped-outcome capture; restore real phase_end_handover integration test; accept macOS as best-effort.
+  2251→
+  2252→- Evidence:
+  2253→  - `docs/context/release_readiness_checklist.md` created
+  2254→  - Worktree status: clean after release-readiness doc cleanup; recheck immediately before C1.6 if new local changes appear
+  2255→  - Doc drift confirmed: `README.md:345` shows "W2 partial" vs actual COMPLETE; `CHANGELOG.md:60` shows "via workflow_run" vs actual `needs:` gate
+  2256→  - Release worktree verification: 473 passed, 33 skipped in 148.45s; CLI smoke passes
+  2257→- Rollback note:
+  2258→  - Delete `docs/context/release_readiness_checklist.md` and remove this D-181 entry.

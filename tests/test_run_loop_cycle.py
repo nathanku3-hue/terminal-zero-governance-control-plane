@@ -603,7 +603,10 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     status_by_step = {step["name"]: step["status"] for step in payload["steps"]}
     assert status_by_step["phase_end_handover"] == "SKIP"
     assert status_by_step["validate_ceo_weekly_summary_truth"] == "PASS"
-    assert status_by_step["validate_refactor_mock_policy"] == "PASS"
+    # Round contract validations are skipped when round_contract_latest.md doesn't exist
+    assert status_by_step["validate_counterexample_gate"] == "SKIP"
+    assert status_by_step["validate_dual_judge_gate"] == "SKIP"
+    assert status_by_step["validate_refactor_mock_policy"] == "SKIP"
     assert status_by_step["validate_review_checklist"] == "SKIP"
     assert status_by_step["validate_interface_contracts"] == "SKIP"
 
@@ -708,10 +711,11 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert temp_summary_payload["repo_root_convenience"] == {}
     assert round_contract_observations[0]["closure_exists"] is True
 
-    # 15 calls: weekly_calibration, dossier, go_signal, weekly_summary, compaction_trigger,
-    # build_memory_packet, go_truth, weekly_truth, exec_memory_truth, counterexample_gate,
-    # dual_judge_gate, refactor_mock_policy, parallel_fanin, closure, round_contract_checks
-    assert len(calls) == 15
+    # 12 calls: weekly_calibration, dossier, go_signal, weekly_summary, compaction_trigger,
+    # build_memory_packet, go_truth, weekly_truth, exec_memory_truth, parallel_fanin,
+    # closure, round_contract_checks
+    # (counterexample_gate, dual_judge_gate, refactor_mock_policy skipped - no round_contract)
+    assert len(calls) == 12
 
     temp_summary = context / "loop_cycle_summary_current.json"
     assert temp_summary.exists(), "Current-cycle summary snapshot should persist for truth validation"

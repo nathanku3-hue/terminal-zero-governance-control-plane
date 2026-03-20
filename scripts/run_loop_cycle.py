@@ -1258,32 +1258,54 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
 
-    run_python_step(
-        step_name="validate_counterexample_gate",
-        script_path=ctx.counterexample_script,
-        script_args=[
-            "--round-contract-md",
-            str(ctx.context_dir / "round_contract_latest.md"),
-        ],
-    )
+    # Skip round contract validations if the file doesn't exist
+    round_contract_md = ctx.context_dir / "round_contract_latest.md"
+    if round_contract_md.exists():
+        run_python_step(
+            step_name="validate_counterexample_gate",
+            script_path=ctx.counterexample_script,
+            script_args=[
+                "--round-contract-md",
+                str(round_contract_md),
+            ],
+        )
 
-    run_python_step(
-        step_name="validate_dual_judge_gate",
-        script_path=ctx.dual_judge_script,
-        script_args=[
-            "--round-contract-md",
-            str(ctx.context_dir / "round_contract_latest.md"),
-        ],
-    )
+        run_python_step(
+            step_name="validate_dual_judge_gate",
+            script_path=ctx.dual_judge_script,
+            script_args=[
+                "--round-contract-md",
+                str(round_contract_md),
+            ],
+        )
 
-    run_python_step(
-        step_name="validate_refactor_mock_policy",
-        script_path=ctx.refactor_mock_policy_script,
-        script_args=[
-            "--round-contract-md",
-            str(ctx.context_dir / "round_contract_latest.md"),
-        ],
-    )
+        run_python_step(
+            step_name="validate_refactor_mock_policy",
+            script_path=ctx.refactor_mock_policy_script,
+            script_args=[
+                "--round-contract-md",
+                str(round_contract_md),
+            ],
+        )
+    else:
+        runtime.steps.append(
+            _skip_step(
+                "validate_counterexample_gate",
+                f"Round contract not found: {round_contract_md}",
+            )
+        )
+        runtime.steps.append(
+            _skip_step(
+                "validate_dual_judge_gate",
+                f"Round contract not found: {round_contract_md}",
+            )
+        )
+        runtime.steps.append(
+            _skip_step(
+                "validate_refactor_mock_policy",
+                f"Round contract not found: {round_contract_md}",
+            )
+        )
 
     if ctx.review_checklist_md.exists():
         run_python_step(

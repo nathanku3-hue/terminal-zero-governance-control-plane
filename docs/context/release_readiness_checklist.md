@@ -54,7 +54,7 @@ Reference: `RELEASING.md` cut criteria (docs aligned, tests pass, CLI smoke, ver
 | C3.1 | Wheel-smoke mandatory | Medium | Promote wheel-smoke job to tag-triggered workflow | Proves real install from built artifact on every release |
 | C3.2 | Release manifest | Medium | Add `upload-artifact` step; emit `release_manifest_{tag}.json` | Durable record: tag, run_id, wheel_hash, py_url |
 | C3.3 | Shipped-outcome capture | Low | Wire `capture_profile_outcome_record.py` into release checklist | Feedback loop per `shipped_outcome_feedback_protocol.md` |
-| C3.4 | macOS coverage | Low | Accept as best-effort; add if demand emerges | Already documented in `RELEASING.md:21` |
+| C3.5 | Restore real phase_end_handover integration test | Low | Replace skipped real-contract test with non-flaky variant | Coverage reduction in v0.1.0 acceptable but not permanent |
 
 **Why after v0.1.0:** These are hardening, not blockers. Kernel is FROZEN; operational refinements driven by real release experience.
 

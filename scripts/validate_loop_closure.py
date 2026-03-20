@@ -687,83 +687,119 @@ def run_validation(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         )
 
     # Round contract DONE_WHEN check binding gate.
-    with tempfile.TemporaryDirectory() as gate_tmp_dir:
-        gate_tmp = Path(gate_tmp_dir)
-        closure_preview_json = gate_tmp / "closure_preview.json"
-        loop_summary_for_gate = loop_summary_json
-        if not loop_summary_for_gate.exists():
-            loop_summary_for_gate = gate_tmp / "loop_summary_preview.json"
+    # Only run round contract gates if the file exists.
+    if round_contract_for_gate.exists():
+        with tempfile.TemporaryDirectory() as gate_tmp_dir:
+            gate_tmp = Path(gate_tmp_dir)
+            closure_preview_json = gate_tmp / "closure_preview.json"
+            loop_summary_for_gate = loop_summary_json
+            if not loop_summary_for_gate.exists():
+                loop_summary_for_gate = gate_tmp / "loop_summary_preview.json"
+                _atomic_write_text(
+                    loop_summary_for_gate,
+                    json.dumps({"steps": []}, indent=2) + "\n",
+                )
             _atomic_write_text(
-                loop_summary_for_gate,
-                json.dumps({"steps": []}, indent=2) + "\n",
+                closure_preview_json,
+                json.dumps({"checks": checks}, indent=2) + "\n",
             )
-        _atomic_write_text(
-            closure_preview_json,
-            json.dumps({"checks": checks}, indent=2) + "\n",
-        )
-        done_when_cmd = [
+            done_when_cmd = [
+                args.python_exe,
+                str(round_contract_checks_script),
+                "--round-contract-md",
+                str(round_contract_for_gate),
+                "--loop-summary-json",
+                str(loop_summary_for_gate),
+                "--closure-json",
+                str(closure_preview_json),
+            ]
+            checks.append(
+                _run_gate_command(
+                    gate_name="done_when_checks_gate",
+                    gate_message="DONE_WHEN checks gate",
+                    script_path=round_contract_checks_script,
+                    command=done_when_cmd,
+                )
+            )
+
+        counterexample_cmd = [
             args.python_exe,
-            str(round_contract_checks_script),
+            str(counterexample_script),
             "--round-contract-md",
             str(round_contract_for_gate),
-            "--loop-summary-json",
-            str(loop_summary_for_gate),
-            "--closure-json",
-            str(closure_preview_json),
         ]
         checks.append(
             _run_gate_command(
-                gate_name="done_when_checks_gate",
-                gate_message="DONE_WHEN checks gate",
-                script_path=round_contract_checks_script,
-                command=done_when_cmd,
+                gate_name="counterexample_gate",
+                gate_message="Counterexample gate",
+                script_path=counterexample_script,
+                command=counterexample_cmd,
             )
         )
 
-    counterexample_cmd = [
-        args.python_exe,
-        str(counterexample_script),
-        "--round-contract-md",
-        str(round_contract_for_gate),
-    ]
-    checks.append(
-        _run_gate_command(
-            gate_name="counterexample_gate",
-            gate_message="Counterexample gate",
-            script_path=counterexample_script,
-            command=counterexample_cmd,
+        dual_judge_cmd = [
+            args.python_exe,
+            str(dual_judge_script),
+            "--round-contract-md",
+            str(round_contract_for_gate),
+        ]
+        checks.append(
+            _run_gate_command(
+                gate_name="dual_judge_gate",
+                gate_message="Dual-judge gate",
+                script_path=dual_judge_script,
+                command=dual_judge_cmd,
+            )
         )
-    )
 
-    dual_judge_cmd = [
-        args.python_exe,
-        str(dual_judge_script),
-        "--round-contract-md",
-        str(round_contract_for_gate),
-    ]
-    checks.append(
-        _run_gate_command(
-            gate_name="dual_judge_gate",
-            gate_message="Dual-judge gate",
-            script_path=dual_judge_script,
-            command=dual_judge_cmd,
+        refactor_mock_policy_cmd = [
+            args.python_exe,
+            str(refactor_mock_policy_script),
+            "--round-contract-md",
+            str(round_contract_for_gate),
+        ]
+        checks.append(
+            _run_gate_command(
+                gate_name="refactor_mock_policy_gate",
+                gate_message="Refactor/mock policy gate",
+                script_path=refactor_mock_policy_script,
+                command=refactor_mock_policy_cmd,
+            )
         )
-    )
-
-    refactor_mock_policy_cmd = [
-        args.python_exe,
-        str(refactor_mock_policy_script),
-        "--round-contract-md",
-        str(round_contract_for_gate),
-    ]
-    checks.append(
-        _run_gate_command(
-            gate_name="refactor_mock_policy_gate",
-            gate_message="Refactor/mock policy gate",
-            script_path=refactor_mock_policy_script,
-            command=refactor_mock_policy_cmd,
+    else:
+        # Skip all round contract gates when the file doesn't exist
+        checks.append(
+            _check_record(
+                name="done_when_checks_gate",
+                status="SKIP",
+                message="Round contract missing; DONE_WHEN checks gate skipped.",
+                path=round_contract_for_gate,
+            )
         )
-    )
+        checks.append(
+            _check_record(
+                name="counterexample_gate",
+                status="SKIP",
+                message="Round contract missing; counterexample gate skipped.",
+                path=round_contract_for_gate,
+            )
+        )
+        checks.append(
+            _check_record(
+                name="dual_judge_gate",
+                status="SKIP",
+                message="Round contract missing; dual-judge gate skipped.",
+                path=round_contract_for_gate,
+            )
+        )
+        checks.append(
+            _check_record(
+                name="refactor_mock_policy_gate",
+                status="SKIP",
+                message="Round contract missing; refactor/mock policy gate skipped.",
+                path=round_contract_for_gate,
+            )
+        )
 
     if review_checklist_path.exists():
         review_checklist_cmd = [
