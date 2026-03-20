@@ -2233,7 +2233,7 @@ Phase definitions:
 
 - **C1 (pre-tag):** Trusted Publisher setup, release notes owner, CODEOWNERS confirmation, README roadmap drift (line 345), CHANGELOG publish drift (line 60), worktree clean, tests pass, CLI smoke.
 - **C2 (post-push):** Tag push triggers workflow; verify all validation jobs pass; verify PyPI publish; verify install from PyPI; run wheel-smoke manually once; create GitHub release.
-- **C3 (post-release):** Promote wheel-smoke to mandatory; add release manifest emission; wire shipped-outcome capture; accept macOS as best-effort.
+- **C3 (post-release):** Promote wheel-smoke to mandatory; add release manifest emission; wire shipped-outcome capture; restore real phase_end_handover integration test; accept macOS as best-effort.
 
 - Evidence:
   - `docs/context/release_readiness_checklist.md` created
@@ -2241,3 +2241,16 @@ Phase definitions:
   - Doc drift confirmed: `README.md:345` shows "W2 partial" vs actual COMPLETE; `CHANGELOG.md:60` shows "via workflow_run" vs actual `needs:` gate
 - Rollback note:
   - Delete `docs/context/release_readiness_checklist.md` and remove this D-181 entry.
+
+### v0.1.0 Test Coverage Decision (2026-03-20)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-182 | governance/test-coverage | Real phase_end_handover contract test skipped in commit ada0297 for CI compatibility; reduction in coverage but not a release blocker | Accept ada0297 for v0.1.0 public beta. Lower-level execution test exists at `tests/test_run_loop_cycle.py:1682`; dedicated real-script coverage exists in `tests/test_phase_end_handover.py` (lines 163, 237, 301, 365). Record v0.1.1 follow-up (C3.5) to restore non-flaky integration test. | Enables v0.1.0 release while maintaining sufficient test coverage. Release worktree baseline passes (473 passed, 33 skipped). |
+
+- Evidence:
+  - Release worktree test run: 473 passed, 33 skipped in 148.45s
+  - CLI smoke: `sop --help`, `sop version (0.1.0)`, `sop init` all pass
+  - Checklist C3.5 added for v0.1.1 follow-up
+- Rollback note:
+  - Remove this D-182 entry and C3.5 from checklist if decision reversed.
