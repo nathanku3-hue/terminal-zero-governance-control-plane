@@ -41,19 +41,3 @@ def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
     # Note: We allow paths starting with repo root name since CI systems
     # like GitHub Actions use various directory structures
     return True, ""
-
-    # Resolve path and verify containment under repo root
-    try:
-        repo_root_resolved = repo_root.resolve()
-        artifact_path = (repo_root / path).resolve()
-
-        # Check if artifact_path is under repo_root
-        try:
-            artifact_path.relative_to(repo_root_resolved)
-        except ValueError:
-            return False, f"Path escapes repository root: {path}"
-
-    except Exception as e:
-        return False, f"Path resolution error: {path} ({str(e)})"
-
-    return True, ""

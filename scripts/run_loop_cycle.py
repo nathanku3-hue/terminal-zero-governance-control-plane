@@ -18,26 +18,16 @@ except ModuleNotFoundError:
     try:
         from scripts.utils.path_validator import validate_artifact_path
     except ModuleNotFoundError:
+        import os
         def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
+            """Simplified fallback matching scripts/utils/path_validator.py."""
             path = str(path).strip()
             if not path:
                 return False, "Empty path"
             if path.startswith("/") or (len(path) >= 2 and path[1] == ":"):
                 return False, f"Absolute path not allowed: {path}"
-            path_parts = path.replace("\\", "/").split("/")
-            if ".." in path_parts:
+            if ".." in path.split(os.sep):
                 return False, f"Parent directory escape (..) not allowed: {path}"
-            if path_parts[0] == repo_root.resolve().name:
-                return False, (
-                    f"Path must not start with repo root name '{repo_root.resolve().name}'"
-                )
-            try:
-                artifact_path = (repo_root / path).resolve()
-                artifact_path.relative_to(repo_root.resolve())
-            except ValueError:
-                return False, f"Path escapes repository root: {path}"
-            except Exception as exc:  # pragma: no cover - defensive fallback
-                return False, f"Path resolution error: {path} ({exc})"
             return True, ""
 
 try:
