@@ -57,7 +57,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) principles.
 
 - CLI now uses `importlib.resources` to find scripts/templates in both dev and installed modes
 - Wheel smoke test now exercises actual script dispatch (not just `--help`)
-- PyPI publish workflow now gated on release-validation success (via workflow_run)
+- PyPI publish workflow now gated on release-validation success (all validation jobs must pass via `needs:` before publish step)
 
 ## [Unreleased]
 

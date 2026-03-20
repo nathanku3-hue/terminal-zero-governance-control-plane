@@ -19,9 +19,9 @@ Reference: `RELEASING.md` cut criteria (docs aligned, tests pass, CLI smoke, ver
 | C1.1 | Trusted Publisher | PENDING | Configure at https://pypi.org/manage/project/terminal-zero-governance/settings/publishing/ | Owner/repo/workflow green |
 | C1.2 | Release notes owner | PENDING | Fill `Release owner:` field in `RELEASE_NOTES_v0.1.0_PUBLIC_BETA.md:3` | Line shows actual handle |
 | C1.3 | CODEOWNERS confirmation | PENDING | Confirm maintainer handle OR add follow-up note per `RELEASING.md:122` | Field filled or follow-up linked |
-| C1.4 | README roadmap drift | PENDING | Fix line 345: "W2 (Quant pilot) partial" → reflect kernel-complete state | Matches `ROADMAP.md` (all waves COMPLETE) |
-| C1.5 | CHANGELOG publish drift | PENDING | Fix line 60: remove "via workflow_run", state actual `needs:` gate | Matches `release-validation.yml:356` |
-| C1.6 | Worktree clean | PENDING | Commit or stash uncommitted changes before tagging | `git status --short` empty |
+| C1.4 | README roadmap drift | DONE | Fix line 345: "W2 (Quant pilot) partial" → reflect kernel-complete state | Matches `ROADMAP.md` (all waves COMPLETE) |
+| C1.5 | CHANGELOG publish drift | DONE | Fix line 60: remove "via workflow_run", state actual `needs:` gate | Matches `release-validation.yml:356` |
+| C1.6 | Worktree clean | DONE | Commit or stash uncommitted changes before tagging | `git status --short` empty |
 | C1.7 | Tests pass | PENDING | Run `python -m pytest -q` | Exit 0 |
 | C1.8 | CLI smoke | PENDING | Run `sop --help && sop version && sop init /tmp/smoke-test` | All commands pass |
 
@@ -83,5 +83,6 @@ None currently.
 
 ## Notes
 
-- Worktree has uncommitted validator changes (11 files modified). Must commit or stash before C1.6.
+- Worktree currently clean (`git status --short` empty). Recheck before C1.6 if local changes resume.
 - Release notes explicitly document known limitations (manual freshness discipline, macOS best-effort).
+- Doc drifts fixed (2026-03-20): README:345, CHANGELOG:60, release notes owner placeholder marked with TODO.

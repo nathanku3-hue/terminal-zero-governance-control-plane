@@ -342,7 +342,7 @@ See `../ENDGAME.md` for detailed truth model, orchestrator state model, planner 
 
 See `../ROADMAP.md` for the full delivery plan.
 
-**Current status:** Phase 1 (W0 + W1) complete (2026-03-18). W2 (Quant pilot) partial — bridge_contract_current.md exists, other artifacts next.
+**Current status:** All roadmap waves (W0–W6) complete (2026-03-19). See `../ROADMAP.md` for details.
 
 ## What This Repository Is
 
