@@ -172,6 +172,12 @@ def main(argv: list[str] | None = None) -> int:
             f"- {check['name']}: {_normalize_text(check['status'])} "
             f"(exit={check['exit_code']})"
         )
+        # Print detailed output for failed/error checks
+        if check["status"] in ("FAIL",) or check["exit_code"] == 2:
+            if check.get("stdout"):
+                print(f"  stdout: {check['stdout'][:500]}")
+            if check.get("stderr"):
+                print(f"  stderr: {check['stderr'][:500]}")
 
     if payload["overall_status"] == "HOLD" and not payload["fail_on_hold"]:
         print("note: HOLD is distinct from PASS and is non-failing unless --fail-on-hold is set")
