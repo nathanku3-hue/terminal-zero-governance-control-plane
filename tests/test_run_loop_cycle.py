@@ -657,11 +657,7 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
         for command in calls
         if any("evaluate_context_compaction_trigger.py" in token for token in command)
     )
-    round_contract_command = next(
-        command
-        for command in calls
-        if any("validate_round_contract_checks.py" in token for token in command)
-    )
+    # Note: validate_round_contract_checks is skipped when round_contract_latest.md doesn't exist
     assert calls.index(memory_command) < calls.index(compaction_command)
     assert "--status-json" in memory_command
     assert memory_command[memory_command.index("--status-json") + 1].endswith(
@@ -684,13 +680,13 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert closure_command[closure_command.index("--memory-json") + 1].endswith(
         "exec_memory_packet_latest_current.json"
     )
-    assert calls.index(closure_command) < calls.index(round_contract_command)
+    # Note: round_contract_checks is skipped when round_contract_latest.md doesn't exist
+    assert len(round_contract_observations) == 0
 
-    assert len(round_contract_observations) == 1
-    assert round_contract_observations[0]["loop_summary_path"].endswith(
-        "loop_cycle_summary_latest.json"
-    )
-    temp_summary_payload = round_contract_observations[0]["loop_summary"]
+    # Read temp_summary_payload from the persisted summary file instead of round_contract_observations
+    temp_summary_path = context / "loop_cycle_summary_latest.json"
+    assert temp_summary_path.exists()
+    temp_summary_payload = json.loads(temp_summary_path.read_text(encoding="utf-8"))
     assert isinstance(temp_summary_payload, dict)
     assert temp_summary_payload["repo_root"] == str(repo_root)
     assert temp_summary_payload["context_dir"] == str(context)
@@ -698,8 +694,11 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
         context / "loop_closure_status_latest.json"
     )
     temp_step_names = [step["name"] for step in temp_summary_payload["steps"]]
-    assert temp_step_names[-1] == "validate_loop_closure"
-    assert "validate_round_contract_checks" not in temp_step_names
+    assert temp_step_names[-1] == "validate_round_contract_checks"
+    # Verify round_contract_checks was skipped
+    rc_step = next((s for s in temp_summary_payload["steps"] if s["name"] == "validate_round_contract_checks"), None)
+    assert rc_step is not None
+    assert rc_step["status"] == "SKIP"
     assert temp_summary_payload["step_summary"]["total_steps"] == len(temp_step_names)
     assert temp_summary_payload["next_round_handoff"] is None
     assert temp_summary_payload["expert_request"] is None
@@ -709,13 +708,14 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
     assert temp_summary_payload["compaction"]["reasons"] == []
     assert temp_summary_payload["compaction"]["guardrail_violations"] == []
     assert temp_summary_payload["repo_root_convenience"] == {}
-    assert round_contract_observations[0]["closure_exists"] is True
 
-    # 12 calls: weekly_calibration, dossier, go_signal, weekly_summary, compaction_trigger,
-    # build_memory_packet, go_truth, weekly_truth, exec_memory_truth, parallel_fanin,
-    # closure, round_contract_checks
-    # (counterexample_gate, dual_judge_gate, refactor_mock_policy skipped - no round_contract)
-    assert len(calls) == 12
+    # Verify closure output exists
+    assert (context / "loop_closure_status_latest.json").exists()
+
+    # 11 calls: weekly_calibration, dossier, go_signal, weekly_summary, compaction_trigger,
+    # build_memory_packet, go_truth, weekly_truth, exec_memory_truth, parallel_fanin, closure
+    # (counterexample_gate, dual_judge_gate, refactor_mock_policy, round_contract_checks skipped - no round_contract)
+    assert len(calls) == 11
 
     temp_summary = context / "loop_cycle_summary_current.json"
     assert temp_summary.exists(), "Current-cycle summary snapshot should persist for truth validation"

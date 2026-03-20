@@ -1389,13 +1389,13 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         ],
     )
 
-    if _write_round_contract_summary_snapshot():
+    if _write_round_contract_summary_snapshot() and round_contract_md.exists():
         run_python_step(
             step_name="validate_round_contract_checks",
             script_path=ctx.round_contract_checks_script,
             script_args=[
                 "--round-contract-md",
-                str(ctx.context_dir / "round_contract_latest.md"),
+                str(round_contract_md),
                 "--loop-summary-json",
                 str(ctx.output_json),
                 "--closure-json",
@@ -1403,10 +1403,15 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             ],
         )
     else:
+        skip_reason = (
+            f"Round contract not found: {round_contract_md}"
+            if not round_contract_md.exists()
+            else f"Round-contract summary snapshot unavailable: {ctx.output_json}"
+        )
         runtime.steps.append(
             _skip_step(
                 "validate_round_contract_checks",
-                f"Round-contract summary snapshot unavailable: {ctx.output_json}",
+                skip_reason,
             )
         )
 
