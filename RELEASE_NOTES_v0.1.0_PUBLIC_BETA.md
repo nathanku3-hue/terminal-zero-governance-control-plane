@@ -1,6 +1,6 @@
 # v0.1.0 — Public Beta
 
-Release owner: `<fill before publish>` <!-- TODO: C1.2 - fill with actual handle before tagging v0.1.0 -->
+Release owner: @nathanku3-hue
 
 ## What It Is
 
