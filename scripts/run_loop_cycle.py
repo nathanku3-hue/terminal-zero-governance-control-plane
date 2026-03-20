@@ -1581,6 +1581,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     exit_code, payload, _ = run_cycle(args)
     print(payload["final_result"])
+    # Debug output for CI failures
+    if payload["final_result"] == "ERROR":
+        print(f"DEBUG: message={payload.get('message', 'N/A')}", file=sys.stderr)
+        if payload.get("steps"):
+            for step in payload["steps"]:
+                if step.get("status") == "ERROR":
+                    print(f"DEBUG: error step={step.get('name')}: {step.get('message')}", file=sys.stderr)
     return exit_code
 
 
