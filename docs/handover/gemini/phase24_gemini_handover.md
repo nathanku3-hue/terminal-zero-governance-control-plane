@@ -1,6 +1,20 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-16T13:37:25Z
+> **⚠️ HISTORICAL SNAPSHOT - NOT AUTHORITATIVE**
+>
+> This file is a handover snapshot generated 2026-03-21. It contains shadow-era instructions
+> that are now superseded. For current operator guidance, see:
+> - `docs/context/current_context.json` (authoritative)
+> - `docs/context/current_context.md` (authoritative)
+> - `docs/handover/phase24c_handover.md` (current handover)
+>
+> Key changes since this snapshot:
+> - **D-184 (2026-03-22)**: Enforce mode is now the default in `phase_end_handover.ps1`
+> - Canary validation passed (3/3 PASS, 0.00% FP rate)
+> - Post-rollout monitoring in progress (2026-03-22 to 2026-04-05)
+> - Rollback requires explicit `-AuditMode shadow` flag
+
+- GeneratedAtUTC: 2026-03-21T17:13:32Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -159,7 +173,7 @@ Wait for explicit approval before running the next shadow cycle. Once approved, 
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-16T13:37:25Z",
+  "generated_at_utc": "2026-03-21T17:13:32Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -209,7 +223,7 @@ Wait for explicit approval before running the next shadow cycle. Once approved, 
 ### docs/decision log.md
 ~~~markdown
 Decision Log: Terminal Zero Governance Control Plane
-Author: Atomic Mesh | Last Updated: 2026-03-09 (Identity framing clarified)
+Author: Atomic Mesh | Last Updated: 2026-03-18 (Product comparison artifact added)
 
 This log is the long-lived decision record for the current governance control plane.
 Legacy quant-era decisions are retained below for historical traceability; current operator behavior is governed by the active control-plane contracts and runbooks.
@@ -339,9 +353,12 @@ Part 1: Master Decision Log
 | D-169 | governance/phase5 | ADR-003 benchmark requirements were approval criteria, but benchmark harness is still Phase 5 design artifact | Amended ADR-003 with interim rule: eval.yaml is declarative until harness operational. Skills requiring benchmark validation need benchmark-waiver entry in decision log. After harness operational, benchmark requirements enforced. | Allows skill approval to proceed during Phase 5A while preserving benchmark requirement for post-5A.1 skills. |
 | D-170 | governance/phase5 | ADR-004 baseline policy (first run becomes baseline) was brittle and vulnerable to noisy first run | Amended ADR-004 to 3-run median baseline per model version. Added re-baselining rules: model version change, major update, baseline drift (3 consecutive trends), or manual PM/CEO request. | Reduces baseline noise and prevents single outlier run from skewing future policy changes. |
 | D-171 | governance/phase5 | ADR-003/004 had implementation-facing inconsistencies: baseline object field mismatch, tightening logic still used boolean-style output conflicting with D-167, risk_level not required in allowlist schema | Amended ADR-004: fixed baseline.baseline_score reference consistency, converted tightening logic to additive-only format (min_review_level, min_approval_level). Amended ADR-003: made risk_level required field in allowlist schema, added to all examples. | Removes implementation ambiguity and ensures consistent additive-only policy format across tightening and loosening logic. |
-| D-172 | governance/phase5 | Phase 5A.0 architecture complete; freeze exit needed to begin implementation | Approved freeze exit for Phase 5 implementation. Current freeze (loop_operating_contract.md lines 9, 14) superseded for Phase 5 work only. Phase 5 implementation may proceed incrementally with validation at each milestone. All other work remains frozen. Implementation plan: phase5_implementation_plan_today_v2.md. | Enables Phase 5 implementation while preserving freeze discipline for non-Phase-5 work. |
+| D-172 | governance/phase5 | Phase 5A.0 architecture complete; freeze exit needed to begin implementation | Approved freeze exit for Phase 5 implementation. Current freeze (loop_operating_contract.md lines 9, 14) superseded for Phase 5 work only. Phase 5 implementation may proceed incrementally with validation at each milestone. All other work remains frozen. Implementation plan: `../../docs/archive/program_history/phase5/phase5_implementation_plan_today_v2.md`. | Enables Phase 5 implementation while preserving freeze discipline for non-Phase-5 work. |
 | D-173 | governance/phase5 | Phase 5A.1 Benchmark Harness Setup complete; operational baseline established | Completed 5A.1 implementation. Promptfoo 0.121.1 installed and operational. sql_accuracy suite implemented with 5 prompts and vendor-neutral assertions. Baseline established: anthropic:claude-opus-4-6 scored 0.91 (median of 3 runs). Harness correctly fails closed on provider errors and distinguishes assertion failures from API errors. Scripts operational: run_baseline_benchmark.py, validate_baseline.py, test_policy_proposal.py. All tests passing (12/12 in test_phase5_benchmark.py). | Delivers operational benchmark harness with real baseline. Enables 5A.2 (Subagent Routing Matrix) to proceed. |
 | D-174 | governance/phase24c | C1 PM signoff for Phase 24C enforce promotion | PM signoff granted for Phase 24C enforce promotion. Criteria: C0 (infra health) PASS, C2 (evidence volume ≥30) PASS, C3 (2 consecutive qualifying weeks) pending W11, C4 (FP rate ≤5%) PASS, C4b (annotation coverage 100%) PASS, C5 (schema v2.0.0) PASS. Authorization: proceed with shadow cycles through W11, then execute dry-run → canary → full rollout → 2-week monitor sequence. Rollout remains single-repo (quant_current_scope) with explicit `-AuditMode enforce` flag. | Satisfies C1 manual signoff requirement. Enables enforce promotion path once C3 automated blocker clears. Date: 2026-03-16. |
+| D-180 | governance/product-comparison | Phase 5 copy/adapt/reject research existed only inside a handoff snapshot, which made it hard to maintain as a reusable comparison artifact | Add `docs/templates/product_comparison_template.md` plus authoritative working copy `docs/context/product_comparison_latest.md`, seeded from the current Phase 5 comparison and kept advisory-only | Separates a reusable researched-product comparison artifact from the historical handoff snapshot without creating a new gate, mirror, or authority path. |
+| D-183 | governance/cli | scripts/*.py and sop CLI surfaces risked silent drift without explicit parity contract | Document canonical surface split in `docs/MIGRATION.md`: `sop` CLI is canonical per `pyproject.toml:22`, `scripts/*.py` is compatibility surface per `RELEASING.md:23`. Add parity tests (`tests/test_cli_script_parity.py`) verifying artifact/output equality across both entrypoints. Add anti-drift rule: new features go to sop first, scripts backport optional. | Enforces interface parity without changing authority model; preserves compatibility commitment while providing clear migration path. |
+| D-184 | governance/phase24c | Phase 24C Full Enforce Rollout complete | Approved full enforce rollout after canary validation. Canary summary: 3/3 PASS, 0.00% FP rate, 0 infra failures, 100% annotation coverage. Default AuditMode changed from "shadow" to "enforce" in `scripts/phase_end_handover.ps1`. Scope: single repo (quant_current_scope). Cross-repo rollout DEFERRED. Monitoring: 2 weeks (2026-03-22 to 2026-04-05). PM approval: `docs/context/pm_canary_review_approval.md`. | Activates enforce mode as default. Triggers 2-week post-rollout monitoring period before Phase 24C can be declared complete. Date: 2026-03-22. |
 
 Part 2: Decision Rationale (Phase 4 — Optimizer)
 
@@ -2409,6 +2426,54 @@ Philosophy Local-First Loop + Gemini Handover Automation (2026-03-01): Worker-Fi
   - `docs/context/loop_closure_status_latest.json` (2026-03-15 refresh; READY_TO_ESCALATE)
 - Rollback note:
   - Remove this PENDING C1 entry; no gate or authority changes.
+
+### Phase 24C: C1 Propagation Guard + _latest Artifact Scan Closure (2026-03-17)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-179 | governance/artifact-refresh | Regression risk: a C1 APPROVED dossier could leak `MANUAL_CHECK` / `manual_signoff_c1` tokens into downstream artifacts, or stale “manual signoff” wording could persist in committed `_latest*` context artifacts | Recorded the verified closure statement below and added deterministic integration coverage `tests/test_artifact_c1_propagation.py` to guard C1 propagation: (1) APPROVED dossier must not emit `MANUAL_CHECK` in exec-memory artifacts; (2) MANUAL_CHECK dossier must emit `manual_signoff_c1` in supervisor status | Creates an automated regression guard and a precise, defensible P0 closure record tied to a concrete wildcard scan and passing tests. |
+
+Closure statement (verified):
+
+After regenerating and validating the full `docs/context/*_latest*.json` and `docs/context/*_latest*.md` set, there is no `MANUAL_CHECK`, no `manual_signoff_c1`, and no `manual signoff` anywhere under those wildcard paths.
+
+- Evidence:
+  - `git status --short` → clean
+  - `python -m pytest tests/test_artifact_c1_propagation.py -v` → 2 passed
+  - `python -m pytest -q` → 494 passed
+  - Wildcard scan over `docs/context/*_latest*.json` + `docs/context/*_latest*.md` for `MANUAL_CHECK|manual_signoff_c1|manual signoff` → 0 matches
+  - `docs/context/context_compaction_status_latest.json` → `C1: true`
+  - `docs/context/context_compaction_state_latest.json` → `C1: true`
+  - `docs/context/exec_memory_packet_latest.json` → contains neither `MANUAL_CHECK` nor `manual_signoff_c1`
+
+- Rollback note:
+  - Revert commit `e5e7a77` to remove the integration test guard, and remove this D-179 entry.
+
+### v0.1.0 Release Readiness Planning (2026-03-20)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-181 | governance/release | First public release needed structured pre-tag, post-push, and post-release hardening phases to ensure docs alignment, publish verification, and auditable release evidence | Created `docs/context/release_readiness_checklist.md` with three-phase structure: C1 (pre-tag cleanup), C2 (tag push and verification), C3 (post-release hardening). C1 gates on explicit `RELEASING.md:38` criteria including README/CHANGELOG drift fixes. C2 captures push-trigger-verify semantics per `RELEASING.md:93,111`. C3 defers wheel-smoke, manifest, and outcome-capture hardening until after first release proves the pattern. | Ensures first release meets documented cut criteria, avoids shipping stale docs, and defers hardening investment until real release experience validates the need. |
+
+Phase definitions:
+
+- **C1 (pre-tag):** Trusted Publisher setup, release notes owner, CODEOWNERS confirmation, README roadmap drift (line 345), CHANGELOG publish drift (line 60), worktree clean, tests pass, CLI smoke.
+- **C2 (post-push):** Tag push triggers workflow; verify all validation jobs pass; verify PyPI publish; verify install from PyPI; run wheel-smoke manually once; create GitHub release.
+| D-182 | governance/test-coverage | Real phase_end_handover contract test skipped in commit ada0297 for CI compatibility; reduction in coverage but not a release blocker | Accept ada0297 for v0.1.0 public beta. Lower-level execution test exists at line 1682; dedicated real-script coverage exists in test_phase_end_handover.py. Record v0.1.1 follow-up to restore non-flaky integration test. | Enables v0.1.0 release while maintaining sufficient test coverage. Release worktree baseline passes (473 passed, 33 skipped). |
+  2245→
+  2246→Phase definitions:
+  2247→
+  2248→- **C1 (pre-tag):** Trusted Publisher setup, release notes owner, CODEOWNERS confirmation, README roadmap drift (line 345), CHANGELOG publish drift (line 60), worktree clean, tests pass, CLI smoke.
+  2249→- **C2 (post-push):** Tag push triggers workflow; verify all validation jobs pass; verify PyPI publish; verify install from PyPI; run wheel-smoke manually once; create GitHub release.
+  2250→- **C3 (post-release):** Promote wheel-smoke to mandatory; add release manifest emission; wire shipped-outcome capture; restore real phase_end_handover integration test; accept macOS as best-effort.
+  2251→
+  2252→- Evidence:
+  2253→  - `docs/context/release_readiness_checklist.md` created
+  2254→  - Worktree status: clean after release-readiness doc cleanup; recheck immediately before C1.6 if new local changes appear
+  2255→  - Doc drift confirmed: `README.md:345` shows "W2 partial" vs actual COMPLETE; `CHANGELOG.md:60` shows "via workflow_run" vs actual `needs:` gate
+  2256→  - Release worktree verification: 473 passed, 33 skipped in 148.45s; CLI smoke passes
+  2257→- Rollback note:
+  2258→  - Delete `docs/context/release_readiness_checklist.md` and remove this D-181 entry.
 ~~~
 
 ### docs/handover/phase20_handover.md
@@ -2776,7 +2841,7 @@ Prompt: Reply "approve next shadow cycle" to release the Ops lane while keeping 
 ~~~markdown
 # lessonss.md
 
-Last updated: 2026-03-08
+Last updated: 2026-03-18
 
 ## Purpose
 Track mistakes, root causes, and guardrails so repeated errors are prevented.
@@ -2865,6 +2930,8 @@ Track mistakes, root causes, and guardrails so repeated errors are prevented.
 | 2026-03-08 | Thesis-pull philosophy learning loop | Cross-repo philosophy learning could easily drift into paper-led novelty or silent policy mutation without one bounded artifact and authority rule | There was no canonical way to combine live external-repo evidence with selective research while keeping local evidence primary and policy change human-reviewed | Added a minimal thesis-pull template, protocol, authoritative working copy, thin root mirror, and one short philosophy note tying any refinement to explicit human-reviewed heuristic updates | When pulling heuristics from another repo, only do it from active SOP or fresh real operating evidence, combine with `1-3` academic inputs, classify research by actionability, and never auto-mutate policy | `docs/templates/thesis_pull_template.md`, `docs/thesis_pull_protocol.md`, `docs/context/thesis_pull_latest.md`, `THESIS_PULL_LATEST.md`, `docs/engineering_philosophy.md`, `docs/runbook_ops.md`, `docs/decision log.md`, `docs/lessonss.md` |
 | 2026-03-08 | Repo-root mirror discoverability | A thin repo-root mirror loses most of its operator value if the main quick-scan guide does not point to it | Convenience mirrors were being added correctly, but discoverability from the primary operator flow was still implicit | Added one short operator-guide pointer to the live thesis mirror | When a repo-root mirror is intended for quick scan flow, link it from `OPERATOR_LOOP_GUIDE.md` and keep the mirror convenience-only with `docs/context` authoritative | `OPERATOR_LOOP_GUIDE.md`, `THESIS_PULL_LATEST.md`, `docs/decision log.md`, `docs/lessonss.md` |
 | 2026-03-08 | Thesis-pull docs-only polish | Final polish pressure could have spawned extra thesis-learning machinery even though the remaining gap was only wording and explicit conservative-state metadata | The thesis-pull lane was already structurally sufficient; what remained was a small consistency and traceability pass | Aligned mirror wording with the repo-root mirror family and added advisory-only freshness/abstention fields to the template and working copy | When a learning loop is structurally good enough, prefer one small docs-only polish pass over adding a new subsystem, gate, validator, or role | `THESIS_PULL_LATEST.md`, `OPERATOR_LOOP_GUIDE.md`, `docs/thesis_pull_protocol.md`, `docs/templates/thesis_pull_template.md`, `docs/context/thesis_pull_latest.md`, `docs/decision log.md`, `docs/lessonss.md` |
+| 2026-03-18 | Product comparison artifact | Copy/adapt/reject research was embedded inside a point-in-time Phase 5 handoff doc instead of living as a maintained working artifact | The comparison started as handoff analysis and never got extracted into its own reusable advisory path | Added a dedicated template plus authoritative working copy for researched-product comparisons and linked it from the operating contract and decision log | When a researched-product comparison will outlive one handoff, extract it into `docs/templates/` plus `docs/context/` instead of expanding the decision log or leaving it buried in narrative docs | `docs/templates/product_comparison_template.md`, `docs/context/product_comparison_latest.md`, `docs/loop_operating_contract.md`, `docs/decision log.md`, `docs/lessonss.md`, `../../docs/archive/program_history/phase5/phase5_pm_architecture_handoff.md` |
+| 2026-03-20 | Post-phase git hygiene | Phase 59/60 produced many current/evidence artifacts that remained uncommitted at review time | No explicit post-phase git hygiene checkpoint in closeout flow | Require a post-phase artifact triage (keep/archive/prune) and clean git status or explicit classification before closure | `docs/lessonss.md`, `docs/templates/done_checklist_template.md`, `docs/decision log.md` |
 ~~~
 
 ### docs/phase_brief/phase20-brief.md

@@ -11,9 +11,13 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
-except Exception:
-    from ceo_go_signal_contract import resolve_c1_signoff_criterion  # type: ignore[no-redef]
+    from sop.scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    try:
+        from scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
+    except Exception:
+        from ceo_go_signal_contract import resolve_c1_signoff_criterion  # type: ignore[no-redef]
 
 
 def _now_utc_iso() -> str:

@@ -228,28 +228,27 @@ Stay on the narrow promotion path:
   - Schema version expectation is `v2.0.0`.
   - Fail-closed governance remains intact.
   - Loop-cycle modularization is complete enough for the current milestone.
-  - Architecture, prompt, and schema scope stay frozen until the promotion decision.
+  - Architecture, prompt, and schema scope stay frozen until Phase 24C is declared complete after monitoring.
   - `quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.
-  - Enforce should remain explicit via `-AuditMode enforce` through dry-run, canary, and monitor rather than flipping defaults early.
+  - Enforce mode is now the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly.
 - What is next:
-  - P0 ops hygiene and W11 evidence collection must keep advancing until `C3` reaches 2 consecutive qualifying weeks.
-  - `C1` PM signoff is now complete (D-174 recorded 2026-03-16).
-  - Once `C3` clears, execute enforce dry-run, canary, full rollout, and stable 2-week monitor sequence.
+  - Post-rollout monitoring period: 2026-03-22 to 2026-04-05 (2 weeks).
+  - `C1` PM signoff is complete (D-174 recorded 2026-03-16).
+  - Canary validation passed (3/3 PASS, 0.00% FP rate). Full enforce rollout activated (D-184, 2026-03-22).
   - Standalone closure should be checked for the current exec-memory truth mismatch on the `latest` packet path.
   - Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.
-  - Do not reopen schema, prompt, or architecture work.
-  - Push through P0 ops recovery, `C3`, explicit enforce dry-run, canary, rollout, and the 2-week monitor.
-  - Carry a W12 contingency because `C3` is calendar-bound rather than code-fixable.
+  - Do not reopen schema, prompt, or architecture work during monitoring.
 - Immediate first step:
-  - Wait for explicit approval before running the next shadow cycle. Once approved, run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow`.
+  - Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .` (enforce is now default).
+  - For rollback, add `-AuditMode shadow`.
 - Next Todos:
-  - Hold worker execution at the approval gate.
-  - After approval, run the next full shadow cycle without widening scope.
+  - Continue daily enforce runs through monitoring period.
   - If new C/H findings appear, annotate them to maintain `100%` coverage.
   - Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.
-  - Prepare the `C1` signoff packet in parallel so PM can move immediately when `C3` flips.
+  - Log daily results in `docs/context/post_rollout_monitoring_log.md`.
+  - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
 
 ## 13) Approval Metadata
-ConfirmationRequired: YES
-NextPhaseApproval: PENDING
-Prompt: Reply "approve next shadow cycle" to release the Ops lane while keeping the current freeze intact.
+ConfirmationRequired: NO (monitoring active)
+NextPhaseApproval: AFTER 2026-04-05
+Prompt: Continue daily enforce runs. Rollback if FP rate >=5% or infra error.

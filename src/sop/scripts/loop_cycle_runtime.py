@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from loop_cycle_context import LoopCycleContext
+    from sop.scripts.loop_cycle_context import LoopCycleContext
 except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
     from scripts.loop_cycle_context import LoopCycleContext
 
 

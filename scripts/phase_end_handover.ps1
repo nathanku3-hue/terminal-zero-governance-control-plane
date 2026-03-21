@@ -18,7 +18,7 @@ param(
     [string]$CrossRepoRoots = "",
     [switch]$EnforceScoreThresholds,
     [ValidateSet("none", "shadow", "enforce")]
-    [string]$AuditMode = "shadow",
+    [string]$AuditMode = "enforce",
     [switch]$DryRun
 )
 

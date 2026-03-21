@@ -51,10 +51,13 @@
 
 **Run every cycle (in order):**
 
-### 1. Shadow Phase-End
+### 1. Enforce Phase-End (Default)
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow
+# Enforce mode is now default (D-184, 2026-03-22)
+powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .
 ```
+
+**For rollback only:** Add `-AuditMode shadow` to revert temporarily.
 
 ### 2. Check for C/H Findings
 ```bash

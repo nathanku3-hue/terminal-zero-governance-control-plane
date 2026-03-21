@@ -16,11 +16,19 @@ if __name__ == "__main__":
     if str(_project_root) not in sys.path:
         sys.path.insert(0, str(_project_root))
 
-from scripts.utils.json_utils import safe_load_json_object
-from scripts.utils.compaction_retention import build_compaction_policy_snapshot
-from scripts.utils.memory_tiers import bind_memory_tier_paths
-from scripts.utils.memory_tiers import build_memory_tier_snapshot
-from scripts.utils.skill_resolver import resolve_active_skills
+try:
+    from sop.scripts.utils.json_utils import safe_load_json_object
+    from sop.scripts.utils.compaction_retention import build_compaction_policy_snapshot
+    from sop.scripts.utils.memory_tiers import bind_memory_tier_paths
+    from sop.scripts.utils.memory_tiers import build_memory_tier_snapshot
+    from sop.scripts.utils.skill_resolver import resolve_active_skills
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.json_utils import safe_load_json_object
+    from scripts.utils.compaction_retention import build_compaction_policy_snapshot
+    from scripts.utils.memory_tiers import bind_memory_tier_paths
+    from scripts.utils.memory_tiers import build_memory_tier_snapshot
+    from scripts.utils.skill_resolver import resolve_active_skills
 
 
 AUTOMATION_BOUNDARY_REGISTRY_PATH = "docs/automation_boundary_registry.md"

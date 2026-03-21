@@ -1,6 +1,6 @@
 # Auditor Calibration Report (DOSSIER)
 
-**Generated:** 2026-03-20T10:04:44.364740+00:00
+**Generated:** 2026-03-21T14:45:29.832466+00:00
 **Runs included:** 17
 **Time range:** N/A to N/A
 
@@ -21,11 +21,11 @@
 |--------|-------|
 | Ledger loaded | True |
 | C/H total | 58 |
-| C/H annotated | 53 |
-| C/H unannotated | 5 |
+| C/H annotated | 58 |
+| C/H unannotated | 0 |
 | C/H FP count | 0 |
 | FP rate | 0.00% |
-| Annotation coverage | 91.38% |
+| Annotation coverage | 100.00% |
 
 ## Per-Rule Breakdown
 
@@ -55,5 +55,5 @@
 | c2_min_items | [OK] | 72 >= 30 |
 | c3_min_weeks | [OK] | 2 consecutive weeks >= 2 |
 | c4_fp_rate | [OK] | 0.00% |
-| c4b_annotation_coverage | [FAIL] | 91.38% |
+| c4b_annotation_coverage | [OK] | 100.00% |
 | c5_all_v2 | [OK] | 1 versions: ['2.0.0'] |

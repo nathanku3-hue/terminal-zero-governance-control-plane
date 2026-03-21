@@ -11,18 +11,10 @@ from pathlib import Path
 from typing import Any, Mapping
 
 try:
-    from utils.path_validator import validate_artifact_path
+    from sop.scripts.utils.path_validator import validate_artifact_path
 except ModuleNotFoundError:
-    try:
-        from scripts.utils.path_validator import validate_artifact_path
-    except ModuleNotFoundError:
-        def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
-            path = str(path).strip()
-            if not path:
-                return False, "Empty path"
-            if path.startswith("/") or (len(path) >= 2 and path[1] == ":"):
-                return False, f"Absolute path not allowed: {path}"
-            path_parts = path.replace("\\", "/").split("/")
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.path_validator import validate_artifact_path
             if ".." in path_parts:
                 return False, f"Parent directory escape (..) not allowed: {path}"
             if path_parts[0] == repo_root.resolve().name:

@@ -512,3 +512,24 @@ directives:
       validators:
         - path: "tests/test_loop_cycle_artifacts.py::test_persist_advisory_sections_writes_expected_artifacts"
         - path: "tests/test_loop_cycle_artifacts.py::test_mirror_repo_root_convenience_copies_markdown_and_takeover_index"
+
+  - directive_id: "PM-24C-022"
+    source: "docs/decision log.md#D-172-D-173"
+    status: "VERIFIED"
+    traceability:
+      code_diffs:
+        - file: "src/sop/__init__.py"
+        - file: "src/sop/scripts/aggregate_worker_status.py"
+        - file: "src/sop/scripts/auditor_calibration_report.py"
+        - file: "src/sop/scripts/build_exec_memory_packet.py"
+        - file: "src/sop/scripts/evaluate_context_compaction_trigger.py"
+        - file: "src/sop/scripts/generate_ceo_go_signal.py"
+        - file: "src/sop/scripts/loop_cycle_runtime.py"
+        - file: "src/sop/scripts/print_takeover_entrypoint.py"
+        - file: "src/sop/scripts/run_loop_cycle.py"
+        - file: "src/sop/scripts/supervise_loop.py"
+        - file: "src/sop/scripts/utils/skill_resolver.py"
+        - file: "src/sop/scripts/validate_ceo_weekly_summary_truth.py"
+      validators:
+        - path: "tests/test_phase5_sop_package.py"
+

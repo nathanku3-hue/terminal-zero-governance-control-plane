@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ValidatorDescriptor",
+  "description": "Minimal descriptor for validators",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Validator name (unique identifier)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description"
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "JSON Schema for input"
+    },
+    "output_schema": {
+      "type": "object",
+      "description": "JSON Schema for output"
+    },
+    "declared_capabilities": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Informational only (NOT permissions)"
+    }
+  },
+  "required": ["name", "description", "input_schema", "output_schema", "declared_capabilities"]
+}

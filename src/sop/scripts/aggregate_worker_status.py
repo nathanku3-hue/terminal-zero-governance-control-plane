@@ -15,8 +15,13 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR.parent) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR.parent))
 
-from scripts.utils.time_utils import utc_now
-from scripts.utils.time_utils import utc_iso
+try:
+    from sop.scripts.utils.time_utils import utc_now
+    from sop.scripts.utils.time_utils import utc_iso
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.time_utils import utc_now
+    from scripts.utils.time_utils import utc_iso
 
 # Default settings from the plan
 DEFAULT_TTL_SECONDS = 300

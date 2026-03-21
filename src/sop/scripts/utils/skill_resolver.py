@@ -17,7 +17,11 @@ if __name__ == "__main__":
     if str(_project_root) not in sys.path:
         sys.path.insert(0, str(_project_root))
 
-from scripts.utils.json_utils import safe_load_json_object
+try:
+    from sop.scripts.utils.json_utils import safe_load_json_object
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.json_utils import safe_load_json_object
 
 try:
     import yaml

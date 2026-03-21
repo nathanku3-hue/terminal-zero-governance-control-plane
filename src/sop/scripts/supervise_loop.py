@@ -13,9 +13,12 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from sop.scripts.utils.atomic_io import atomic_write_text
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
     from scripts.utils.atomic_io import atomic_write_text
 except ModuleNotFoundError:
-    # Fallback for direct script execution
+    # Inline fallback if neither package nor scripts available
     def atomic_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=".tmp_", suffix=".tmp")

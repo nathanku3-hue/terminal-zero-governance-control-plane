@@ -1,0 +1,52 @@
+{
+  "name": "validate_architect_calibration",
+  "description": "Validate architect profile calibration using historical outcomes",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "history_csv": {
+        "type": "string",
+        "description": "Path to CSV file with historical profile outcomes"
+      },
+      "active_profile": {
+        "type": "string",
+        "description": "Profile name to validate"
+      },
+      "min_rows": {
+        "type": "integer",
+        "description": "Minimum number of rows required before evaluating calibration drift",
+        "default": 5
+      },
+      "tolerance": {
+        "type": "number",
+        "description": "Maximum allowed gap between the active profile success rate and the best profile",
+        "default": 0.1
+      }
+    },
+    "required": ["history_csv", "active_profile"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "valid": {
+        "type": "boolean",
+        "description": "Whether the active profile stayed within the configured calibration threshold; INSUFFICIENT still exits 0."
+      },
+      "output": {
+        "type": "string",
+        "description": "Validator output (PASS, DRIFT, INSUFFICIENT, or INVALID: <error>)"
+      },
+      "exit_code": {
+        "type": "integer",
+        "description": "Exit code (0 for PASS or INSUFFICIENT, 1 for INVALID, 2 for DRIFT)",
+        "enum": [0, 1, 2]
+      }
+    },
+    "required": ["valid", "output", "exit_code"]
+  },
+  "declared_capabilities": [
+    "read_csv",
+    "aggregate_profile_outcomes",
+    "detect_calibration_drift"
+  ]
+}

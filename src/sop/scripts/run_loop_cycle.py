@@ -13,42 +13,21 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from utils.path_validator import validate_artifact_path
+    from sop.scripts.utils.path_validator import validate_artifact_path
 except ModuleNotFoundError:
-    try:
-        from scripts.utils.path_validator import validate_artifact_path
-    except ModuleNotFoundError:
-        def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
-            path = str(path).strip()
-            if not path:
-                return False, "Empty path"
-            if path.startswith("/") or (len(path) >= 2 and path[1] == ":"):
-                return False, f"Absolute path not allowed: {path}"
-            path_parts = path.replace("\\", "/").split("/")
-            if ".." in path_parts:
-                return False, f"Parent directory escape (..) not allowed: {path}"
-            if path_parts[0] == repo_root.resolve().name:
-                return False, (
-                    f"Path must not start with repo root name '{repo_root.resolve().name}'"
-                )
-            try:
-                artifact_path = (repo_root / path).resolve()
-                artifact_path.relative_to(repo_root.resolve())
-            except ValueError:
-                return False, f"Path escapes repository root: {path}"
-            except Exception as exc:  # pragma: no cover - defensive fallback
-                return False, f"Path resolution error: {path} ({exc})"
-            return True, ""
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.path_validator import validate_artifact_path
 
 try:
-    from loop_cycle_artifacts import (
+    from sop.scripts.loop_cycle_artifacts import (
         REPO_ROOT_CONVENIENCE_SPECS,
         mirror_repo_root_convenience,
         persist_advisory_sections,
     )
-    from loop_cycle_context import build_loop_cycle_context
-    from loop_cycle_runtime import build_loop_cycle_runtime
+    from sop.scripts.loop_cycle_context import build_loop_cycle_context
+    from sop.scripts.loop_cycle_runtime import build_loop_cycle_runtime
 except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
     from scripts.loop_cycle_artifacts import (
         REPO_ROOT_CONVENIENCE_SPECS,
         mirror_repo_root_convenience,

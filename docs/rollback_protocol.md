@@ -84,8 +84,9 @@ echo $?
 
 **Rollback Command:**
 ```bash
-# No explicit rollback needed - shadow mode is default
-# Simply do not run enforce mode until issue is resolved
+# ROLLBACK REQUIRED - enforce mode is now default (D-184)
+# Explicitly run shadow mode until issue is resolved
+powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow
 ```
 
 **Recovery Criteria:**
@@ -157,8 +158,9 @@ cat docs/context/auditor_promotion_dossier.json | grep "fp_rate"
 
 **Rollback Command:**
 ```bash
-# No explicit rollback needed - shadow mode is default
-# Do not proceed to enforce mode until FP rate <5%
+# ROLLBACK REQUIRED - enforce mode is now default (D-184)
+# Explicitly run shadow mode until FP rate <5%
+powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow
 ```
 
 **Recovery Criteria:**
@@ -437,12 +439,13 @@ powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoo
 
 ### Step 1: Stop Current Mode
 ```bash
-# No explicit stop needed - simply do not run enforce mode
+# Explicitly stop enforce runs
+powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow
 ```
 
-### Step 2: Revert to Shadow
+### Step 2: Revert to Shadow (Explicit)
 ```bash
-# Run shadow mode (default, no special flags)
+# Run shadow mode explicitly (enforce is now default)
 powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot . -AuditMode shadow
 ```
 

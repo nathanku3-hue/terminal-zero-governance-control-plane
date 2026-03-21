@@ -8,21 +8,31 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from scripts.ceo_go_signal_contract import (
+    from sop.scripts.ceo_go_signal_contract import (
         AUTOMATED_CRITERIA_KEYS,
         CRITERIA_ORDER,
         criterion_met,
         criterion_status_display,
         extract_infra_failures,
     )
-except Exception:
-    from ceo_go_signal_contract import (  # type: ignore[no-redef]
-        AUTOMATED_CRITERIA_KEYS,
-        CRITERIA_ORDER,
-        criterion_met,
-        criterion_status_display,
-        extract_infra_failures,
-    )
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    try:
+        from scripts.ceo_go_signal_contract import (
+            AUTOMATED_CRITERIA_KEYS,
+            CRITERIA_ORDER,
+            criterion_met,
+            criterion_status_display,
+            extract_infra_failures,
+        )
+    except Exception:
+        from ceo_go_signal_contract import (  # type: ignore[no-redef]
+            AUTOMATED_CRITERIA_KEYS,
+            CRITERIA_ORDER,
+            criterion_met,
+            criterion_status_display,
+            extract_infra_failures,
+        )
 
 
 KNOWN_CRITERIA_CODES = tuple(short_code for short_code, _ in CRITERIA_ORDER)

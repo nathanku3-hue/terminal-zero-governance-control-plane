@@ -1,0 +1,49 @@
+{
+  "name": "validate_saw_report_blocks",
+  "description": "Validate required SAW report blocks and scope split markers",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "report": {
+        "type": "string",
+        "description": "SAW report text supplied inline"
+      },
+      "report_file": {
+        "type": "string",
+        "description": "Path to a SAW report text file"
+      }
+    },
+    "oneOf": [
+      {
+        "required": ["report"]
+      },
+      {
+        "required": ["report_file"]
+      }
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "valid": {
+        "type": "boolean",
+        "description": "Whether the report satisfied all required block and scope checks"
+      },
+      "output": {
+        "type": "string",
+        "description": "Validator output (VALID or INVALID: <error>)"
+      },
+      "exit_code": {
+        "type": "integer",
+        "description": "Exit code (0 for VALID, 1 for INVALID)",
+        "enum": [0, 1]
+      }
+    },
+    "required": ["valid", "output", "exit_code"]
+  },
+  "declared_capabilities": [
+    "read_report_text",
+    "check_required_blocks",
+    "verify_scope_split"
+  ]
+}

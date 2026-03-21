@@ -30,3 +30,6 @@ sop = ["py.typed", "scripts/**", "templates/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "parity: CLI-vs-script parity contract tests",
+]
