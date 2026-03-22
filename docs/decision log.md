@@ -2250,3 +2250,36 @@ Phase definitions:
   2256→  - Release worktree verification: 473 passed, 33 skipped in 148.45s; CLI smoke passes
   2257→- Rollback note:
   2258→  - Delete `docs/context/release_readiness_checklist.md` and remove this D-181 entry.
+
+### Terminal Zero Integration: Surface-First, No New Authority Plane (2026-03-22)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-183 | governance/terminal-zero | Product comparison (product_comparison_latest.md Round 4) identified useful patterns from obra/superpowers, affaan-m/everything-claude-code, and msitarzewski/agency-agents, but importing them naively could create a second control plane or bypass freeze constraints | Approve surface-first integration with explicit constraints: (1) **NO new gates**, (2) **NO runtime hooks**, (3) **NO new authority path**, (4) **NO Phase 5C execution semantics**. Integration must extend existing seams only: startup anchored on startup_codex_helper.py + loop_operating_contract.md:22 freeze boundary; skill visibility on skill_resolver.py + validate_skill_activation.py + skill_activation_latest.json; operator UX on run_loop_cycle.py:1569 Skill Activation section; delegation on subagent_routing_matrix.yaml:7. | Preserves freeze-mode integrity while enabling additive surface improvements. Keeps artifact-first governance model intact. Prevents second control plane emergence from imported patterns. |
+
+Approved implementation sequence:
+
+| Priority | Task | Constraint |
+|----------|------|------------|
+| P0 | Document explicit subagent review choreography in runbook_ops.md + planning_loop_integration_guide.md | Surface-only, no runtime |
+| P1 | Add skill-triggering test coverage beside test_skill_activation.py | Tests only, no runtime |
+| P1 | Expand visible skills surface from existing artifacts (extend run_loop_cycle.py:1569) | No new runtime logic |
+| P2 | Thin startup summary from existing helper (post-freeze) | Via startup_codex_helper.py, not new hook |
+| P2 | Event-driven quality checkpoints via existing scripts (post-freeze) | Via run_fast_checks.py outputs, not hidden hooks |
+| P3 | Manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation (Phase 5C+) | Execution semantics blocked until Phase 5C |
+
+Rejection boundaries (DO NOT IMPORT):
+- Prompt policy as authority plane
+- Node/plugin center-of-gravity shift
+- Personality-library sprawl
+- Hidden-hook governance
+- Universal workflow dogma bypassing risk-tiered SOP contracts
+- Capability-catalog bloat
+
+- Evidence:
+  - `docs/context/product_comparison_latest.md` Round 4 synthesis (obra/superpowers 7/10, affaan-m/everything-claude-code 5/10, msitarzewski/agency-agents 4/10)
+  - `docs/loop_operating_contract.md:13` freeze constraint: "FROZEN... no new gates/scripts/major prompt redesign... no runtime control-plane changes"
+  - `docs/decision log.md:2178` execution semantics blocked: "Execution semantics remain blocked until Phase 5C skill execution engine approval"
+  - `docs/runbook_ops.md:47` skill_activation_latest.json advisory-only: "does not change authority"
+- Rollback note:
+  - Remove this D-183 entry. No code changes until P0/P1 tasks land after this approval.

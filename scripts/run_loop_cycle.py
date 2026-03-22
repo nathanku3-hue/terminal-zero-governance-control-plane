@@ -1570,6 +1570,40 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 "",
                 f"- Status: {runtime.skill_activation_artifacts['status']}",
                 f"- ActiveSkills: {skill_count}",
+            ]
+        )
+        # Expanded visibility: show each skill's key fields
+        for skill in runtime.skill_activation_artifacts['payload'].get('skills', []):
+            skill_name = skill.get('name', 'unknown')
+            skill_version = skill.get('version', 'unknown')
+            skill_category = skill.get('category', 'unknown')
+            skill_risk = skill.get('risk_level', 'UNKNOWN')
+            skill_desc = skill.get('description', '')
+            skill_approval = skill.get('approval_decision_id', 'N/A')
+            # Truncate description for readability
+            desc_short = skill_desc[:60] + "..." if len(skill_desc) > 60 else skill_desc
+            md_lines.extend(
+                [
+                    f"  - {skill_name} (v{skill_version})",
+                    f"    - Category: {skill_category}",
+                    f"    - Risk: {skill_risk}",
+                    f"    - Description: {desc_short}",
+                    f"    - ApprovedBy: {skill_approval}",
+                ]
+            )
+        # Show warnings/errors if present
+        warnings = runtime.skill_activation_artifacts['payload'].get('warnings', [])
+        errors = runtime.skill_activation_artifacts['payload'].get('errors', [])
+        if warnings:
+            md_lines.append(f"- Warnings: {len(warnings)}")
+            for w in warnings[:3]:  # Show first 3
+                md_lines.append(f"  - {w[:80]}")
+        if errors:
+            md_lines.append(f"- Errors: {len(errors)}")
+            for e in errors[:3]:
+                md_lines.append(f"  - {e[:80]}")
+        md_lines.extend(
+            [
                 f"- JSON: {runtime.skill_activation_artifacts['json']}",
                 "",
             ]

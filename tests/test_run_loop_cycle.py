@@ -380,6 +380,7 @@ def _fake_run_factory(
     expert_request: dict[str, object] | None = None,
     pm_ceo_research_brief: dict[str, object] | None = None,
     board_decision_brief: dict[str, object] | None = None,
+    skill_activation: dict[str, object] | None = None,
     round_contract_observations: list[dict[str, object]] | None = None,
     compaction_status_payload: dict[str, object] | None = None,
     compaction_status_raw: str | None = None,
@@ -421,6 +422,8 @@ def _fake_run_factory(
                     output_payload["pm_ceo_research_brief"] = pm_ceo_research_brief
                 if board_decision_brief is not None:
                     output_payload["board_decision_brief"] = board_decision_brief
+                if skill_activation is not None:
+                    output_payload["skill_activation"] = skill_activation
                 output_json.write_text(
                     json.dumps(output_payload),
                     encoding="utf-8",
@@ -2296,3 +2299,214 @@ def test_run_loop_cycle_allows_nested_same_name_repo_root(tmp_path: Path, monkey
     # Should succeed (not reject nested same-name directories)
     assert exit_code == 0
     assert payload["final_result"] == "PASS"
+
+
+# =============================================================================
+# Phase 5B.2b: Expanded Skill Activation Visibility Tests
+# =============================================================================
+# These tests verify the expanded skill activation surface in loop cycle output.
+# Invariants: no new authority, no runtime hooks, no new gate, no Phase 5C behavior,
+# render-only over existing artifacts.
+
+
+def test_skill_activation_section_expanded_visibility(tmp_path: Path, monkeypatch) -> None:
+    """Skill Activation section must show expanded skill details."""
+    repo_root = tmp_path / "repo"
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    skill_activation_payload = {
+        "status": "ok",
+        "skills": [
+            {
+                "name": "test-skill",
+                "version": "1.0.0",
+                "status": "active",
+                "manifest_path": "skills/test_skill/skill.yaml",
+                "category": "testing",
+                "description": "A test skill for verifying expanded visibility",
+                "approval_decision_id": "D-183",
+                "risk_level": "LOW"
+            }
+        ],
+        "warnings": [],
+        "errors": []
+    }
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0, skill_activation=skill_activation_payload),
+    )
+
+    args = run_loop_cycle.parse_args(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--scripts-dir",
+            str(scripts_dir),
+            "--skip-phase-end",
+        ]
+    )
+
+    exit_code, payload, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+
+    # Verify expanded visibility in markdown output
+    assert "## Skill Activation" in markdown
+    assert "test-skill" in markdown
+    assert "v1.0.0" in markdown
+    assert "Category: testing" in markdown
+    assert "Risk: LOW" in markdown
+    assert "D-183" in markdown
+
+
+def test_skill_activation_section_shows_multiple_skills(tmp_path: Path, monkeypatch) -> None:
+    """Skill Activation section must show all active skills."""
+    repo_root = tmp_path / "repo"
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    skill_activation_payload = {
+        "status": "ok",
+        "skills": [
+            {
+                "name": "skill-alpha",
+                "version": "1.0.0",
+                "category": "testing",
+                "description": "First skill",
+                "approval_decision_id": "D-001",
+                "risk_level": "LOW",
+                "status": "active"
+            },
+            {
+                "name": "skill-beta",
+                "version": "2.0.0",
+                "category": "database",
+                "description": "Second skill",
+                "approval_decision_id": "D-002",
+                "risk_level": "HIGH",
+                "status": "active"
+            }
+        ],
+        "warnings": [],
+        "errors": []
+    }
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0, skill_activation=skill_activation_payload),
+    )
+
+    args = run_loop_cycle.parse_args(
+        ["--repo-root", str(repo_root), "--scripts-dir", str(scripts_dir), "--skip-phase-end"]
+    )
+
+    exit_code, _, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    assert "skill-alpha" in markdown
+    assert "skill-beta" in markdown
+    assert "Risk: LOW" in markdown
+    assert "Risk: HIGH" in markdown
+
+
+def test_skill_activation_section_shows_warnings(tmp_path: Path, monkeypatch) -> None:
+    """Skill Activation section must show warnings from skill resolution."""
+    repo_root = tmp_path / "repo"
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    skill_activation_payload = {
+        "status": "degraded",
+        "skills": [
+            {
+                "name": "active-skill",
+                "version": "1.0.0",
+                "category": "testing",
+                "description": "Active skill",
+                "approval_decision_id": "D-001",
+                "risk_level": "LOW",
+                "status": "active"
+            }
+        ],
+        "warnings": ["deprecated-skill is deprecated and was filtered out"],
+        "errors": []
+    }
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0, skill_activation=skill_activation_payload),
+    )
+
+    args = run_loop_cycle.parse_args(
+        ["--repo-root", str(repo_root), "--scripts-dir", str(scripts_dir), "--skip-phase-end"]
+    )
+
+    exit_code, _, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    assert "Warnings: 1" in markdown
+    assert "deprecated" in markdown
+
+
+def test_skill_activation_section_no_authority_path(tmp_path: Path, monkeypatch) -> None:
+    """Verify skill activation rendering does not create new authority path."""
+    repo_root = tmp_path / "repo"
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    skill_activation_payload = {
+        "status": "ok",
+        "skills": [
+            {
+                "name": "test-skill",
+                "version": "1.0.0",
+                "category": "testing",
+                "description": "Test",
+                "approval_decision_id": "D-183",
+                "risk_level": "LOW",
+                "status": "active"
+            }
+        ],
+        "warnings": [],
+        "errors": []
+    }
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0, skill_activation=skill_activation_payload),
+    )
+
+    args = run_loop_cycle.parse_args(
+        ["--repo-root", str(repo_root), "--scripts-dir", str(scripts_dir), "--skip-phase-end"]
+    )
+
+    exit_code, payload, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    # Verify no authority/override fields in output
+    assert "authority" not in markdown.lower() or "approval_decision_id" in markdown
+    assert "override" not in markdown.lower()
+    # Skill activation is advisory-only, not enforcement
+    assert "enforcement" not in markdown.lower()

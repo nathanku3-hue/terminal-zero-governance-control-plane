@@ -293,3 +293,181 @@ def test_validate_skill_activation_version_mismatch(temp_repo):
 
     assert not is_valid
     assert any("version mismatch" in error for error in errors)
+
+
+# =============================================================================
+# Phase 5B.2b: Skill Visibility and Trigger Coverage Tests
+# =============================================================================
+# These tests cover skill visibility, trigger predicates, and review sequence
+# expectations WITHOUT execution semantics or new config shapes.
+# Invariants: no new authority, no runtime hooks, no Phase 5C behavior.
+
+
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
+class TestSkillVisibility:
+    """Tests for skill visibility surface requirements."""
+
+    def test_skill_visibility_includes_required_fields(self, temp_repo):
+        """Active skills must expose name, version, category, description, risk_level."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        assert result["status"] in ("ok", "degraded")
+        if len(result["skills"]) > 0:
+            skill = result["skills"][0]
+            # Required visibility fields
+            assert "name" in skill
+            assert "version" in skill
+            assert "category" in skill
+            assert "description" in skill
+            assert "risk_level" in skill
+            assert "status" in skill
+            assert "approval_decision_id" in skill
+
+    def test_skill_visibility_category_taxonomy(self, temp_repo):
+        """Skill categories must be from known taxonomy."""
+        KNOWN_CATEGORIES = {
+            "testing", "database", "documentation", "refactoring",
+            "security", "deployment", "analysis", "automation"
+        }
+
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        for skill in result["skills"]:
+            # Category should be from known set or prefixed (extensibility)
+            category = skill.get("category", "")
+            assert category in KNOWN_CATEGORIES or "." in category, \
+                f"Unknown category '{category}' not in taxonomy"
+
+    def test_skill_visibility_risk_level_taxonomy(self, temp_repo):
+        """Risk levels must be from known taxonomy."""
+        KNOWN_RISK_LEVELS = {"LOW", "MEDIUM", "HIGH"}
+
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        for skill in result["skills"]:
+            risk_level = skill.get("risk_level", "")
+            assert risk_level in KNOWN_RISK_LEVELS, \
+                f"Unknown risk_level '{risk_level}' not in taxonomy"
+
+    def test_skill_visibility_includes_approval_chain(self, temp_repo):
+        """Active skills must show approval decision ID for traceability."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        for skill in result["skills"]:
+            assert "approval_decision_id" in skill
+            assert skill["approval_decision_id"].startswith("D-"), \
+                f"approval_decision_id must reference decision log"
+
+
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
+class TestSkillTriggerPredicates:
+    """Tests for skill trigger predicate expectations.
+
+    These tests define WHEN a skill SHOULD be triggered based on task context.
+    They do NOT execute skills - they only validate trigger expectations.
+    """
+
+    def test_database_skill_trigger_on_schema_change(self, temp_repo):
+        """Database-category skills should trigger on schema change tasks."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        # Find database-category skills
+        db_skills = [s for s in result["skills"] if s.get("category") == "database"]
+
+        # If database skill is active, it should have expected trigger context
+        for skill in db_skills:
+            # Trigger expectation: database skills trigger on schema operations
+            # This is documentation-only - no execution
+            assert "description" in skill
+            # Description should hint at trigger context
+            desc = skill["description"].lower()
+            trigger_keywords = {"schema", "database", "migration", "table", "column"}
+            has_trigger_hint = any(kw in desc for kw in trigger_keywords)
+            assert has_trigger_hint, \
+                f"Database skill '{skill['name']}' lacks trigger context in description"
+
+    def test_skill_trigger_requires_active_status(self, temp_repo):
+        """Only 'active' status skills should be triggerable."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        for skill in result["skills"]:
+            # Only active skills should appear in resolved list
+            assert skill.get("status") == "active", \
+                f"Non-active skill '{skill['name']}' in resolved skills"
+
+    def test_skill_trigger_blocked_for_wrong_project(self, temp_repo):
+        """Skills with project restrictions should not trigger for wrong project."""
+        # Add project-specific skill to active_skills
+        sop_config = yaml.safe_load((temp_repo / ".sop_config.yaml").read_text())
+        sop_config["active_skills"].append("project-specific-skill")
+        (temp_repo / ".sop_config.yaml").write_text(yaml.dump(sop_config))
+
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        # project-specific-skill should NOT be in resolved skills
+        skill_names = [s["name"] for s in result["skills"]]
+        assert "project-specific-skill" not in skill_names
+        # And there should be a warning about it
+        assert any("project-specific-skill" in w for w in result["warnings"])
+
+
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
+class TestSkillReviewSequenceExpectations:
+    """Tests for review sequence expectations tied to skills.
+
+    These tests validate that skills carry enough context for the
+    implementer -> spec compliance -> code quality -> continue/close
+    review choreography documented in runbook_ops.md.
+    """
+
+    def test_skill_carries_approval_for_review_traceability(self, temp_repo):
+        """Skills must carry approval_decision_id for review sequence traceability."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        for skill in result["skills"]:
+            # Review sequence requires approval chain visibility
+            assert "approval_decision_id" in skill
+            assert skill["approval_decision_id"], \
+                f"Skill '{skill['name']}' missing approval_decision_id"
+
+    def test_high_risk_skill_requires_explicit_review_notation(self, temp_repo):
+        """HIGH-risk skills should have explicit risk_level for review routing."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        high_risk_skills = [s for s in result["skills"] if s.get("risk_level") == "HIGH"]
+
+        for skill in high_risk_skills:
+            # HIGH-risk skills require additional review attention
+            # This is visibility-only - no enforcement
+            assert skill.get("risk_level") == "HIGH"
+            assert "approval_decision_id" in skill
+            # HIGH-risk should have CEO-level approval (D-xxx pattern in decision log)
+            assert skill["approval_decision_id"].startswith("D-")
+
+    def test_skill_manifest_path_resolvable(self, temp_repo):
+        """Skill manifest_path must be resolvable for review inspection."""
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        for skill in result["skills"]:
+            manifest_path = skill.get("manifest_path")
+            assert manifest_path, f"Skill '{skill['name']}' missing manifest_path"
+            # Path should be relative and within skills/
+            assert manifest_path.startswith("skills/"), \
+                f"manifest_path '{manifest_path}' not in skills/ directory"
+
+    def test_review_sequence_invariants_no_new_authority(self, temp_repo):
+        """Verify skill resolution does not create new authority path.
+
+        This test documents the invariant that skill resolution is
+        advisory-only and does not override PM/CEO approval gates.
+        """
+        result = resolve_active_skills(temp_repo, "test_project")
+
+        # Resolution result should be purely informational
+        # It should not contain any enforcement or authority fields
+        assert "authority" not in result
+        assert "enforcement" not in result
+        assert "override" not in result
+
+        # Status reflects advisory nature
+        assert result["status"] in ("ok", "degraded", "failed")
