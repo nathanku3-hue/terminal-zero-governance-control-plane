@@ -17,6 +17,7 @@ except ImportError:
 
 from scripts.utils.skill_resolver import resolve_active_skills
 from scripts.validate_skill_activation import validate_skill_activation
+from tests.test_skill_taxonomy import KNOWN_SKILL_CATEGORIES, KNOWN_RISK_LEVELS
 
 
 @pytest.fixture
@@ -325,23 +326,16 @@ class TestSkillVisibility:
 
     def test_skill_visibility_category_taxonomy(self, temp_repo):
         """Skill categories must be from known taxonomy."""
-        KNOWN_CATEGORIES = {
-            "testing", "database", "documentation", "refactoring",
-            "security", "deployment", "analysis", "automation"
-        }
-
         result = resolve_active_skills(temp_repo, "test_project")
 
         for skill in result["skills"]:
             # Category should be from known set or prefixed (extensibility)
             category = skill.get("category", "")
-            assert category in KNOWN_CATEGORIES or "." in category, \
+            assert category in KNOWN_SKILL_CATEGORIES or "." in category, \
                 f"Unknown category '{category}' not in taxonomy"
 
     def test_skill_visibility_risk_level_taxonomy(self, temp_repo):
         """Risk levels must be from known taxonomy."""
-        KNOWN_RISK_LEVELS = {"LOW", "MEDIUM", "HIGH"}
-
         result = resolve_active_skills(temp_repo, "test_project")
 
         for skill in result["skills"]:

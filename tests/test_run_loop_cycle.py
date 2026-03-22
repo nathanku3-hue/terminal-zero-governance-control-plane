@@ -2510,3 +2510,87 @@ def test_skill_activation_section_no_authority_path(tmp_path: Path, monkeypatch)
     assert "override" not in markdown.lower()
     # Skill activation is advisory-only, not enforcement
     assert "enforcement" not in markdown.lower()
+
+
+def test_skill_activation_section_shows_errors(tmp_path: Path, monkeypatch) -> None:
+    """Skill Activation section must show errors from skill resolution."""
+    repo_root = tmp_path / "repo"
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    skill_activation_payload = {
+        "status": "failed",
+        "skills": [],
+        "warnings": [],
+        "errors": ["critical-skill manifest not found", "validation failed for required-skill"]
+    }
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0, skill_activation=skill_activation_payload),
+    )
+
+    args = run_loop_cycle.parse_args(
+        ["--repo-root", str(repo_root), "--scripts-dir", str(scripts_dir), "--skip-phase-end"]
+    )
+
+    exit_code, _, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    assert "Errors: 2" in markdown
+    assert "critical-skill" in markdown
+    assert "validation failed" in markdown
+
+
+def test_skill_activation_section_truncates_long_descriptions(tmp_path: Path, monkeypatch) -> None:
+    """Skill Activation section must truncate long descriptions for readability."""
+    repo_root = tmp_path / "repo"
+    context_dir = repo_root / "docs" / "context"
+    scripts_dir = repo_root / "scripts"
+    _prepare_scripts_dir(scripts_dir, include_weekly_truth=False)
+
+    context_dir.mkdir(parents=True, exist_ok=True)
+
+    long_description = "A" * 100  # 100 characters, should be truncated to 60 + "..."
+
+    skill_activation_payload = {
+        "status": "ok",
+        "skills": [
+            {
+                "name": "verbose-skill",
+                "version": "1.0.0",
+                "category": "testing",
+                "description": long_description,
+                "approval_decision_id": "D-183",
+                "risk_level": "LOW",
+                "status": "active"
+            }
+        ],
+        "warnings": [],
+        "errors": []
+    }
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        run_loop_cycle.subprocess,
+        "run",
+        _fake_run_factory(calls, closure_exit_code=0, skill_activation=skill_activation_payload),
+    )
+
+    args = run_loop_cycle.parse_args(
+        ["--repo-root", str(repo_root), "--scripts-dir", str(scripts_dir), "--skip-phase-end"]
+    )
+
+    exit_code, _, markdown = run_loop_cycle.run_cycle(args)
+
+    assert exit_code == 0
+    assert "verbose-skill" in markdown
+    # Verify truncation: should have 60 chars + "..."
+    assert "A" * 60 + "..." in markdown
+    # Verify full description is NOT in output
+    assert long_description not in markdown
