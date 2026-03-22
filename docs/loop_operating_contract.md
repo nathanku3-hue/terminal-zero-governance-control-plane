@@ -1,22 +1,25 @@
-# Loop Operating Contract (Freeze Mode) v1.2
+# Loop Operating Contract (Freeze Lifted) v1.2
 
 > Internal governance contract for operator/worker/auditor loop behavior in this repository.
 > External readers: start with `README.md`; use `SECURITY.md` for vulnerability reporting and `SUPPORT.md` for support channels.
 
 Owner: PM  
 Status: ACTIVE  
-Last Updated: 2026-03-08  
-Applies To: Phase 24C (W11 execution through promotion decision)
+Last Updated: 2026-03-23  
+Applies To: Phase 24C Closure and P2 Authorization (Freeze Lifted per D-185)
 
 ## 1) Current Mode
 
-Architecture Status: **FROZEN**
-- No new gates/scripts/major prompt redesign.
-- No runtime control-plane changes.
+Architecture Status: **UNFROZEN** (D-185, 2026-03-23)
+- Schema, prompt, and architecture scope now unblocked for P2 work.
+- New gates/scripts/prompt redesign may proceed with standard review discipline.
+- No runtime control-plane changes without explicit approval.
 
 Operations Status: **ACTIVE**
-- Continue shadow/enforce operations per phase playbook.
+- Continue enforce-mode operations per phase playbook.
 - Continue annotation, weekly report, dossier, and GO signal refresh.
+- Phase 24C closure: Ready for declaration.
+- P2 work authorization: Ready.
 
 Startup Rule (enforced):
 - Start every round with `python scripts/startup_codex_helper.py --repo-root .`.
@@ -397,9 +400,27 @@ NEXT_DIRECTIVE: <single action>
 
 ## 6) Freeze Exit Condition
 
-Freeze lifts only after:
-1. C3 closed (2 consecutive qualifying weeks),
-2. C1 manual signoff completed,
-3. Canary enforce criteria passed.
+Freeze lifts only after ALL conditions below are met:
+1. `C1` manual signoff is recorded in the decision log.
+2. Canary enforce is complete and PM rollout approval is recorded in:
+   - `docs/context/canary_enforce_log.md`
+   - `docs/context/pm_canary_review_approval.md`
+3. Enforce stability evidence is complete:
+   - Count only phase-end status artifacts under `docs/context/phase_end_logs/phase_end_handover_status_*.json` produced after PM rollout approval and enforce-default activation.
+   - At least `10` consecutive counted runs must be `PASS`.
+   - Each counted run must satisfy all of:
+     - top-level `result == "PASS"`
+     - top-level `failed_exit_code == 0`
+     - `finalize_failures` is empty
+     - gate `G11_auditor_review` exists, has `status == "PASS"`, and its `command` includes `--mode enforce`
+     - no skipped gates except explicitly scoped exceptions such as `G05b_cross_repo_readiness` for single-repo rollout
+4. The latest available `docs/context/auditor_promotion_dossier.json` still shows all of:
+   - `c0_infra_health.met == true`
+   - `c4_fp_rate.met == true`
+   - `c4b_annotation_coverage.met == true`
+   - `c5_all_v2.met == true`
+5. Mode transition evidence exists in `docs/context/phase_end_logs/`:
+   - at least one earlier `PASS` run in `shadow` mode
+   - at least one later `PASS` run in `enforce` mode
 
 Until then: improve execution quality, not architecture complexity.
