@@ -2,12 +2,12 @@
 
 Authority: advisory-only authoritative working copy  
 Purpose: record which researched products and patterns to copy, modify on top, or reject before implementation.  
-Current state: combines the original Phase 5 reference snapshot with external ecosystem research and a third harness/governance research round on 2026-03-18.
+Current state: combines the original Phase 5 reference snapshot with external ecosystem research, a third harness/governance research round on 2026-03-18, and a direct GitHub repo refresh for three named comparison targets on 2026-03-22.
 
 ## Header
-- `COMPARISON_ID`: `20260318-phase5-reference-products-round2`
+- `COMPARISON_ID`: `20260322-phase5-reference-products-round4`
 - `OWNER`: `PM`
-- `DATE_UTC`: `2026-03-18T06:34:46.4299050Z`
+- `DATE_UTC`: `2026-03-22T09:57:50.5163126Z`
 - `SCOPE`: `Phase 5 and adjacent product-architecture comparison for orchestration, skills/plugins, delegation UX, and endgame shape`
 - `PRIMARY_OBJECTIVE`: `Import useful product and technical patterns without importing authority violations, silent policy mutation, permissionless automation, or marketplace drift.`
 - `NON_GOALS`: `This artifact does not approve implementation by itself and does not replace PM/CEO review for policy or control-plane changes.`
@@ -16,7 +16,7 @@ Current state: combines the original Phase 5 reference snapshot with external ec
 ## Comparison Lens
 - `TRANSFER_BOUNDARY`: `Reuse pragmatic implementation and operator patterns, but keep repo-specific authority, audit, and advisory-only governance semantics intact.`
 - `AUTHORITY_NOTE`: `Advisory only; final implementation and policy decisions still follow the normal PM/CEO approval path.`
-- `SOURCE_ACCESS_NOTES`: `The two referenced X posts could not be retrieved in this environment, and the BestBlogs article rendered as a client-side loading shell. Conclusions below rely on accessible repo sources and clearly mark inaccessible references.`
+- `SOURCE_ACCESS_NOTES`: `Round 4 conclusions below rely on direct shallow clones of the named GitHub repos on 2026-03-22 plus repo-local files and commit history. The older two referenced X posts could not be retrieved in this environment, and the BestBlogs article rendered as a client-side loading shell; those unresolved sources are retained as historical notes only.`
 
 ## Round 1: Phase 5 Internal Reference Snapshot
 
@@ -494,6 +494,107 @@ Current state: combines the original Phase 5 reference snapshot with external ec
 - `DO_NOT_IMPORT`: `model-first thinking, monolithic handbooks, prompt-only governance, skill or plugin sprawl, autonomy theater, unredacted audit logging, benchmark heuristics presented as hard law, and local-success-only validation`
 - `BIGGEST_DECISION_RISK`: `Building an impressive-looking agent platform that still lacks a coherent authority model, evidence plane, and done-state contract`
 - `NEXT_ACTION`: `Converge the product around a single governance-first harness: add a machine-checkable done checklist, tighten skills governance and measurement, keep specs for complex work only, and treat observability as authoritative evidence about what happened.`
+
+## Round 4: Direct Repo Refresh For Named Targets (2026-03-22)
+
+### PRODUCT_19: `obra/superpowers`
+- `WHY_RESEARCHED`: `Superpowers is a live skills-first workflow layer with Codex support, subagent execution choreography, and session-start hook wiring that is directly adjacent to Terminal Zero's skill and delegation surfaces.`
+- `FIT_SCORE`: `7/10`
+- `PRIMARY_RECOMMENDATION`: `MODIFY_ON_TOP`
+- `TECHNICAL_PERSPECTIVE`
+  - `COPY`:
+    - `Explicit subagent review ordering: implementer -> spec compliance review -> code quality review`
+    - `Skill-triggering and explicit-skill-request test coverage as a way to keep workflow activation honest`
+    - `Low-friction Codex skill discovery and install ergonomics`
+  - `MODIFY_ON_TOP`:
+    - `Session-start policy injection -> keep the injected payload thin and sourced from AGENTS.md plus active truth surfaces instead of a large always-on meta-skill`
+    - `Design-first and TDD-heavy defaults -> map into Terminal Zero risk tiers, done checklists, and validators instead of universal hard law`
+  - `REJECT`:
+    - `Letting hook-injected prompt policy become the primary authority plane`
+    - `Universal worktree or TDD dogma regardless of task risk and repo context`
+- `PRODUCT_PERSPECTIVE`
+  - `COPY`:
+    - `A legible skills catalog that tells operators which workflows exist and when they apply`
+    - `Visible review sequencing before a task can be called done`
+  - `MODIFY_ON_TOP`:
+    - `Agent checks skills first -> keep as a thin startup reminder plus validator-backed workflow routing`
+  - `REJECT`:
+    - `A product feel where prompt discipline substitutes for artifacts and mechanical validation`
+- `EVIDENCE_PATHS`:
+  - `https://github.com/obra/superpowers`
+  - `https://github.com/obra/superpowers/blob/main/README.md`
+  - `https://github.com/obra/superpowers/blob/main/hooks/hooks.json`
+  - `https://github.com/obra/superpowers/blob/main/skills/subagent-driven-development/SKILL.md`
+- `OPEN_RISKS`: `The strongest upside is review choreography and skill ergonomics; the main risk is shifting governance from artifacts into injected prompt policy.`
+
+### PRODUCT_20: `affaan-m/everything-claude-code`
+- `WHY_RESEARCHED`: `Everything Claude Code is a current, large-scale harness optimization system with hook-driven quality gates, selective install, and cross-harness runtime adapters.`
+- `FIT_SCORE`: `5/10`
+- `PRIMARY_RECOMMENDATION`: `MODIFY_ON_TOP`
+- `TECHNICAL_PERSPECTIVE`
+  - `COPY`:
+    - `Event-driven checkpoints around session start, tool use, compaction, and stop`
+    - `Manifest-driven selective install and incremental update concepts for optional capability packs`
+    - `Structured governance capture and MCP health-check ideas as evidence-producing helpers`
+  - `MODIFY_ON_TOP`:
+    - `Hook runtime -> re-express in Python and repo-native validators instead of importing a Node/npm runtime center of gravity`
+    - `Cross-harness parity -> keep the adapter concept but ship only a small allowlisted governance layer`
+    - `Session persistence and continuous-learning ideas -> tie to explicit artifacts and audit policy rather than open-ended background automation`
+  - `REJECT`:
+    - `Importing the whole plugin architecture and Node dependency surface into Terminal Zero`
+    - `Harness-wide rule packs or style doctrine as a replacement for repo-specific contracts`
+    - `Capability-catalog sprawl`
+- `PRODUCT_PERSPECTIVE`
+  - `COPY`:
+    - `Few-command selective installation for optional capability layers`
+    - `A visible safety and quality surface around tool use`
+  - `MODIFY_ON_TOP`:
+    - `Hook-driven ergonomics -> expose them as advisory evidence and optional runtime helpers, not hidden authority`
+  - `REJECT`:
+    - `Positioning breadth of plugin surface as the product`
+- `EVIDENCE_PATHS`:
+  - `https://github.com/affaan-m/everything-claude-code`
+  - `https://github.com/affaan-m/everything-claude-code/blob/main/README.md`
+  - `https://github.com/affaan-m/everything-claude-code/blob/main/hooks/hooks.json`
+  - `https://github.com/affaan-m/everything-claude-code/blob/main/package.json`
+- `OPEN_RISKS`: `The useful seams are real, but it is easy to over-import Node/plugin surface and global rules that do not match Terminal Zero's artifact-first model.`
+
+### PRODUCT_21: `msitarzewski/agency-agents`
+- `WHY_RESEARCHED`: `agency-agents is a current cross-tool specialist-agent catalog with a canonical-source conversion pipeline, minimal linting, and a strong operator-facing delegation story.`
+- `FIT_SCORE`: `4/10`
+- `PRIMARY_RECOMMENDATION`: `MODIFY_ON_TOP`
+- `TECHNICAL_PERSPECTIVE`
+  - `COPY`:
+    - `Single canonical source converted into multiple tool-specific targets`
+    - `Minimal frontmatter plus linter discipline for agent-definition files`
+  - `MODIFY_ON_TOP`:
+    - `Agent portability -> keep a very small governance-aligned roster and convert from canonical repo-controlled definitions`
+    - `Memory tagging and rollback semantics -> express through exec-memory packets and closure artifacts rather than MCP-first persona workflows`
+  - `REJECT`:
+    - `A large personality-heavy prompt library as the memory system`
+    - `Bash-first installer and converter scripts as the shipped control-plane surface`
+    - `Single-command autonomy framing`
+- `PRODUCT_PERSPECTIVE`
+  - `COPY`:
+    - `A curated specialist roster mental model with predictable deliverables`
+  - `MODIFY_ON_TOP`:
+    - `Operator chooses a specialist -> route through role-to-artifact mapping and bounded delegation contracts`
+  - `REJECT`:
+    - `Personality-zoo branding as the primary product value`
+    - `Catalog size and variety as the value proposition`
+- `EVIDENCE_PATHS`:
+  - `https://github.com/msitarzewski/agency-agents`
+  - `https://github.com/msitarzewski/agency-agents/blob/main/README.md`
+  - `https://github.com/msitarzewski/agency-agents/blob/main/scripts/convert.sh`
+  - `https://github.com/msitarzewski/agency-agents/blob/main/scripts/lint-agents.sh`
+- `OPEN_RISKS`: `The portability idea is useful, but the repo's size, personality emphasis, and shell-heavy tooling can quickly add cognitive load without strengthening the governance kernel.`
+
+## Round 4 Synthesis
+- `TECHNICAL_KEEP_THESE_PATTERNS`: `thin startup guidance, explicit spec-vs-quality review ordering for subagents, event-driven quality checkpoints, selective install or manifest concepts for optional capability packs, and canonical-to-multi-target conversion for a very small curated skill or agent set`
+- `PRODUCT_KEEP_THESE_PATTERNS`: `small visible skill catalogs, low-friction install and discovery, specialist selection with predictable deliverables, and review states that are obvious to the operator`
+- `DO_NOT_IMPORT`: `Node or plugin runtime center-of-gravity shifts, prompt policy as authority, personality-library sprawl, hidden hooks as silent governance, and universal workflow dogma that bypasses risk-tiered SOP contracts`
+- `BIGGEST_DECISION_RISK`: `Trying to improve operator UX by importing another repo's runtime or prompt mass and accidentally weakening Terminal Zero's artifact-first governance model`
+- `NEXT_ACTION`: `Keep Terminal Zero artifact-first; use the new rating fields in this comparison format, and only consider follow-up implementation for three thin seams: startup guidance, ordered subagent review choreography, and a small manifest or registry story for optional capability packs.`
 
 ## Endgame
 - `PRODUCT_ENDGAME`: `A PM-first operator control plane where a human sets intent, risk, approvals, and done criteria once, then delegates to a small visible team of specialists that return contract-shaped artifacts, not black-box magic. The product feels like one place to run engineering work with bounded autonomy: goals, active lane, current evidence, budget pressure, verification state, and open approvals are always visible, and chat surfaces remain adapters rather than sources of truth.`
