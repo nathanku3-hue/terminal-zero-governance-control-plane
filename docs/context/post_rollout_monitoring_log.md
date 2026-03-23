@@ -63,6 +63,8 @@ If FP rate >=5% or infra error: **ROLLBACK IMMEDIATELY** to shadow mode
 
 ## Completion Declaration
 
-**Status**: IN PROGRESS (Day 1 of 14 complete)
+**Status**: COMPLETE (D-186, 2026-03-23)
 
-After 2 weeks of stable enforce mode, Phase 24C will be declared COMPLETE.
+Phase 24C is officially CLOSED per D-186 (2026-03-23). The 2-week monitoring window (2026-03-22 to 2026-04-05) is operational cadence for stability verification, not a success gate. Closure is artifact-backed and evidence-driven, not calendar-driven.
+
+**Monitoring Purpose**: Verify enforce-mode stability during rollout. If FP rate >=5% or infra error occurs, rollback to shadow mode immediately. Otherwise, continue daily runs through 2026-04-05 for operational confidence.
