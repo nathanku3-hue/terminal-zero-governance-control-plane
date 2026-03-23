@@ -26,7 +26,7 @@
 **Resolution**:
 - Created `execution_surfaces_status_20260323.md` explicitly deactivating all seven surfaces
 - Documented that Phase 24C is CLOSED (D-186) and in monitoring-only mode
-- Defined reactivation trigger: post-rollout monitoring completion (2026-04-05) or P2 work authorization
+- Defined reactivation trigger: post-rollout monitoring completion (2026-04-05) AND P2 phase brief issuance
 - Active truth surfaces during monitoring: `post_rollout_monitoring_log.md`, `current_context.md`, `current_context.json`
 
 **Status**: PASS (Surfaces explicitly deactivated with clear reactivation path)
@@ -67,6 +67,7 @@
 3. ✅ Confirm execution surfaces state: Explicitly deactivated (monitoring mode)
 4. ✅ Route to monitoring operations: Daily enforce runs with annotation maintenance
 5. ✅ Decision authority: PM/CEO (no worker/auditor loop during monitoring)
+6. ✅ Reactivation trigger: Post-rollout monitoring completion (2026-04-05) AND P2 phase brief issuance
 
 ---
 
