@@ -955,3 +955,43 @@ def test_phase_a_qa_request_validation_rejects_invalid_values(tmp_path: Path) ->
 
     assert result.returncode == 1
     assert "qa_pre_escalation_request(invalid; use YES|NO)" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# P2 item 1: thin startup summary tests (RED -> GREEN after implementation)
+# ---------------------------------------------------------------------------
+
+
+def test_summary_mode_exits_zero_without_interrogation(tmp_path: Path) -> None:
+    """--summary prints a thin status block and exits 0 without needing interrogation."""
+    _touch_files(tmp_path)
+
+    result = _run(tmp_path, "--summary")
+
+    assert result.returncode == 0, result.stderr
+    assert "STARTUP_SUMMARY" in result.stdout
+    assert "READINESS_PROGRESS:" in result.stdout
+    assert "READINESS_STATUS:" in result.stdout
+    assert "P2_AUTHORIZATION:" in result.stdout
+    assert "PHASE_STATUS:" in result.stdout
+    # Must NOT require interrogation fields
+    assert "Missing or invalid interrogation fields" not in result.stderr
+
+
+def test_summary_mode_reflects_missing_readiness_doc(tmp_path: Path) -> None:
+    """--summary shows NEEDS_ATTENTION when a required readiness doc is absent."""
+    # Touch all required paths except ceo_go_signal.md
+    for rel in REQUIRED_PATHS:
+        if "ceo_go_signal" in rel:
+            continue
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("ok\n", encoding="utf-8")
+
+    result = _run(tmp_path, "--summary")
+
+    assert result.returncode == 0, result.stderr
+    assert "READINESS_STATUS: NEEDS_ATTENTION" in result.stdout
+    assert "MISSING_DOCS:" in result.stdout
+    assert "ceo_go_signal" in result.stdout
+

@@ -1130,6 +1130,55 @@ def _render_round_contract_seed(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _read_context_field(repo_root: Path, field: str, fallback: str) -> str:
+    ctx_path = repo_root / "docs/context/current_context.json"
+    if not ctx_path.exists():
+        return fallback
+    try:
+        data = json.loads(ctx_path.read_text(encoding="utf-8-sig"))
+        if not isinstance(data, dict):
+            return fallback
+        value = data.get(field)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        return fallback
+    except (OSError, json.JSONDecodeError):
+        return fallback
+
+
+def _print_thin_summary(
+    *,
+    repo_root: Path,
+    generated_at_utc: str,
+    summary: dict[str, Any],
+    rows: list[dict[str, Any]],
+) -> None:
+    p2_auth = _read_context_field(
+        repo_root,
+        "p2_work_authorization",
+        "see docs/loop_operating_contract.md",
+    )
+    phase_status = _read_context_field(
+        repo_root,
+        "phase_status",
+        "see docs/loop_operating_contract.md",
+    )
+    missing = _readiness_line_items(rows, status="MISSING")
+    stale = _readiness_line_items(rows, status="STALE")
+    print("STARTUP_SUMMARY: CODEX")
+    print(f"GENERATED_AT_UTC: {generated_at_utc}")
+    print(
+        f"READINESS_PROGRESS: {summary['ready_docs']}/{summary['total_docs']} "
+        f"({summary['ready_percent']}%)"
+    )
+    print(f"READINESS_STATUS: {summary['status']}")
+    print(f"MISSING_DOCS: {missing}")
+    print(f"STALE_DOCS: {stale}")
+    print(f"PHASE_STATUS: {phase_status}")
+    print(f"P2_AUTHORIZATION: {p2_auth}")
+    print("NOTE: run without --summary to capture full interrogation intake.")
+
+
 def _print_terminal_summary(
     *,
     generated_at_utc: str,
@@ -1365,11 +1414,36 @@ def parse_args() -> argparse.Namespace:
         default=0.0,
         help="Optional fail threshold for readiness ratio (0.0-1.0).",
     )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help=(
+            "Print a thin one-screen readiness+phase status block and exit. "
+            "Does not require any interrogation fields."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+
+    # --summary: thin glanceable mode, no interrogation required
+    if args.summary:
+        repo_root = args.repo_root.resolve()
+        now_utc = _now_utc()
+        generated_at_utc = _utc_iso(now_utc)
+        readiness_rows, readiness_summary = collect_readiness(
+            repo_root=repo_root, now_utc=now_utc
+        )
+        _print_thin_summary(
+            repo_root=repo_root,
+            generated_at_utc=generated_at_utc,
+            summary=readiness_summary,
+            rows=readiness_rows,
+        )
+        return 0
+
     if args.min_ready_ratio < 0.0 or args.min_ready_ratio > 1.0:
         print("--min-ready-ratio must be between 0.0 and 1.0", file=sys.stderr)
         return 2
