@@ -16,7 +16,6 @@
 - Post-rollout monitoring period: 2026-03-22 to 2026-04-05 (2 weeks).
 - `C1` PM signoff is complete (D-174 recorded 2026-03-16).
 - Canary validation passed (3/3 PASS, 0.00% FP rate). Full enforce rollout activated (D-184, 2026-03-22).
-- Standalone closure should be checked for the current exec-memory truth mismatch on the `latest` packet path.
 - Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.
 - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
 - Continue daily enforce runs through monitoring period.

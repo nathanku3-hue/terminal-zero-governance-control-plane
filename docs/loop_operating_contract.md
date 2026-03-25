@@ -18,8 +18,8 @@ Architecture Status: **UNFROZEN** (D-185, 2026-03-23)
 Operations Status: **ACTIVE**
 - Continue enforce-mode operations per phase playbook.
 - Continue annotation, weekly report, dossier, and GO signal refresh.
-- Phase 24C closure: Ready for declaration.
-- P2 work authorization: Ready.
+- Phase 24C closure: COMPLETE (D-186, 2026-03-23).
+- P2 work authorization: ACTIVE (sop-first policy per MIGRATION.md:72).
 
 Startup Rule (enforced):
 - Start every round with `python scripts/startup_codex_helper.py --repo-root .`.
