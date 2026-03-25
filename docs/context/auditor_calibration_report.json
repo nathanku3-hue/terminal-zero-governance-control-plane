@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "report_type": "dossier",
-  "generated_at_utc": "2026-03-21T14:45:19.392236+00:00",
+  "report_type": "weekly",
+  "generated_at_utc": "2026-03-25T07:04:28.641976+00:00",
   "data_range": {
     "from_utc": null,
     "to_utc": null,
@@ -104,38 +104,6 @@
       "medium": 4,
       "low": 0,
       "info": 0
-    }
-  },
-  "promotion_criteria": {
-    "c0_infra_health": {
-      "met": true,
-      "value": "0 failures"
-    },
-    "c1_24b_close": {
-      "met": true,
-      "value": "APPROVED",
-      "decision_id": "D-174",
-      "decision_date": "2026-03-16"
-    },
-    "c2_min_items": {
-      "met": true,
-      "value": "72 >= 30"
-    },
-    "c3_min_weeks": {
-      "met": true,
-      "value": "2 consecutive weeks >= 2"
-    },
-    "c4_fp_rate": {
-      "met": true,
-      "value": "0.00%"
-    },
-    "c4b_annotation_coverage": {
-      "met": true,
-      "value": "100.00%"
-    },
-    "c5_all_v2": {
-      "met": true,
-      "value": "1 versions: ['2.0.0']"
     }
   }
 }

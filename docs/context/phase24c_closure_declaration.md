@@ -19,7 +19,7 @@ Phase 24C freeze-lift criteria (D-185) have been satisfied and approved in commi
 
 - `docs/decision log.md` - D-185 recorded
 - `docs/context/freeze_lift_status_20260323_final.md` - complete evidence trail
-- `docs/context/current_context.md` - enforce mode, Phase 24C closure ready (regenerated 2026-03-23)
+- `docs/context/current_context.md` - enforce mode, Phase 24C closure complete (D-186, regenerated 2026-03-23)
 - `docs/context/current_context.json` - machine-readable context (regenerated 2026-03-23)
 - `docs/context/ceo_go_signal.md` - freeze lift criteria satisfied
 - `docs/loop_operating_contract.md` - Freeze Lifted status, architecture scope unblocked
