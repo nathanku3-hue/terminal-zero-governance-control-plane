@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-25T06:34:30Z
+- GeneratedAtUTC: 2026-03-25T06:51:55Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -156,7 +156,7 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-25T06:34:30Z",
+  "generated_at_utc": "2026-03-25T06:51:55Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -2649,7 +2649,7 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
 - C3 (consecutive weeks) was satisfied by 2026-03-22
 - Canary validation passed (3/3 PASS, 0.00% FP rate)
 - Full enforce rollout activated (D-184, 2026-03-22)
-- Freeze lifted; Phase 24C closure ready
+- Freeze lifted; Phase 24C closure complete (D-186, 2026-03-23)
 
 ### Current Operation (Monitoring Window)
 1. Daily enforce runs continue through 2026-04-05.
@@ -2760,10 +2760,6 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
 ### Decision C: Is Cross-Repo Readiness Required Before Any Enforce Action?
 - Recommendation: close `quant_current_scope` first and treat Quant/Film expansion as rollout wave 2 unless PM/CEO explicitly broaden scope.
 - Why: the current briefs and playbooks are single-repo scoped, and forcing cross-repo scope now would widen risk without helping close the active blocker.
-
-### Decision D: Is the Standalone Exec-Memory Truth Mismatch a Must-Fix Before C1?
-- Recommendation: yes, resolve or explicitly classify it before claiming "done done."
-- Why: it is not the main blocker today, but it weakens the closure surface that PM will rely on during promotion.
 
 ### Decision E: When Should Enforce Become the Default?
 - Recommendation: keep `-AuditMode enforce` explicit through the dry-run, canary, and monitor window.

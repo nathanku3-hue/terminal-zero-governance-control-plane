@@ -43,7 +43,7 @@ Both items follow sop-first policy: implement in `src/sop/scripts/` first, backp
 
 - Context artifacts regenerated via `python scripts/build_context_packet.py` (2026-03-23)
 - Context artifacts validated via `python scripts/build_context_packet.py --validate` (2026-03-23)
-- All authoritative surfaces reflect Phase 24C closure-ready state
+- All authoritative surfaces reflect Phase 24C closure-complete state (D-186, 2026-03-23)
 - Freeze-lift approval live in origin/main (commit 147ded2)
 
 ## Next Steps
