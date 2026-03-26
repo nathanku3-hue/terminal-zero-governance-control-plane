@@ -228,17 +228,18 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
   - Enforce mode is the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly.
   - Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations.
 - What is next:
-  - Stream D pilot (D-190, 2026-03-26): COMPLETE (de5e280, 2026-03-26). `repo_map` registered as callable skill via `skill_resolver.py` seam. Rollback plan committed at `docs/phase_brief/repo_map_skill_rollback_plan.md`. Manifest at `skills/repo_map/skill.yaml`. `validate_skill_activation.py` passes. `build_context_packet.py --validate` passes. Full suite 756 passed, 1 skipped.
-  - D-183 P3 items unblocked: manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation.
+  - D-183 P3 implementation authorized (D-191, 2026-03-26): (1) memory/rollback for skills, (2) manifest-driven selective install, (3) canonical-to-multi-target, (4) specialist delegation. Each item independent; rollback plan required before execution semantics land.
+  - D-190 pilot COMPLETE: `repo_map` registered, dispatch seam proven, all checks pass.
   - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
   - Post-rollout monitoring period ends 2026-04-05.
 - Immediate first step:
   - Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .` (enforce is default).
   - For emergency rollback only, add `-AuditMode shadow`.
 - Next Todos:
-  - [COMPLETE] Rollback plan committed: `docs/phase_brief/repo_map_skill_rollback_plan.md` (D-190, de5e280, 2026-03-26).
-  - [COMPLETE] `repo_map` wired as callable skill via `skill_resolver.py` seam: manifest `skills/repo_map/skill.yaml`, allowlist entry D-190, risk LOW.
-  - [COMPLETE] Full suite validated: 756 passed, 1 skipped after pilot wiring.
+  - Implement D-191 item 1: memory/rollback for skills (commit rollback plan first).
+  - Implement D-191 item 2: manifest-driven selective install.
+  - Implement D-191 item 3: canonical-to-multi-target.
+  - Implement D-191 item 4: specialist delegation.
   - Continue daily enforce runs through monitoring period.
   - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
   - Next: D-183 P3 items (manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation) — pending PM/CEO authorization.

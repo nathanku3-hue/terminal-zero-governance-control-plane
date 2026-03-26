@@ -251,3 +251,54 @@ Wire `repo_map` as a callable skill via the existing `skill_resolver.py` seam. N
 **Approved by**: PM/CEO (2026-03-26)  
 **Committed in**: D-190 (this decision log entry)  
 **Predecessor**: D-189 (Phase 5C complete), D-188 (Phase 5C approved)
+
+---
+
+## D-191: D-183 P3 Items Authorized — Manifest-Driven Selective Install, Canonical-to-Multi-Target, Memory/Rollback, Specialist Delegation
+
+**Date**: 2026-03-26  
+**Status**: APPROVED  
+**Owner**: PM/CEO
+
+### Summary
+
+D-190 pilot (repo-map) is fully verified. Dispatch seam is proven. All four D-183 P3 items are hereby authorized for implementation.
+
+### D-190 Pilot Evidence (Verified Directly)
+
+| Check | Result | Evidence |
+|-------|--------|----------|
+| Rollback plan committed | PASS | `docs/phase_brief/repo_map_skill_rollback_plan.md` (de5e280) |
+| `skill_resolver.py` seam wired | PASS | `skills/repo_map/skill.yaml`, allowlist + config (de5e280) |
+| `validate_skill_activation.py` | PASS | `[OK]` (verified 2026-03-26) |
+| `build_context_packet.py --validate` | PASS | exit 0 (5469f15) |
+| Full suite | PASS | 756 passed, 1 skipped |
+| Context surfaces synced | PASS | `generated_at_utc: 2026-03-26T14:44:28Z` (5469f15) |
+
+### Authorized Implementation Sequence
+
+| Order | Item | Constraint |
+|-------|------|------------|
+| 1 | **Memory/rollback for skills** | Skills record rollback state before applying changes; uses existing `rollback_protocol.md` pattern; lowest risk |
+| 2 | **Manifest-driven selective install** | Skill manifest declares what surfaces it installs; operator can selectively apply; `skill_resolver.py` seam only |
+| 3 | **Canonical-to-multi-target** | Extend canonical skill outputs to multiple target surfaces; `skill_resolver.py` seam only |
+| 4 | **Specialist delegation** | Route narrow specialist tasks to dedicated skill workers; `subagent_routing_matrix.yaml` seam only |
+
+Each item is implemented and validated independently before the next begins. A decision log entry is required at completion of each item.
+
+### Hard Limits (Unchanged)
+
+- No full skill-execution engine
+- No forced routing
+- No auto-promotion of generated or self-evolved skills
+- No new authority paths
+- Rollback plan must be committed before each item's execution semantics land
+- Kernel guardrails, auditor review chain, and CEO GO signal authority unchanged
+- No cross-repo rollout (quant_current_scope closes first per D-186)
+- No weakening of kernel minimums
+
+---
+
+**Approved by**: PM/CEO (2026-03-26)  
+**Committed in**: D-191 (this decision log entry)  
+**Predecessor**: D-190 (Stream D pilot complete), D-183 (P3 items defined)
