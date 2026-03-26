@@ -63,3 +63,61 @@ Execution surfaces will be reactivated when:
 
 **Approved by**: Governance review (2026-03-23)  
 **Committed in**: D-187 (this decision log entry)
+
+---
+
+## D-188: Phase 5C / P3 Approval — Worker Inner Loop Execution Semantics
+
+**Date**: 2026-03-26  
+**Status**: APPROVED  
+**Owner**: PM/CEO
+
+### Summary
+
+Phase 5C (Worker Inner Loop) is hereby approved. This entry lifts the explicit block recorded in D-187 and D-183. The prior auditor block is lifted by this positive authorization entry from PM/CEO.
+
+### Prerequisites Confirmed
+
+1. ✅ **5A complete** — Benchmark harness operational (D-173, promptfoo 0.121.1, sql_accuracy baseline 0.91)
+2. ✅ **5B.1 complete** — Subagent routing matrix implemented (D-177/D-177a/D-177b); skill visibility active without execution semantics per prior entries
+3. ✅ **Phase 24C closure complete** — Enforce mode live, freeze lifted (D-185/D-186, 2026-03-23)
+4. ✅ **P2 queue complete** — Thin startup summary + event-driven quality checkpoints delivered (D-187, 2026-03-26)
+5. ✅ **Context packet current** — `build_context_packet.py --validate` passes post-D-187
+
+### Phase 5C Scope Authorized (per ADR-001 §4)
+
+- **5C.1 — Repo map compression**: `repo_map.py` (file → symbols → dependencies); compresses worker context to relevant symbols only
+- **5C.2 — Lint/test repair loop**: `lint_repair_loop.py` + `test_repair_loop.py`; max 5 iterations then mandatory human escalation
+- **5C.3 — Sandbox execution**: `sandbox_executor.py`; Docker-based isolation; worker operates within guardrails
+
+Each sub-phase (5C.1, 5C.2, 5C.3) may be implemented incrementally. A milestone validation pass is required before closing each sub-phase.
+
+### Authority Boundary (Unchanged)
+
+- Worker loop operates **within** existing kernel guardrails
+- Worker loop **cannot bypass** auditor review for high-risk changes
+- Worker loop **cannot bypass** CEO GO signal for ONE_WAY decisions
+- Repair loop has a **hard 5-iteration limit**; exceeding it triggers mandatory human escalation
+- No new authority paths introduced
+- No weakening of kernel minimums
+- All policy changes still require PM/CEO approval in this decision log
+
+### What This Does NOT Authorize
+
+- Cross-repo rollout (remains deferred per D-184)
+- Any change to the authority model, truth-gate stack, or auditor review chain
+- Rollout automation (Phase 5 §5, future-state)
+- Adaptive guardrails or memory optimization (Phase 5 §6, future-state)
+- Any surface not listed in ADR-001 §4 Worker Inner Loop
+
+### Required After Commit
+
+- Regenerate context packet: `python scripts/build_context_packet.py --validate`
+- Confirm `current_context.json` and `current_context.md` reflect Phase 5C approval state
+- Closure artifact committed: `docs/context/phase5c_approval.md`
+
+---
+
+**Approved by**: PM/CEO (2026-03-26)  
+**Committed in**: D-188 (this decision log entry)  
+**Closure artifact**: `docs/context/phase5c_approval.md`
