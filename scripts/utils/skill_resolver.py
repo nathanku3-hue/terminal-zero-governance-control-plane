@@ -2,6 +2,11 @@
 
 Phase 5B.2: Thin Skill-Activation Bridge
 Resolves active skills from project config against global allowlist.
+
+P3 extensions (D-191):
+- P3.1: Surface rollback_state from skill manifest (memory/rollback for skills)
+- P3.2: Surface installs from skill manifest (manifest-driven selective install)
+- P3.3: Surface targets from skill manifest (canonical-to-multi-target)
 """
 
 from __future__ import annotations
@@ -39,6 +44,13 @@ def _load_yaml_safe(path: Path) -> dict[str, Any] | None:
         return None
 
 
+def _load_manifest(repo_root: Path, manifest_path: str) -> dict[str, Any]:
+    """Load a skill manifest YAML. Returns empty dict on missing/invalid."""
+    p = repo_root / manifest_path
+    result = _load_yaml_safe(p)
+    return result if result is not None else {}
+
+
 def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
     """Resolve active skills from project config against global allowlist.
 
@@ -51,6 +63,7 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
       - Get version from allowlist
       - Get metadata from skills/registry.yaml
       - Derive manifest_path: skills/{name.replace('-', '_')}/skill.yaml
+      - Load manifest and surface P3 fields: rollback_state, installs, targets
 
     Fail-soft: Return status + warnings on errors.
 
@@ -165,8 +178,18 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
         manifest_name = skill_name.replace("-", "_")
         manifest_path = f"skills/{manifest_name}/skill.yaml"
 
+        # P3.1 / P3.2 / P3.3: Load manifest and surface rollback_state, installs, targets
+        manifest = _load_manifest(repo_root, manifest_path)
+        rollback_state: dict[str, Any] | None = manifest.get("rollback") or None
+        installs: list[str] = manifest.get("installs", [])
+        if not isinstance(installs, list):
+            installs = []
+        targets: list[str] = manifest.get("targets", [])
+        if not isinstance(targets, list):
+            targets = []
+
         # Build skill metadata
-        skill_metadata = {
+        skill_metadata: dict[str, Any] = {
             "name": skill_name,
             "version": str(version),
             "status": status,
@@ -175,6 +198,12 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
             "description": registry_entry.get("description", ""),
             "approval_decision_id": allowlist_entry.get("approval_decision_id", ""),
             "risk_level": allowlist_entry.get("risk_level", "UNKNOWN"),
+            # P3.1: rollback state from manifest
+            "rollback_state": rollback_state,
+            # P3.2: manifest-declared install surfaces
+            "installs": installs,
+            # P3.3: canonical-to-multi-target output surfaces
+            "targets": targets,
         }
 
         skills.append(skill_metadata)

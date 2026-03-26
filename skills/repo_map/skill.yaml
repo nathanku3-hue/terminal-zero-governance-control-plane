@@ -30,8 +30,26 @@ implementation:
   invocation_example: |
     python src/sop/scripts/repo_map.py . --text
 
+# P3.2 (D-191): Manifest-driven selective install
+# Surfaces declared by this skill that an operator can selectively apply.
+# repo-map is read-only so installs is empty — it produces output artifacts only.
+installs: []
+
+# P3.3 (D-191): Canonical-to-multi-target
+# Output surfaces this skill can write to when --output is specified.
+targets:
+  - docs/context/repo_map_latest.json
+  - docs/context/repo_map_latest.txt
+
+# P3.1 (D-191): Memory/rollback state
+# Pre-execution state record. repo-map is read-only; nothing to undo on the
+# repo itself. Rollback = remove any --output artifact written during the run.
 rollback:
   plan: docs/phase_brief/repo_map_skill_rollback_plan.md
+  pre_execution_snapshot: null  # no write surfaces; snapshot not required
+  undo_steps:
+    - Remove output artifact if written: docs/context/repo_map_latest.json
+    - Remove output artifact if written: docs/context/repo_map_latest.txt
   procedure: Remove repo-map from extension_allowlist.yaml, .sop_config.yaml,
     skills/registry.yaml, and delete this file. Do NOT remove
     src/sop/scripts/repo_map.py (D-189 implementation).
