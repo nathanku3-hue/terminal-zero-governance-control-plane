@@ -9,29 +9,30 @@ from pathlib import Path
 from typing import Any
 
 
+# ---------------------------------------------------------------------------
+# Check registry
+# Each entry is a spec; repo_root and freshness_hours are injected at runtime.
+# ---------------------------------------------------------------------------
+
 CHECKS: tuple[dict[str, Any], ...] = (
     {
+        "name": "startup_gate",
+        "script": "scripts/startup_codex_helper.py",
+        "extra_args": ["--summary"],
+    },
+    {
         "name": "run_loop_cycle",
-        "args": [
-            "scripts/run_loop_cycle.py",
-            "--repo-root",
-            ".",
-            "--skip-phase-end",
-            "--allow-hold",
-            "true",
-        ],
+        "script": "scripts/run_loop_cycle.py",
+        "extra_args": ["--skip-phase-end", "--allow-hold", "true"],
     },
     {
         "name": "validate_loop_closure",
-        "args": [
-            "scripts/validate_loop_closure.py",
-            "--repo-root",
-            ".",
-            "--freshness-hours",
-            "72",
-        ],
+        "script": "scripts/validate_loop_closure.py",
+        "extra_args": [],          # --freshness-hours injected at runtime if provided
     },
 )
+
+ALL_CHECK_NAMES: tuple[str, ...] = tuple(spec["name"] for spec in CHECKS)
 
 
 def _utc_now_iso() -> str:
@@ -51,8 +52,18 @@ def _final_status_token(stdout: str, stderr: str) -> str | None:
 
 
 def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> str:
-    token = _final_status_token(stdout=stdout, stderr=stderr)
+    if name == "startup_gate":
+        # Pass only if the summary explicitly reports READINESS_STATUS: READY
+        for line in stdout.splitlines():
+            if _normalize_text(line) == "READINESS_STATUS: READY":
+                return "PASS"
+        # Any other non-error outcome (including NEEDS_ATTENTION) -> HOLD
+        if exit_code == 0:
+            return "HOLD"
+        return "FAIL"
+
     if name == "validate_loop_closure":
+        token = _final_status_token(stdout=stdout, stderr=stderr)
         if exit_code == 0 and token == "READY_TO_ESCALATE":
             return "PASS"
         if exit_code == 1 and token == "NOT_READY":
@@ -60,6 +71,7 @@ def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> st
         return "FAIL"
 
     if name == "run_loop_cycle":
+        token = _final_status_token(stdout=stdout, stderr=stderr)
         if exit_code == 0 and token == "PASS":
             return "PASS"
         if exit_code == 0 and token == "HOLD":
@@ -69,14 +81,33 @@ def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> st
     return "FAIL"
 
 
+def _build_command(
+    *,
+    python_exe: str,
+    repo_root: Path,
+    spec: dict[str, Any],
+    freshness_hours: str | None,
+) -> list[str]:
+    cmd = [python_exe, spec["script"], "--repo-root", str(repo_root)]
+    cmd.extend(spec["extra_args"])
+    if spec["name"] == "validate_loop_closure" and freshness_hours is not None:
+        cmd.extend(["--freshness-hours", freshness_hours])
+    return cmd
+
+
 def _run_check(
     *,
     repo_root: Path,
     python_exe: str,
-    name: str,
-    args: list[str],
+    spec: dict[str, Any],
+    freshness_hours: str | None,
 ) -> dict[str, Any]:
-    command = [python_exe, *args]
+    command = _build_command(
+        python_exe=python_exe,
+        repo_root=repo_root,
+        spec=spec,
+        freshness_hours=freshness_hours,
+    )
     result = subprocess.run(
         command,
         cwd=str(repo_root),
@@ -86,9 +117,11 @@ def _run_check(
     )
     stdout = result.stdout or ""
     stderr = result.stderr or ""
-    status = _status_for_check(name=name, exit_code=result.returncode, stdout=stdout, stderr=stderr)
+    status = _status_for_check(
+        name=spec["name"], exit_code=result.returncode, stdout=stdout, stderr=stderr
+    )
     return {
-        "name": name,
+        "name": spec["name"],
         "status": status,
         "exit_code": result.returncode,
         "command": command,
@@ -113,19 +146,50 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Exit 1 when overall status is HOLD instead of allowing a zero exit code.",
     )
+    parser.add_argument(
+        "--check",
+        dest="checks",
+        action="append",
+        choices=ALL_CHECK_NAMES,
+        metavar="CHECK",
+        default=None,
+        help=(
+            f"Run only the named check(s). Repeatable. "
+            f"Choices: {', '.join(ALL_CHECK_NAMES)}. "
+            f"Default: run all checks in order."
+        ),
+    )
+    parser.add_argument(
+        "--freshness-hours",
+        type=str,
+        default=None,
+        dest="freshness_hours",
+        help=(
+            "Override the freshness threshold (hours) forwarded to validate_loop_closure. "
+            "Default: 72 (as hardcoded in the validate_loop_closure default)."
+        ),
+    )
     return parser.parse_args(argv)
 
 
 def run_fast_checks(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     repo_root = args.repo_root.resolve()
+
+    # Filter checks by --check selector; default = all in declaration order
+    selected_names: list[str] = args.checks if args.checks else list(ALL_CHECK_NAMES)
+    # Preserve declaration order even if --check args arrived in different order
+    specs_to_run = [spec for spec in CHECKS if spec["name"] in selected_names]
+
+    freshness_hours: str | None = getattr(args, "freshness_hours", None)
+
     results = [
         _run_check(
             repo_root=repo_root,
             python_exe=args.python_exe,
-            name=spec["name"],
-            args=list(spec["args"]),
+            spec=spec,
+            freshness_hours=freshness_hours,
         )
-        for spec in CHECKS
+        for spec in specs_to_run
     ]
 
     if any(item["status"] == "FAIL" for item in results):
@@ -172,12 +236,6 @@ def main(argv: list[str] | None = None) -> int:
             f"- {check['name']}: {_normalize_text(check['status'])} "
             f"(exit={check['exit_code']})"
         )
-        # Print detailed output for failed/error checks
-        if check["status"] in ("FAIL",) or check["exit_code"] == 2:
-            if check.get("stdout"):
-                print(f"  stdout: {check['stdout'][:5000]}")
-            if check.get("stderr"):
-                print(f"  stderr: {check['stderr'][:5000]}")
 
     if payload["overall_status"] == "HOLD" and not payload["fail_on_hold"]:
         print("note: HOLD is distinct from PASS and is non-failing unless --fail-on-hold is set")
