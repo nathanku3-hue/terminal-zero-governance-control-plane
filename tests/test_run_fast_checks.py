@@ -27,7 +27,7 @@ def _fake_subprocess_run_factory(outcomes: dict[str, subprocess.CompletedProcess
                 "startup_gate",
                 subprocess.CompletedProcess(
                     command, 0,
-                    stdout="READINESS_STATUS: READY\n",
+                    stdout="STARTUP_SUMMARY: CODEX\nREADINESS_STATUS: READY\n",
                     stderr="",
                 ),
             )
@@ -211,7 +211,7 @@ def test_run_fast_checks_refreshes_cycle_before_closure_validation(
         del cwd, capture_output, text, check
         command_text = " ".join(command)
         if "startup_codex_helper.py" in command_text:
-            return subprocess.CompletedProcess(command, 0, stdout="READINESS_STATUS: READY\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="STARTUP_SUMMARY: CODEX\nREADINESS_STATUS: READY\n", stderr="")
         if "run_loop_cycle.py" in command_text:
             state["cycle_ran"] = True
             return subprocess.CompletedProcess(command, 0, stdout="PASS\n", stderr="")
@@ -266,7 +266,7 @@ def test_check_selector_runs_only_named_checks(monkeypatch, tmp_path: Path) -> N
             return subprocess.CompletedProcess(command, 0, stdout="PASS\n", stderr="")
         if "startup_codex_helper.py" in command_text:
             called.append("startup_gate")
-            return subprocess.CompletedProcess(command, 0, stdout="READINESS_STATUS: READY\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="STARTUP_SUMMARY: CODEX\nREADINESS_STATUS: READY\n", stderr="")
         return subprocess.CompletedProcess(command, 2, stdout="", stderr="unknown command")
 
     monkeypatch.setattr(run_fast_checks.subprocess, "run", _fake_run)
@@ -375,3 +375,85 @@ def test_freshness_hours_forwarded_to_validate_loop_closure(monkeypatch, tmp_pat
     assert "--freshness-hours" in captured_args
     idx = captured_args.index("--freshness-hours")
     assert captured_args[idx + 1] == "24"
+
+
+# ---------------------------------------------------------------------------
+# Auditor gap fixes (RED -> GREEN)
+# ---------------------------------------------------------------------------
+
+
+def test_startup_gate_hold_short_circuits_heavier_checks(monkeypatch, tmp_path: Path) -> None:
+    """When startup_gate returns HOLD, run_loop_cycle and validate_loop_closure must NOT run."""
+    called: list[str] = []
+
+    def _fake_run(
+        command: list[str],
+        cwd: str | None = None,
+        capture_output: bool = True,
+        text: bool = True,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, capture_output, text, check
+        command_text = " ".join(command)
+        if "startup_codex_helper.py" in command_text:
+            called.append("startup_gate")
+            return subprocess.CompletedProcess(
+                command, 0,
+                stdout="STARTUP_SUMMARY: CODEX\nREADINESS_STATUS: NEEDS_ATTENTION\n",
+                stderr="",
+            )
+        if "run_loop_cycle.py" in command_text:
+            called.append("run_loop_cycle")
+            return subprocess.CompletedProcess(command, 0, stdout="PASS\n", stderr="")
+        if "validate_loop_closure.py" in command_text:
+            called.append("validate_loop_closure")
+            return subprocess.CompletedProcess(command, 0, stdout="READY_TO_ESCALATE\n", stderr="")
+        return subprocess.CompletedProcess(command, 2, stdout="", stderr="unknown")
+
+    monkeypatch.setattr(run_fast_checks.subprocess, "run", _fake_run)
+
+    args = run_fast_checks.parse_args(["--repo-root", str(tmp_path)])
+    exit_code, payload = run_fast_checks.run_fast_checks(args)
+
+    # startup_gate fired, heavier checks must NOT have been called
+    assert called == ["startup_gate"], f"Expected only startup_gate to run, got: {called}"
+    assert exit_code == 0  # HOLD is non-failing by default
+    assert payload["overall_status"] == "HOLD"
+
+    # Heavier checks must appear in payload as SKIPPED
+    status_by_name = {item["name"]: item["status"] for item in payload["checks"]}
+    assert status_by_name["startup_gate"] == "HOLD"
+    assert status_by_name["run_loop_cycle"] == "SKIPPED"
+    assert status_by_name["validate_loop_closure"] == "SKIPPED"
+
+
+def test_startup_gate_malformed_output_is_fail(monkeypatch, tmp_path: Path) -> None:
+    """startup_gate exit-0 output with no STARTUP_SUMMARY: header must be FAIL (fail-closed)."""
+
+    def _fake_run(
+        command: list[str],
+        cwd: str | None = None,
+        capture_output: bool = True,
+        text: bool = True,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, capture_output, text, check
+        command_text = " ".join(command)
+        if "startup_codex_helper.py" in command_text:
+            # Malformed: exits 0 but missing STARTUP_SUMMARY: header (interface drift / truncation)
+            return subprocess.CompletedProcess(
+                command, 0,
+                stdout="something unexpected happened\n",
+                stderr="",
+            )
+        return subprocess.CompletedProcess(command, 2, stdout="", stderr="unknown")
+
+    monkeypatch.setattr(run_fast_checks.subprocess, "run", _fake_run)
+
+    args = run_fast_checks.parse_args(["--repo-root", str(tmp_path), "--check", "startup_gate"])
+    exit_code, payload = run_fast_checks.run_fast_checks(args)
+
+    assert exit_code == 1  # malformed = FAIL = hard exit
+    assert payload["overall_status"] == "FAIL"
+    status_by_name = {item["name"]: item["status"] for item in payload["checks"]}
+    assert status_by_name["startup_gate"] == "FAIL"

@@ -34,6 +34,10 @@ CHECKS: tuple[dict[str, Any], ...] = (
 
 ALL_CHECK_NAMES: tuple[str, ...] = tuple(spec["name"] for spec in CHECKS)
 
+# startup_gate is the only gating check; a non-PASS result short-circuits all
+# subsequent checks in the default run order.
+_GATING_CHECK = "startup_gate"
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -53,14 +57,25 @@ def _final_status_token(stdout: str, stderr: str) -> str | None:
 
 def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> str:
     if name == "startup_gate":
-        # Pass only if the summary explicitly reports READINESS_STATUS: READY
+        if exit_code != 0:
+            return "FAIL"
+        # Require the STARTUP_SUMMARY: header as a contract sentinel.
+        # Absent header == malformed / interface drift == fail-closed.
+        has_header = any(
+            _normalize_text(line).startswith("STARTUP_SUMMARY:")
+            for line in stdout.splitlines()
+        )
+        if not has_header:
+            return "FAIL"
+        # Explicit readiness lines
         for line in stdout.splitlines():
-            if _normalize_text(line) == "READINESS_STATUS: READY":
+            normed = _normalize_text(line)
+            if normed == "READINESS_STATUS: READY":
                 return "PASS"
-        # Any other non-error outcome (including NEEDS_ATTENTION) → HOLD
-        if exit_code == 0:
-            return "HOLD"
-        return "FAIL"
+            if normed == "READINESS_STATUS: NEEDS_ATTENTION":
+                return "HOLD"
+        # Header present but no recognised readiness status → HOLD (unknown state)
+        return "HOLD"
 
     if name == "validate_loop_closure":
         token = _final_status_token(stdout=stdout, stderr=stderr)
@@ -79,6 +94,18 @@ def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> st
         return "FAIL"
 
     return "FAIL"
+
+
+def _skipped_record(spec: dict[str, Any]) -> dict[str, Any]:
+    """Produce a placeholder record for a check that was short-circuited."""
+    return {
+        "name": spec["name"],
+        "status": "SKIPPED",
+        "exit_code": None,
+        "command": [],
+        "stdout": "",
+        "stderr": "",
+    }
 
 
 def _build_command(
@@ -182,15 +209,27 @@ def run_fast_checks(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
 
     freshness_hours: str | None = getattr(args, "freshness_hours", None)
 
-    results = [
-        _run_check(
+    results: list[dict[str, Any]] = []
+    short_circuited = False
+
+    for spec in specs_to_run:
+        if short_circuited:
+            # Gate blocked: record SKIPPED without invoking the subprocess
+            results.append(_skipped_record(spec))
+            continue
+
+        record = _run_check(
             repo_root=repo_root,
             python_exe=args.python_exe,
             spec=spec,
             freshness_hours=freshness_hours,
         )
-        for spec in specs_to_run
-    ]
+        results.append(record)
+
+        # Gating check: a non-PASS result prevents heavier destructive checks from
+        # running and potentially rewriting current-state artifacts.
+        if spec["name"] == _GATING_CHECK and record["status"] != "PASS":
+            short_circuited = True
 
     if any(item["status"] == "FAIL" for item in results):
         overall = "FAIL"
