@@ -199,3 +199,55 @@ Each sub-phase (5C.1, 5C.2, 5C.3) may be implemented incrementally. A milestone 
   - Full suite: 746 passed, 1 skipped, Python 3.14.0, 2026-03-26
 - Rollback note:
   - Remove `src/sop/scripts/repo_map.py`, `lint_repair_loop.py`, `test_repair_loop.py`, `sandbox_executor.py` and corresponding test files. No schema or governance artifact changes.
+
+---
+
+## D-190: Stream D Skill Execution Pilot — `repo_map` Selected
+
+**Date**: 2026-03-26  
+**Status**: APPROVED  
+**Owner**: PM/CEO
+
+### Summary
+
+Stream B and C gates are both GREEN. Stream D entry gate is open. Pilot skill candidate selected: `repo_map` (5C.1).
+
+### Gate Evidence
+
+| Stream | Status | Evidence |
+|--------|--------|----------|
+| B — Memory Reduction | GREEN | Routing validator 6/6 OK; pm_actual=179/3000, ceo_actual=99/1800 |
+| C — Tiered Memory | GREEN | `memory_tier_contract.md` + `compaction_behavior_contract.md` present and complete; retention guardrails in `compaction_retention.py` |
+
+### Pilot Skill Selected: `repo_map` (5C.1)
+
+**Rationale**:
+- Already implemented and tested (41 tests passing, D-189)
+- Read-only, zero write authority — narrowest governance profile of the three candidates
+- Exercises the full skill dispatch path via `skill_resolver.py` without mutation risk
+- No new governance complexity introduced
+
+**Why not `lint_repair`**: carries write authority and repair-loop governance complexity; deferred until dispatch seam is proven via `repo_map`.
+
+**Why not a net-new research skill**: adds implementation overhead before the dispatch path itself is validated.
+
+### Hard Limits (Unchanged)
+
+- No full skill-execution engine
+- No forced routing
+- No auto-promotion of generated or self-evolved skills
+- No new authority paths
+- Rollback plan must be documented and committed before any execution semantics land
+- Existing 5-iteration cap governance retained for any future `lint_repair` pilot
+- Wire `repo_map` through `skill_resolver.py` seam only
+- No changes to kernel guardrails, auditor review chain, or CEO GO signal authority
+
+### Implementation Constraint
+
+Wire `repo_map` as a callable skill via the existing `skill_resolver.py` seam. No kernel changes. Rollback plan documented and committed before execution semantics land.
+
+---
+
+**Approved by**: PM/CEO (2026-03-26)  
+**Committed in**: D-190 (this decision log entry)  
+**Predecessor**: D-189 (Phase 5C complete), D-188 (Phase 5C approved)

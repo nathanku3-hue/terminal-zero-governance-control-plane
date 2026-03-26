@@ -14,16 +14,15 @@
 - Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations.
 
 ## What Is Next
-- Phase 5C implementation COMPLETE (D-189, 2026-03-26): 5C.1 repo map compression, 5C.2 lint/test repair loop (hard 5-iter cap, HumanEscalationRequired), 5C.3 sandbox execution (Docker, fail-closed). 122 tests passing, 756 full suite passing.
+- Stream D pilot (D-190, 2026-03-26): wire `repo_map` as callable skill via `skill_resolver.py` seam; document and commit rollback plan before execution semantics land.
+- D-183 P3 items unblocked: manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation.
 - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
 - Post-rollout monitoring period ends 2026-04-05.
-- P4 planning may now begin per D-189 scope.
-- [COMPLETE] Phase 5C.1: `src/sop/scripts/repo_map.py` — repo map compression (D-189, 2026-03-26).
-- [COMPLETE] Phase 5C.2: `src/sop/scripts/lint_repair_loop.py`, `test_repair_loop.py` — 5-iter cap, HumanEscalationRequired (D-189, 2026-03-26).
-- [COMPLETE] Phase 5C.3: `src/sop/scripts/sandbox_executor.py` — Docker-based sandbox, fail-closed (D-189, 2026-03-26).
+- Document and commit rollback plan for `repo_map` skill pilot before any execution semantics land (D-190 requirement).
+- Wire `repo_map` as callable skill via `skill_resolver.py` seam only (no kernel changes).
+- Validate full suite still passes (756+ tests) after pilot wiring.
 - Continue daily enforce runs through monitoring period.
 - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
-- Begin P4 planning per D-189 scope authorization.
 
 ## First Command
 ```text
