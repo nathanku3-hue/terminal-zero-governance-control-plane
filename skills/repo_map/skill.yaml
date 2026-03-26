@@ -1,0 +1,46 @@
+# Repo Map Skill Manifest
+# Conforms to skills/schemas/skill_schema.yaml
+
+schema_version: "1.0.0"
+name: repo-map
+version: 1.0.0
+approval_decision_id: D-190
+status: active
+risk_level: LOW
+
+description: |
+  Generate a deterministic file-to-symbols-to-dependencies map of the repository.
+  Read-only: this skill never modifies files, commits changes, or invokes any
+  write-authority path. Zero governance authority — output is evidence only.
+
+authority_boundary:
+  write_access: false
+  commit_access: false
+  network_access: false
+  authority_paths: []
+  max_iterations: null  # stateless; no repair loop
+
+implementation:
+  entrypoint: src/sop/scripts/repo_map.py
+  cli_args:
+    - "--output"       # optional: write JSON to file
+    - "--text"         # optional: human-readable output
+    - "--path-filter"  # optional: restrict to path prefixes
+    - "--no-tests"     # optional: exclude tests dir
+  invocation_example: |
+    python src/sop/scripts/repo_map.py . --text
+
+rollback:
+  plan: docs/phase_brief/repo_map_skill_rollback_plan.md
+  procedure: Remove repo-map from extension_allowlist.yaml, .sop_config.yaml,
+    skills/registry.yaml, and delete this file. Do NOT remove
+    src/sop/scripts/repo_map.py (D-189 implementation).
+  verification:
+    - python scripts/validate_skill_activation.py
+    - python scripts/build_context_packet.py --validate
+    - python -m pytest -q
+
+tests:
+  coverage: tests/test_phase5c_repo_map.py
+  count: 41
+  last_run: 2026-03-26
