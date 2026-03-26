@@ -2287,3 +2287,23 @@ Rejection boundaries (DO NOT IMPORT):
   - `docs/runbook_ops.md:47` skill_activation_latest.json advisory-only: "does not change authority"
 - Rollback note:
   - Remove this D-183 entry. No code changes until P0/P1 tasks land after this approval.
+
+
+### Phase 5C: Worker Inner Loop Implementation Complete (2026-03-26)
+
+| ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
+|------|-----------|---------------------|--------------------------|-----------|
+| D-189 | governance/phase5c | Phase 5C implementation required milestone closeout evidence after all three sub-phases delivered | Phase 5C implementation complete. All three sub-phases delivered and validated: (1) 5C.1 `src/sop/scripts/repo_map.py` — deterministic file→symbols→dependencies compression, fail-closed on parse errors, path filter, CLI; 41 tests passing. (2) 5C.2 `src/sop/scripts/lint_repair_loop.py` and `test_repair_loop.py` — hard 5-iteration cap, `HumanEscalationRequired` on cap exhaustion, fail-closed on command errors, no-fix/observation mode; 42 tests passing. (3) 5C.3 `src/sop/scripts/sandbox_executor.py` — Docker-backed isolation, `SandboxUnavailableError` fail-closed (no host fallback), `--network none` enforced, wired into 5C.2 repair loops via `use_sandbox=True`; 29 tests passing. Full suite: 746 passed, 1 skipped. Authority boundary unchanged: worker loop operates within existing kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop hard cap 5 iterations then human escalation; no new authority paths. | Closes Phase 5C implementation. P3 delivery complete. Enables P4+ planning per D-188 scope. Date: 2026-03-26. |
+
+- Evidence:
+  - `src/sop/scripts/repo_map.py` (5C.1 implementation)
+  - `src/sop/scripts/lint_repair_loop.py` (5C.2 implementation)
+  - `src/sop/scripts/test_repair_loop.py` (5C.2 implementation)
+  - `src/sop/scripts/sandbox_executor.py` (5C.3 implementation)
+  - `tests/test_phase5c_repo_map.py` — 41 passed
+  - `tests/test_phase5c_lint_repair.py` — 23 passed
+  - `tests/test_phase5c_test_repair.py` — 19 passed
+  - `tests/test_phase5c_sandbox.py` — 29 passed
+  - Full suite: 746 passed, 1 skipped, Python 3.14.0, 2026-03-26
+- Rollback note:
+  - Remove `src/sop/scripts/repo_map.py`, `lint_repair_loop.py`, `test_repair_loop.py`, `sandbox_executor.py` and corresponding test files. No schema or governance artifact changes.
