@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-26T11:14:59Z
+- GeneratedAtUTC: 2026-03-26T11:26:27Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -157,7 +157,7 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-26T11:14:59Z",
+  "generated_at_utc": "2026-03-26T11:26:27Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -2499,7 +2499,7 @@ Rejection boundaries (DO NOT IMPORT):
 
 | ID | Component | The Friction Point | The Decision (Hardcoded) | Rationale |
 |------|-----------|---------------------|--------------------------|-----------|
-| D-189 | governance/phase5c | Phase 5C implementation required milestone closeout evidence after all three sub-phases delivered | Phase 5C implementation complete. All three sub-phases delivered and validated: (1) 5C.1 `src/sop/scripts/repo_map.py` — deterministic file→symbols→dependencies compression, fail-closed on parse errors, path filter, CLI; 41 tests passing. (2) 5C.2 `src/sop/scripts/lint_repair_loop.py` and `test_repair_loop.py` — hard 5-iteration cap, `HumanEscalationRequired` on cap exhaustion, fail-closed on command errors, no-fix/observation mode; 42 tests passing. (3) 5C.3 `src/sop/scripts/sandbox_executor.py` — Docker-backed isolation, `SandboxUnavailableError` fail-closed (no host fallback), `--network none` enforced, wired into 5C.2 repair loops via `use_sandbox=True`; 29 tests passing. Full suite: 746 passed, 1 skipped. Authority boundary unchanged: worker loop operates within existing kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop hard cap 5 iterations then human escalation; no new authority paths. | Closes Phase 5C implementation. P3 delivery complete. Enables P4+ planning per D-188 scope. Date: 2026-03-26. |
+| D-189 | governance/phase5c | Phase 5C implementation required milestone closeout evidence after all three sub-phases delivered | Phase 5C implementation complete. All three sub-phases delivered and validated: (1) 5C.1 `src/sop/scripts/repo_map.py` — deterministic file→symbols→dependencies compression, fail-closed on parse errors, path filter, CLI; 41 tests passing. (2) 5C.2 `src/sop/scripts/lint_repair_loop.py` and `test_repair_loop.py` — hard 5-iteration cap, `HumanEscalationRequired` on cap exhaustion, fail-closed on command errors, no-fix/observation mode; 52 tests passing (26 lint-repair + 26 test-repair). (3) 5C.3 `src/sop/scripts/sandbox_executor.py` — Docker-backed isolation, `SandboxUnavailableError` fail-closed (no host fallback), `--network none` enforced, wired into 5C.2 repair loops via `use_sandbox=True`; 29 tests passing. Full suite: 756 passed, 1 skipped. Phase 5C scoped suite: 122 passed. Authority boundary unchanged: worker loop operates within existing kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop hard cap 5 iterations then human escalation; no new authority paths. | Closes Phase 5C implementation. P3 delivery complete. Enables P4+ planning per D-188 scope. Date: 2026-03-26. |
 
 - Evidence:
   - `src/sop/scripts/repo_map.py` (5C.1 implementation)
