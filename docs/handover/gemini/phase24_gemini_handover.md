@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-26T07:20:30Z
+- GeneratedAtUTC: 2026-03-26T07:51:10Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -123,8 +123,8 @@ Application pattern:
 ## What Was Done
 - Phase 24C delivered the auditor calibration system, dossier reporting, FP ledger workflow, and the loop-cycle refactor checkpoint.
 - Annotation coverage has been restored to `100%`, and the live promotion machinery is **operational in enforce mode** (active as of 2026-03-22).
-- PM/CEO framing is now aligned to the 4-lane completion model: `Ops`, `Quality`, `Governance`, and `Rollout`.
-- The code baseline is green and new v2/schema work is confirmed off the critical path because `C5` is already passing.
+- P2 implementation queue is complete (D-187, 2026-03-26): thin startup summary and event-driven quality checkpoints delivered across both `scripts/` and `src/sop/scripts/` surfaces.
+- Phase 5C (Worker Inner Loop) is approved (D-188, 2026-03-26). P3 is authorized. Block from D-187/D-183 is lifted.
 
 ## What Is Locked
 - Schema version expectation is `v2.0.0`.
@@ -133,17 +133,17 @@ Application pattern:
 - **Freeze is lifted.** Architecture, prompt, and schema scope remain stable. No new v2 work needed on critical path.
 - `quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.
 - Enforce mode is the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly.
+- Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations.
 
 ## What Is Next
-- Post-rollout monitoring period: 2026-03-22 to 2026-04-05 (2 weeks).
-- `C1` PM signoff is complete (D-174 recorded 2026-03-16).
-- Canary validation passed (3/3 PASS, 0.00% FP rate). Full enforce rollout activated (D-184, 2026-03-22).
-- Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.
+- Phase 5C implementation: 5C.1 repo map compression, 5C.2 lint/test repair loop, 5C.3 sandbox execution (D-188, 2026-03-26).
+- Each sub-phase implemented incrementally with milestone validation before close.
 - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
+- Post-rollout monitoring period ends 2026-04-05.
+- Implement Phase 5C.1: repo map compression (`repo_map.py`).
+- Implement Phase 5C.2: lint/test repair loop (max 5 iterations, then human escalation).
+- Implement Phase 5C.3: sandbox execution (`sandbox_executor.py`, Docker-based).
 - Continue daily enforce runs through monitoring period.
-- If new C/H findings appear, annotate them to maintain `100%` coverage.
-- Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.
-- Log daily results in `docs/context/post_rollout_monitoring_log.md`.
 - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
 
 ## First Command
@@ -156,7 +156,7 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-26T07:20:30Z",
+  "generated_at_utc": "2026-03-26T07:51:10Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -169,8 +169,8 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
   "what_was_done": [
     "Phase 24C delivered the auditor calibration system, dossier reporting, FP ledger workflow, and the loop-cycle refactor checkpoint.",
     "Annotation coverage has been restored to `100%`, and the live promotion machinery is **operational in enforce mode** (active as of 2026-03-22).",
-    "PM/CEO framing is now aligned to the 4-lane completion model: `Ops`, `Quality`, `Governance`, and `Rollout`.",
-    "The code baseline is green and new v2/schema work is confirmed off the critical path because `C5` is already passing."
+    "P2 implementation queue is complete (D-187, 2026-03-26): thin startup summary and event-driven quality checkpoints delivered across both `scripts/` and `src/sop/scripts/` surfaces.",
+    "Phase 5C (Worker Inner Loop) is approved (D-188, 2026-03-26). P3 is authorized. Block from D-187/D-183 is lifted."
   ],
   "what_is_locked": [
     "Schema version expectation is `v2.0.0`.",
@@ -178,21 +178,21 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
     "Loop-cycle modularization is complete enough for the current milestone.",
     "**Freeze is lifted.** Architecture, prompt, and schema scope remain stable. No new v2 work needed on critical path.",
     "`quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.",
-    "Enforce mode is the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly."
+    "Enforce mode is the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly.",
+    "Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations."
   ],
   "what_is_next": [
-    "Post-rollout monitoring period: 2026-03-22 to 2026-04-05 (2 weeks).",
-    "`C1` PM signoff is complete (D-174 recorded 2026-03-16).",
-    "Canary validation passed (3/3 PASS, 0.00% FP rate). Full enforce rollout activated (D-184, 2026-03-22).",
-    "Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.",
-    "Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error)."
+    "Phase 5C implementation: 5C.1 repo map compression, 5C.2 lint/test repair loop, 5C.3 sandbox execution (D-188, 2026-03-26).",
+    "Each sub-phase implemented incrementally with milestone validation before close.",
+    "Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).",
+    "Post-rollout monitoring period ends 2026-04-05."
   ],
   "first_command": "Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .` (enforce is default).",
   "next_todos": [
+    "Implement Phase 5C.1: repo map compression (`repo_map.py`).",
+    "Implement Phase 5C.2: lint/test repair loop (max 5 iterations, then human escalation).",
+    "Implement Phase 5C.3: sandbox execution (`sandbox_executor.py`, Docker-based).",
     "Continue daily enforce runs through monitoring period.",
-    "If new C/H findings appear, annotate them to maintain `100%` coverage.",
-    "Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.",
-    "Log daily results in `docs/context/post_rollout_monitoring_log.md`.",
     "If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode."
   ]
 }
@@ -342,6 +342,7 @@ Part 1: Master Decision Log
 | D-185 | governance/phase24c | Phase 24C freeze exit still depended on a calendar window even though the repo already emits artifact-backed enforce evidence | Amend the Phase 24C freeze exit rule to be evidence-based only. This supersedes the date-based monitoring portion of D-184. Freeze now lifts only when: (1) D-174 manual signoff remains recorded; (2) canary completion and PM rollout approval are recorded in `docs/context/canary_enforce_log.md` and `docs/context/pm_canary_review_approval.md`; (3) at least 10 consecutive phase-end `PASS` runs in enforce mode are recorded after PM rollout approval, each with `failed_exit_code = 0`, empty `finalize_failures`, `G11_auditor_review` passing with `--mode enforce`, and no skipped gates except explicitly scoped cases such as `G05b_cross_repo_readiness`; (4) the latest `docs/context/auditor_promotion_dossier.json` still shows `C0`, `C4`, `C4b`, and `C5` passing; and (5) `docs/context/phase_end_logs/` contains at least one earlier `shadow` PASS and one later `enforce` PASS, showing both audit modes have passed. No new gates, scripts, runtime hooks, or authority paths are introduced. | Replaces calendar waiting with measurable operational evidence while preserving conservative freeze discipline and single-repo scope. Date: 2026-03-22. |
 | D-186 | governance/phase24c | Phase 24C freeze lift approved and live in origin/main (commit 147ded2), but closure declaration and P2 authorization still pending | Declare Phase 24C complete with machine-readable context refresh. All D-185 criteria satisfied: 10/10 enforce PASS runs collected, dossier regenerated with C0/C4/C4b/C5 passing, authoritative surfaces committed and aligned. Context artifacts regenerated via `python scripts/build_context_packet.py` and validated. Architecture status: UNFROZEN (D-185, 2026-03-23). P2 work authorization: ACTIVE (sop-first policy per MIGRATION.md:72). Closure artifact: `docs/context/phase24c_closure_declaration.md`. | Completes Phase 24C governance closure and authorizes P2 implementation queue. Freeze lift is now operationally complete. Date: 2026-03-23. |
 | D-187 | governance/p2 | P2 implementation queue (D-186) complete; context refresh and closeout pending | P2 item 1: thin startup summary (`--summary` flag in `startup_codex_helper.py`, both `scripts/` and `src/sop/scripts/`; wired through `sop startup --summary` canonical surface; parity test added). Commits: `ac7cab3` (implementation), `0942f9d` (parity gap fix). P2 item 2: event-driven quality checkpoints in `run_fast_checks.py` (both surfaces): `startup_gate` check runs `--summary` and short-circuits heavier checks on HOLD/FAIL; malformed summary output fails closed (no `STARTUP_SUMMARY:` header → FAIL); `--check` selector; `--freshness-hours` passthrough. Commits: `376e54e` (implementation), `f06c6a5` (gap fixes). Test evidence: 634 passed, 1 skipped across full suite on `f06c6a5`. Context artifacts refreshed via `python scripts/run_loop_cycle.py --skip-phase-end --allow-hold true` (2026-03-26). P3 remains BLOCKED pending Phase 5C approval. | Closes P2 implementation queue per D-186 authorization. P3 is explicitly not authorized by this entry. Date: 2026-03-26. |
+| D-188 | governance/phase5c | P3 / Phase 5C execution semantics blocked pending explicit PM/CEO authorization | Phase 5C (Worker Inner Loop) is hereby APPROVED. Scope per ADR-001 §Future-State Plugin Layer §4: (a) 5C.1 repo map compression (`repo_map.py`: file → symbols → dependencies); (b) 5C.2 lint/test repair loop (`lint_repair_loop.py`, `test_repair_loop.py`, max 5 iterations then human escalation); (c) 5C.3 sandbox execution (`sandbox_executor.py`: Docker-based isolation). Prerequisites confirmed: 5A (benchmark harness, D-173) complete; 5B.1 (subagent routing matrix) complete per D-177/D-177a/D-177b; Phase 24C governance closure complete (D-186); P2 queue complete (D-187). Authority boundary: worker loop operates within existing kernel guardrails; it cannot bypass auditor review for high-risk changes or CEO GO signal for ONE_WAY decisions; repair loop has max 5-iteration limit before human escalation. No new authority paths introduced. No weakening of kernel minimums. Closure artifact: `docs/context/phase5c_approval.md`. Context packet must be regenerated via `python scripts/build_context_packet.py --validate` after this entry is committed. Approving authority: PM/CEO. | Authorizes P3 / Phase 5C execution semantics. Lifts the block recorded in D-187 and D-183. Implementation may proceed incrementally with validation at each sub-phase milestone (5C.1, 5C.2, 5C.3). Date: 2026-03-26. |
 
 Part 2: Decision Rationale (Phase 4 — Optimizer)
 
@@ -2815,8 +2816,8 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
 - What was done:
   - Phase 24C delivered the auditor calibration system, dossier reporting, FP ledger workflow, and the loop-cycle refactor checkpoint.
   - Annotation coverage has been restored to `100%`, and the live promotion machinery is **operational in enforce mode** (active as of 2026-03-22).
-  - PM/CEO framing is now aligned to the 4-lane completion model: `Ops`, `Quality`, `Governance`, and `Rollout`.
-  - The code baseline is green and new v2/schema work is confirmed off the critical path because `C5` is already passing.
+  - P2 implementation queue is complete (D-187, 2026-03-26): thin startup summary and event-driven quality checkpoints delivered across both `scripts/` and `src/sop/scripts/` surfaces.
+  - Phase 5C (Worker Inner Loop) is approved (D-188, 2026-03-26). P3 is authorized. Block from D-187/D-183 is lifted.
 - What is locked:
   - Schema version expectation is `v2.0.0`.
   - Fail-closed governance remains intact.
@@ -2824,21 +2825,20 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
   - **Freeze is lifted.** Architecture, prompt, and schema scope remain stable. No new v2 work needed on critical path.
   - `quant_current_scope` closes first; cross-repo rollout stays out of scope unless leadership expands it.
   - Enforce mode is the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly.
+  - Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations.
 - What is next:
-  - Post-rollout monitoring period: 2026-03-22 to 2026-04-05 (2 weeks).
-  - `C1` PM signoff is complete (D-174 recorded 2026-03-16).
-  - Canary validation passed (3/3 PASS, 0.00% FP rate). Full enforce rollout activated (D-184, 2026-03-22).
-
-  - Treat this as a 4-lane promotion path: `Ops`, `Quality`, `Governance`, `Rollout`.
+  - Phase 5C implementation: 5C.1 repo map compression, 5C.2 lint/test repair loop, 5C.3 sandbox execution (D-188, 2026-03-26).
+  - Each sub-phase implemented incrementally with milestone validation before close.
   - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
+  - Post-rollout monitoring period ends 2026-04-05.
 - Immediate first step:
   - Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .` (enforce is default).
   - For emergency rollback only, add `-AuditMode shadow`.
 - Next Todos:
+  - Implement Phase 5C.1: repo map compression (`repo_map.py`).
+  - Implement Phase 5C.2: lint/test repair loop (max 5 iterations, then human escalation).
+  - Implement Phase 5C.3: sandbox execution (`sandbox_executor.py`, Docker-based).
   - Continue daily enforce runs through monitoring period.
-  - If new C/H findings appear, annotate them to maintain `100%` coverage.
-  - Refresh dossier, CEO GO signal, and closure artifacts after each evidence change.
-  - Log daily results in `docs/context/post_rollout_monitoring_log.md`.
   - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
 
 ## 13) Approval Metadata
