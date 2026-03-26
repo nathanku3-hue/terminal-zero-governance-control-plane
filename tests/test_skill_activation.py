@@ -305,6 +305,58 @@ def test_validate_skill_activation_version_mismatch(temp_repo):
 
 
 @pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
+def test_resolve_active_skills_p3_fields_present(temp_repo):
+    """D-191 P3: resolver must surface rollback_state, installs, and targets from manifest."""
+    result = resolve_active_skills(temp_repo, "test_project")
+    assert result["status"] == "ok"
+    assert len(result["skills"]) == 1
+    skill = result["skills"][0]
+    # P3.1 rollback_state
+    assert "rollback_state" in skill, "P3.1: rollback_state field missing"
+    # P3.2 installs
+    assert "installs" in skill, "P3.2: installs field missing"
+    assert isinstance(skill["installs"], list), "P3.2: installs must be a list"
+    # P3.3 targets
+    assert "targets" in skill, "P3.3: targets field missing"
+    assert isinstance(skill["targets"], list), "P3.3: targets must be a list"
+
+
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
+def test_resolve_active_skills_p3_rollback_state_from_manifest(temp_repo):
+    """D-191 P3.1: rollback_state is populated from manifest rollback section when present."""
+    # Add rollback section to the test-skill manifest
+    manifest_path = temp_repo / "skills" / "test_skill" / "skill.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest["rollback"] = {"plan": "docs/phase_brief/test_rollback.md", "undo_steps": ["Remove output"]}
+    manifest["installs"] = ["docs/context/output.json"]
+    manifest["targets"] = ["docs/context/output.json", "docs/context/output.txt"]
+    manifest_path.write_text(yaml.dump(manifest))
+
+    result = resolve_active_skills(temp_repo, "test_project")
+    assert result["status"] == "ok"
+    skill = result["skills"][0]
+    # P3.1: rollback_state populated from manifest
+    assert skill["rollback_state"] is not None
+    assert skill["rollback_state"]["plan"] == "docs/phase_brief/test_rollback.md"
+    # P3.2: installs populated
+    assert skill["installs"] == ["docs/context/output.json"]
+    # P3.3: targets populated
+    assert skill["targets"] == ["docs/context/output.json", "docs/context/output.txt"]
+
+
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
+def test_resolve_active_skills_p3_fields_default_when_manifest_missing(temp_repo):
+    """D-191 P3: P3 fields default gracefully when manifest has no rollback/installs/targets."""
+    result = resolve_active_skills(temp_repo, "test_project")
+    assert result["status"] == "ok"
+    skill = result["skills"][0]
+    # Manifest has no rollback/installs/targets — defaults should be safe
+    assert skill["rollback_state"] is None
+    assert skill["installs"] == []
+    assert skill["targets"] == []
+
+
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not available")
 class TestSkillVisibility:
     """Tests for skill visibility surface requirements."""
 
@@ -323,6 +375,10 @@ class TestSkillVisibility:
             assert "risk_level" in skill
             assert "status" in skill
             assert "approval_decision_id" in skill
+            # P3 fields
+            assert "rollback_state" in skill
+            assert "installs" in skill
+            assert "targets" in skill
 
     def test_skill_visibility_category_taxonomy(self, temp_repo):
         """Skill categories must be from known taxonomy."""

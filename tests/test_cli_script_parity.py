@@ -408,6 +408,59 @@ class TestSkillResolverContract:
         # Status must be valid
         assert result["status"] in ("ok", "degraded", "failed")
 
+    def test_skill_resolver_p3_fields_present(self):
+        """D-191 P3: scripts resolver must surface rollback_state, installs, targets."""
+        import sys
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from utils.skill_resolver import resolve_active_skills
+
+        result = resolve_active_skills(REPO_ROOT, "quant_current_scope")
+        assert result["status"] in ("ok", "degraded")
+        for skill in result["skills"]:
+            assert "rollback_state" in skill, f"P3.1: rollback_state missing from scripts resolver for {skill['name']}"
+            assert "installs" in skill, f"P3.2: installs missing from scripts resolver for {skill['name']}"
+            assert "targets" in skill, f"P3.3: targets missing from scripts resolver for {skill['name']}"
+
+    def test_src_skill_resolver_p3_fields_present(self):
+        """D-191 P3 canonical surface: src/sop resolver must surface rollback_state, installs, targets."""
+        from sop.scripts.utils.skill_resolver import resolve_active_skills
+
+        result = resolve_active_skills(REPO_ROOT, "quant_current_scope")
+        assert result["status"] in ("ok", "degraded")
+        for skill in result["skills"]:
+            assert "rollback_state" in skill, f"P3.1: rollback_state missing from src resolver for {skill['name']}"
+            assert "installs" in skill, f"P3.2: installs missing from src resolver for {skill['name']}"
+            assert "targets" in skill, f"P3.3: targets missing from src resolver for {skill['name']}"
+
+    def test_src_scripts_resolver_parity(self):
+        """D-183/D-191: src/sop and scripts/ resolvers must return identical skill shapes."""
+        import sys
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from utils.skill_resolver import resolve_active_skills as scripts_resolve
+        from sop.scripts.utils.skill_resolver import resolve_active_skills as src_resolve
+
+        scripts_result = scripts_resolve(REPO_ROOT, "quant_current_scope")
+        src_result = src_resolve(REPO_ROOT, "quant_current_scope")
+
+        assert scripts_result["status"] == src_result["status"], (
+            f"Status mismatch: scripts={scripts_result['status']} src={src_result['status']}"
+        )
+        assert len(scripts_result["skills"]) == len(src_result["skills"]), (
+            f"Skill count mismatch: scripts={len(scripts_result['skills'])} src={len(src_result['skills'])}"
+        )
+        for s_skill, src_skill in zip(scripts_result["skills"], src_result["skills"]):
+            assert set(s_skill.keys()) == set(src_skill.keys()), (
+                f"Field shape mismatch for {s_skill['name']}: "
+                f"scripts={sorted(s_skill.keys())} src={sorted(src_skill.keys())}"
+            )
+            # Check all scalar fields match
+            for key in ("name", "version", "status", "manifest_path", "category",
+                        "approval_decision_id", "risk_level"):
+                assert s_skill[key] == src_skill[key], (
+                    f"Field '{key}' mismatch for {s_skill['name']}: "
+                    f"scripts={s_skill[key]} src={src_skill[key]}"
+                )
+
 
 # Mark all tests in this file as parity tests
 pytestmark = pytest.mark.parity

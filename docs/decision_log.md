@@ -199,106 +199,253 @@ Each sub-phase (5C.1, 5C.2, 5C.3) may be implemented incrementally. A milestone 
   - Full suite: 746 passed, 1 skipped, Python 3.14.0, 2026-03-26
 - Rollback note:
   - Remove `src/sop/scripts/repo_map.py`, `lint_repair_loop.py`, `test_repair_loop.py`, `sandbox_executor.py` and corresponding test files. No schema or governance artifact changes.
-
----
-
-## D-190: Stream D Skill Execution Pilot — `repo_map` Selected
-
-**Date**: 2026-03-26  
-**Status**: APPROVED  
-**Owner**: PM/CEO
-
-### Summary
-
-Stream B and C gates are both GREEN. Stream D entry gate is open. Pilot skill candidate selected: `repo_map` (5C.1).
-
-### Gate Evidence
-
-| Stream | Status | Evidence |
-|--------|--------|----------|
-| B — Memory Reduction | GREEN | Routing validator 6/6 OK; pm_actual=179/3000, ceo_actual=99/1800 |
-| C — Tiered Memory | GREEN | `memory_tier_contract.md` + `compaction_behavior_contract.md` present and complete; retention guardrails in `compaction_retention.py` |
-
-### Pilot Skill Selected: `repo_map` (5C.1)
-
-**Rationale**:
-- Already implemented and tested (41 tests passing, D-189)
-- Read-only, zero write authority — narrowest governance profile of the three candidates
-- Exercises the full skill dispatch path via `skill_resolver.py` without mutation risk
-- No new governance complexity introduced
-
-**Why not `lint_repair`**: carries write authority and repair-loop governance complexity; deferred until dispatch seam is proven via `repo_map`.
-
-**Why not a net-new research skill**: adds implementation overhead before the dispatch path itself is validated.
-
-### Hard Limits (Unchanged)
-
-- No full skill-execution engine
-- No forced routing
-- No auto-promotion of generated or self-evolved skills
-- No new authority paths
-- Rollback plan must be documented and committed before any execution semantics land
-- Existing 5-iteration cap governance retained for any future `lint_repair` pilot
-- Wire `repo_map` through `skill_resolver.py` seam only
-- No changes to kernel guardrails, auditor review chain, or CEO GO signal authority
-
-### Implementation Constraint
-
-Wire `repo_map` as a callable skill via the existing `skill_resolver.py` seam. No kernel changes. Rollback plan documented and committed before execution semantics land.
-
----
-
-**Approved by**: PM/CEO (2026-03-26)  
-**Committed in**: D-190 (this decision log entry)  
-**Predecessor**: D-189 (Phase 5C complete), D-188 (Phase 5C approved)
-
----
-
-## D-191: D-183 P3 Items Authorized — Manifest-Driven Selective Install, Canonical-to-Multi-Target, Memory/Rollback, Specialist Delegation
-
-**Date**: 2026-03-26  
-**Status**: APPROVED  
-**Owner**: PM/CEO
-
-### Summary
-
-D-190 pilot (repo-map) is fully verified. Dispatch seam is proven. All four D-183 P3 items are hereby authorized for implementation.
-
-### D-190 Pilot Evidence (Verified Directly)
-
-| Check | Result | Evidence |
-|-------|--------|----------|
-| Rollback plan committed | PASS | `docs/phase_brief/repo_map_skill_rollback_plan.md` (de5e280) |
-| `skill_resolver.py` seam wired | PASS | `skills/repo_map/skill.yaml`, allowlist + config (de5e280) |
-| `validate_skill_activation.py` | PASS | `[OK]` (verified 2026-03-26) |
-| `build_context_packet.py --validate` | PASS | exit 0 (5469f15) |
-| Full suite | PASS | 756 passed, 1 skipped |
-| Context surfaces synced | PASS | `generated_at_utc: 2026-03-26T14:44:28Z` (5469f15) |
-
-### Authorized Implementation Sequence
-
-| Order | Item | Constraint |
-|-------|------|------------|
-| 1 | **Memory/rollback for skills** | Skills record rollback state before applying changes; uses existing `rollback_protocol.md` pattern; lowest risk |
-| 2 | **Manifest-driven selective install** | Skill manifest declares what surfaces it installs; operator can selectively apply; `skill_resolver.py` seam only |
-| 3 | **Canonical-to-multi-target** | Extend canonical skill outputs to multiple target surfaces; `skill_resolver.py` seam only |
-| 4 | **Specialist delegation** | Route narrow specialist tasks to dedicated skill workers; `subagent_routing_matrix.yaml` seam only |
-
-Each item is implemented and validated independently before the next begins. A decision log entry is required at completion of each item.
-
-### Hard Limits (Unchanged)
-
-- No full skill-execution engine
-- No forced routing
-- No auto-promotion of generated or self-evolved skills
-- No new authority paths
-- Rollback plan must be committed before each item's execution semantics land
-- Kernel guardrails, auditor review chain, and CEO GO signal authority unchanged
-- No cross-repo rollout (quant_current_scope closes first per D-186)
-- No weakening of kernel minimums
-
----
-
-**Approved by**: PM/CEO (2026-03-26)  
-**Committed in**: D-191 (this decision log entry)  
-**Predecessor**: D-190 (Stream D pilot complete), D-183 (P3 items defined)
+
+
+---
+
+
+
+## D-190: Stream D Skill Execution Pilot — `repo_map` Selected
+
+
+
+**Date**: 2026-03-26  
+
+**Status**: APPROVED  
+
+**Owner**: PM/CEO
+
+
+
+### Summary
+
+
+
+Stream B and C gates are both GREEN. Stream D entry gate is open. Pilot skill candidate selected: `repo_map` (5C.1).
+
+
+
+### Gate Evidence
+
+
+
+| Stream | Status | Evidence |
+
+|--------|--------|----------|
+
+| B — Memory Reduction | GREEN | Routing validator 6/6 OK; pm_actual=179/3000, ceo_actual=99/1800 |
+
+| C — Tiered Memory | GREEN | `memory_tier_contract.md` + `compaction_behavior_contract.md` present and complete; retention guardrails in `compaction_retention.py` |
+
+
+
+### Pilot Skill Selected: `repo_map` (5C.1)
+
+
+
+**Rationale**:
+
+- Already implemented and tested (41 tests passing, D-189)
+
+- Read-only, zero write authority — narrowest governance profile of the three candidates
+
+- Exercises the full skill dispatch path via `skill_resolver.py` without mutation risk
+
+- No new governance complexity introduced
+
+
+
+**Why not `lint_repair`**: carries write authority and repair-loop governance complexity; deferred until dispatch seam is proven via `repo_map`.
+
+
+
+**Why not a net-new research skill**: adds implementation overhead before the dispatch path itself is validated.
+
+
+
+### Hard Limits (Unchanged)
+
+
+
+- No full skill-execution engine
+
+- No forced routing
+
+- No auto-promotion of generated or self-evolved skills
+
+- No new authority paths
+
+- Rollback plan must be documented and committed before any execution semantics land
+
+- Existing 5-iteration cap governance retained for any future `lint_repair` pilot
+
+- Wire `repo_map` through `skill_resolver.py` seam only
+
+- No changes to kernel guardrails, auditor review chain, or CEO GO signal authority
+
+
+
+### Implementation Constraint
+
+
+
+Wire `repo_map` as a callable skill via the existing `skill_resolver.py` seam. No kernel changes. Rollback plan documented and committed before execution semantics land.
+
+
+
+---
+
+
+
+**Approved by**: PM/CEO (2026-03-26)  
+
+**Committed in**: D-190 (this decision log entry)  
+
+**Predecessor**: D-189 (Phase 5C complete), D-188 (Phase 5C approved)
+
+
+
+---
+
+
+
+## D-191: D-183 P3 Items Authorized — Manifest-Driven Selective Install, Canonical-to-Multi-Target, Memory/Rollback, Specialist Delegation
+
+
+
+**Date**: 2026-03-26  
+
+**Status**: APPROVED  
+
+**Owner**: PM/CEO
+
+
+
+### Summary
+
+
+
+D-190 pilot (repo-map) is fully verified. Dispatch seam is proven. All four D-183 P3 items are hereby authorized for implementation.
+
+
+
+### D-190 Pilot Evidence (Verified Directly)
+
+
+
+| Check | Result | Evidence |
+
+|-------|--------|----------|
+
+| Rollback plan committed | PASS | `docs/phase_brief/repo_map_skill_rollback_plan.md` (de5e280) |
+
+| `skill_resolver.py` seam wired | PASS | `skills/repo_map/skill.yaml`, allowlist + config (de5e280) |
+
+| `validate_skill_activation.py` | PASS | `[OK]` (verified 2026-03-26) |
+
+| `build_context_packet.py --validate` | PASS | exit 0 (5469f15) |
+
+| Full suite | PASS | 756 passed, 1 skipped |
+
+| Context surfaces synced | PASS | `generated_at_utc: 2026-03-26T14:44:28Z` (5469f15) |
+
+
+
+### Authorized Implementation Sequence
+
+
+
+| Order | Item | Constraint |
+
+|-------|------|------------|
+
+| 1 | **Memory/rollback for skills** | Skills record rollback state before applying changes; uses existing `rollback_protocol.md` pattern; lowest risk |
+
+| 2 | **Manifest-driven selective install** | Skill manifest declares what surfaces it installs; operator can selectively apply; `skill_resolver.py` seam only |
+
+| 3 | **Canonical-to-multi-target** | Extend canonical skill outputs to multiple target surfaces; `skill_resolver.py` seam only |
+
+| 4 | **Specialist delegation** | Route narrow specialist tasks to dedicated skill workers; `subagent_routing_matrix.yaml` seam only |
+
+
+
+Each item is implemented and validated independently before the next begins. A decision log entry is required at completion of each item.
+
+
+
+### Hard Limits (Unchanged)
+
+
+
+- No full skill-execution engine
+
+- No forced routing
+
+- No auto-promotion of generated or self-evolved skills
+
+- No new authority paths
+
+- Rollback plan must be committed before each item's execution semantics land
+
+- Kernel guardrails, auditor review chain, and CEO GO signal authority unchanged
+
+- No cross-repo rollout (quant_current_scope closes first per D-186)
+
+- No weakening of kernel minimums
+
+
+
+---
+
+
+
+**Approved by**: PM/CEO (2026-03-26)  
+
+**Committed in**: D-191 (this decision log entry)  
+
+**Predecessor**: D-190 (Stream D pilot complete), D-183 (P3 items defined)
+
+
+
+---
+
+## D-192: D-191 P3 Implementation Complete — All Four Items Delivered on Canonical and Compatibility Surfaces
+
+**Date**: 2026-03-26  
+**Status**: CLOSED  
+**Owner**: PM/CEO
+
+### Summary
+
+All four D-191 P3 items are implemented, validated, and committed on both the canonical (`src/sop/scripts/utils/skill_resolver.py`) and compatibility (`scripts/utils/skill_resolver.py`) surfaces. Test coverage protects the new contract. Context surfaces updated.
+
+### Delivery Evidence
+
+| Item | Surface | Evidence |
+|------|---------|----------|
+| P3.1 Memory/rollback | `skill_resolver.py` surfaces `rollback_state` from manifest | `baecf58` |
+| P3.2 Manifest-driven selective install | `skill_resolver.py` surfaces `installs` from manifest | `baecf58` |
+| P3.3 Canonical-to-multi-target | `skill_resolver.py` surfaces `targets` from manifest | `baecf58` |
+| P3.4 Specialist delegation | `specialist_deputy` gains `skill_delegation: [repo-map]` | `baecf58` |
+| Canonical surface (src/sop) | `_load_manifest` + P3 fields added | post-`447ca61` |
+| Parity verified | `src/sop` and `scripts/` return identical 11-field shape | `test_src_scripts_resolver_parity` |
+| Test coverage | 3 new P3 tests in `test_skill_activation.py`, 3 in `test_cli_script_parity.py` | 51/51 pass |
+| Full suite | 756 passed, 1 skipped | 2026-03-26 |
+| `validate_skill_activation.py` | `[OK]` | 2026-03-26 |
+| Routing validator | 6/6 roles OK | 2026-03-26 |
+| Rollback plan | `docs/phase_brief/d191_p3_rollback_plan.md` | `baecf58` |
+
+### Authority Boundary (Unchanged)
+
+- No new authority paths introduced
+- No kernel changes
+- No forced routing
+- No auto-promotion
+- Rollback plan committed before execution semantics
+- Full kernel guardrails, auditor review chain, and CEO GO signal authority intact
+
+---
+
+**Approved by**: PM/CEO (2026-03-26)  
+**Committed in**: D-192 (this decision log entry)  
+**Predecessor**: D-191 (P3 authorized), D-190 (dispatch seam proven)
