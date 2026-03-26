@@ -254,6 +254,46 @@ class TestOutputParity:
             f"stderr mismatch:\nCLI: {cli_result.stderr[:500]}\nScript: {script_result.stderr[:500]}"
         )
 
+    def test_startup_summary_parity(self, test_repo: Path):
+        """sop startup --summary and startup_codex_helper.py --summary must produce identical output."""
+        # Run via CLI
+        cli_result = _run_command(
+            [sys.executable, "-m", "sop", "startup", "--repo-root", str(test_repo), "--summary"],
+            cwd=REPO_ROOT,
+        )
+
+        # Run via script
+        script_result = _run_command(
+            [sys.executable, str(SCRIPTS_DIR / "startup_codex_helper.py"), "--repo-root", str(test_repo), "--summary"],
+            cwd=REPO_ROOT,
+        )
+
+        # Exit codes must match
+        assert cli_result.returncode == script_result.returncode, (
+            f"Exit code mismatch: CLI={cli_result.returncode}, script={script_result.returncode}"
+        )
+        # Both must exit 0 (summary never blocks)
+        assert cli_result.returncode == 0, f"--summary should exit 0, got {cli_result.returncode}: {cli_result.stderr}"
+
+        # Core tokens must be present
+        assert "STARTUP_SUMMARY" in cli_result.stdout
+        assert "READINESS_STATUS" in cli_result.stdout
+        assert "P2_AUTHORIZATION" in cli_result.stdout
+        assert "PHASE_STATUS" in cli_result.stdout
+
+        # Compare stdout excluding the GENERATED_AT_UTC line (timestamp differs by a few seconds
+        # between the two sequential subprocess invocations — not a parity defect)
+        def _strip_timestamp(text: str) -> str:
+            return "\n".join(
+                line for line in text.splitlines() if not line.startswith("GENERATED_AT_UTC:")
+            )
+
+        assert _strip_timestamp(cli_result.stdout) == _strip_timestamp(script_result.stdout), (
+            f"stdout mismatch (excluding timestamp):\n"
+            f"CLI: {cli_result.stdout[:500]}\nScript: {script_result.stdout[:500]}"
+        )
+
+
 
 class TestArtifactParityContract:
     """Verify that loop artifacts have required fields (parity contract)."""

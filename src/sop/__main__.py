@@ -100,6 +100,8 @@ def cmd_startup(args: argparse.Namespace) -> int:
         cli_args.extend(["--output-json", args.output_json])
     if args.no_interactive:
         cli_args.append("--no-interactive")
+    if args.summary:
+        cli_args.append("--summary")
 
     return _run_script("startup_codex_helper.py", cli_args)
 
@@ -202,6 +204,11 @@ For subcommand help: sop <command> --help
     p_startup.add_argument("--output-md", help="Markdown output path")
     p_startup.add_argument("--output-json", help="JSON output path")
     p_startup.add_argument("--no-interactive", action="store_true", help="Disable prompts")
+    p_startup.add_argument(
+        "--summary",
+        action="store_true",
+        help="Print a thin readiness+phase status block and exit (no interrogation required)",
+    )
     p_startup.set_defaults(func=cmd_startup)
 
     # run
