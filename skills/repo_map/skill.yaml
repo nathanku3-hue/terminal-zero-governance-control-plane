@@ -62,3 +62,14 @@ tests:
   coverage: tests/test_phase5c_repo_map.py
   count: 41
   last_run: 2026-03-26
+
+# P3.4 (D-191): Specialist delegation
+# Declares that this skill may be routed to specialist_deputy for narrow read-only tasks.
+# Seam: subagent_routing_matrix.yaml specialist_deputy.skill_delegation list.
+# Note: benchmark/subagent_routing_matrix.yaml is gitignored; the authoritative
+# declaration of this delegation mapping lives here and in docs/phase_brief/d191_p3_rollback_plan.md.
+specialist_delegation:
+  routable_to: specialist_deputy
+  rationale: "repo-map is read-only and fits the specialist_deputy domain-specific expert seam"
+  constraint: "via subagent_routing_matrix.yaml specialist_deputy.skill_delegation list only; no new authority path"
+  decision: D-191

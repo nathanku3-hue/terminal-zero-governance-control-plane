@@ -1,6 +1,6 @@
 # Gemini Handover - Phase 24
 
-- GeneratedAtUTC: 2026-03-26T16:08:22Z
+- GeneratedAtUTC: 2026-03-27T03:45:20Z
 - SchemaVersion: 1.0.0
 - SourceTopLevelPM: `top_level_PM.md`
 - SourceContextJSON: `docs/context/current_context.json`
@@ -136,17 +136,15 @@ Application pattern:
 - Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations.
 
 ## What Is Next
-- D-183 P3 implementation authorized (D-191, 2026-03-26): (1) memory/rollback for skills, (2) manifest-driven selective install, (3) canonical-to-multi-target, (4) specialist delegation. Each item independent; rollback plan required before execution semantics land.
+- D-191 P3 COMPLETE (D-192, 2026-03-26): all four items delivered on both canonical (src/sop) and compatibility (scripts/) surfaces. P3.1 rollback_state, P3.2 installs, P3.3 targets surfaced by skill_resolver.py; P3.4 specialist_delegation declared in skills/repo_map/skill.yaml. Canonical src/sop parity verified. 762 tests passing, 1 skipped.
+- D-192 closeout entry committed. validate_skill_activation.py [OK]. routing validator 6/6 OK.
 - D-190 pilot COMPLETE: `repo_map` registered, dispatch seam proven, all checks pass.
 - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
 - Post-rollout monitoring period ends 2026-04-05.
-- Implement D-191 item 1: memory/rollback for skills (commit rollback plan first).
-- Implement D-191 item 2: manifest-driven selective install.
-- Implement D-191 item 3: canonical-to-multi-target.
-- Implement D-191 item 4: specialist delegation.
+- [COMPLETE] D-191 P3 all four items delivered (D-192, 2026-03-26). No pending P3 implementation items.
 - Continue daily enforce runs through monitoring period.
 - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
-- Next: D-183 P3 items (manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation) — pending PM/CEO authorization.
+- Remaining active: D-183 P3 items beyond scope of D-191 (none — all four authorized items are delivered).
 
 ## First Command
 ```text
@@ -158,7 +156,7 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
 ~~~json
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-26T16:08:22Z",
+  "generated_at_utc": "2026-03-27T03:45:20Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -184,20 +182,18 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -Re
     "Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations."
   ],
   "what_is_next": [
-    "D-183 P3 implementation authorized (D-191, 2026-03-26): (1) memory/rollback for skills, (2) manifest-driven selective install, (3) canonical-to-multi-target, (4) specialist delegation. Each item independent; rollback plan required before execution semantics land.",
+    "D-191 P3 COMPLETE (D-192, 2026-03-26): all four items delivered on both canonical (src/sop) and compatibility (scripts/) surfaces. P3.1 rollback_state, P3.2 installs, P3.3 targets surfaced by skill_resolver.py; P3.4 specialist_delegation declared in skills/repo_map/skill.yaml. Canonical src/sop parity verified. 762 tests passing, 1 skipped.",
+    "D-192 closeout entry committed. validate_skill_activation.py [OK]. routing validator 6/6 OK.",
     "D-190 pilot COMPLETE: `repo_map` registered, dispatch seam proven, all checks pass.",
     "Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).",
     "Post-rollout monitoring period ends 2026-04-05."
   ],
   "first_command": "Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .` (enforce is default).",
   "next_todos": [
-    "Implement D-191 item 1: memory/rollback for skills (commit rollback plan first).",
-    "Implement D-191 item 2: manifest-driven selective install.",
-    "Implement D-191 item 3: canonical-to-multi-target.",
-    "Implement D-191 item 4: specialist delegation.",
+    "[COMPLETE] D-191 P3 all four items delivered (D-192, 2026-03-26). No pending P3 implementation items.",
     "Continue daily enforce runs through monitoring period.",
     "If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.",
-    "Next: D-183 P3 items (manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation) \u2014 pending PM/CEO authorization."
+    "Remaining active: D-183 P3 items beyond scope of D-191 (none \u2014 all four authorized items are delivered)."
   ]
 }
 ~~~
@@ -347,7 +343,7 @@ Part 1: Master Decision Log
 | D-186 | governance/phase24c | Phase 24C freeze lift approved and live in origin/main (commit 147ded2), but closure declaration and P2 authorization still pending | Declare Phase 24C complete with machine-readable context refresh. All D-185 criteria satisfied: 10/10 enforce PASS runs collected, dossier regenerated with C0/C4/C4b/C5 passing, authoritative surfaces committed and aligned. Context artifacts regenerated via `python scripts/build_context_packet.py` and validated. Architecture status: UNFROZEN (D-185, 2026-03-23). P2 work authorization: ACTIVE (sop-first policy per MIGRATION.md:72). Closure artifact: `docs/context/phase24c_closure_declaration.md`. | Completes Phase 24C governance closure and authorizes P2 implementation queue. Freeze lift is now operationally complete. Date: 2026-03-23. |
 | D-187 | governance/p2 | P2 implementation queue (D-186) complete; context refresh and closeout pending | P2 item 1: thin startup summary (`--summary` flag in `startup_codex_helper.py`, both `scripts/` and `src/sop/scripts/`; wired through `sop startup --summary` canonical surface; parity test added). Commits: `ac7cab3` (implementation), `0942f9d` (parity gap fix). P2 item 2: event-driven quality checkpoints in `run_fast_checks.py` (both surfaces): `startup_gate` check runs `--summary` and short-circuits heavier checks on HOLD/FAIL; malformed summary output fails closed (no `STARTUP_SUMMARY:` header → FAIL); `--check` selector; `--freshness-hours` passthrough. Commits: `376e54e` (implementation), `f06c6a5` (gap fixes). Test evidence: 634 passed, 1 skipped across full suite on `f06c6a5`. Context artifacts refreshed via `python scripts/run_loop_cycle.py --skip-phase-end --allow-hold true` (2026-03-26). P3 remains BLOCKED pending Phase 5C approval. | Closes P2 implementation queue per D-186 authorization. P3 is explicitly not authorized by this entry. Date: 2026-03-26. |
 | D-191 | governance/phase5d | D-183 P3 items blocked pending dispatch seam proof; D-190 pilot now complete | D-190 pilot (repo-map) fully verified: rollback plan committed (de5e280), skill_resolver.py seam proven, validate_skill_activation.py passes, build_context_packet.py --validate passes, full suite 756 passed 1 skipped (5469f15). Dispatch seam is proven. D-183 P3 items hereby authorized for implementation in the following sequence: (1) Memory/rollback for skills — skills record rollback state before applying changes, using existing rollback_protocol.md pattern; lowest risk, enables safe execution for subsequent items. (2) Manifest-driven selective install — skill manifest declares what surfaces it installs; operator can selectively apply; via skill_resolver.py seam only, no new authority path. (3) Canonical-to-multi-target — extend canonical skill outputs to multiple target surfaces; via existing skill_resolver.py seam only. (4) Specialist delegation — route narrow specialist tasks to dedicated skill workers; via subagent_routing_matrix.yaml seam only. Hard limits unchanged: no full skill-execution engine; no forced routing; no auto-promotion; no new authority paths; each item requires rollback plan committed before execution semantics land; kernel guardrails, auditor review chain, and CEO GO signal authority unchanged; no cross-repo rollout. Each item is implemented and validated independently before the next begins. Decision log entry required at completion of each item. | Authorizes all four D-183 P3 items. Implementation sequence: (1) memory/rollback, (2) manifest-driven selective install, (3) canonical-to-multi-target, (4) specialist delegation. Rollback plan required before each item's execution semantics land. Date: 2026-03-26. |
-| | D-192 | governance/phase5d | D-191 P3 implementation required closeout evidence after all four items delivered | D-191 P3 implementation complete. All four items delivered and validated on both canonical (src/sop/scripts/utils/skill_resolver.py) and compatibility (scripts/utils/skill_resolver.py) surfaces: (1) P3.1 memory/rollback: skill_resolver.py surfaces rollback_state from skill manifest rollback section; (2) P3.2 manifest-driven selective install: skill_resolver.py surfaces installs from skill manifest; (3) P3.3 canonical-to-multi-target: skill_resolver.py surfaces targets from skill manifest; (4) P3.4 specialist delegation: subagent_routing_matrix.yaml specialist_deputy gains skill_delegation: [repo-map] seam. Canonical surface parity verified: src/sop and scripts/ resolvers return identical 11-field shape. Test coverage added: test_skill_activation.py (3 new P3 tests), test_cli_script_parity.py (3 new parity/P3 tests), 51/51 pass. Full suite: 756 passed 1 skipped. validate_skill_activation.py [OK]. routing validator 6/6 OK. Rollback plan: docs/phase_brief/d191_p3_rollback_plan.md (committed baecf58). Authority boundary unchanged. | Closes D-191 P3 implementation. Date: 2026-03-26. |
+| D-192 | governance/phase5d | D-191 P3 implementation required closeout evidence after all four items delivered | D-191 P3 implementation complete. All four items delivered and validated on both canonical (src/sop/scripts/utils/skill_resolver.py) and compatibility (scripts/utils/skill_resolver.py) surfaces: (1) P3.1 memory/rollback: skill_resolver.py surfaces rollback_state from skill manifest rollback section; (2) P3.2 manifest-driven selective install: skill_resolver.py surfaces installs from skill manifest; (3) P3.3 canonical-to-multi-target: skill_resolver.py surfaces targets from skill manifest; (4) P3.4 specialist delegation: subagent_routing_matrix.yaml specialist_deputy gains skill_delegation: [repo-map] seam. Canonical surface parity verified: src/sop and scripts/ resolvers return identical 11-field shape. Test coverage added: test_skill_activation.py (3 new P3 tests), test_cli_script_parity.py (3 new parity/P3 tests), 51/51 pass. Full suite: 756 passed 1 skipped. validate_skill_activation.py [OK]. routing validator 6/6 OK. Rollback plan: docs/phase_brief/d191_p3_rollback_plan.md (committed baecf58). Authority boundary unchanged. | Closes D-191 P3 implementation. Date: 2026-03-26. |
 | D-190 | governance/phase5d | Stream D entry gate open; pilot skill candidate required for execution semantics authorization | Stream B (Memory Reduction) GREEN: routing validator 6/6 OK, pm_actual=179/3000, ceo_actual=99/1800. Stream C (Tiered Memory) GREEN: `memory_tier_contract.md` and `compaction_behavior_contract.md` present and complete; retention guardrails in `compaction_retention.py`. Pilot skill selected: **`repo_map` (5C.1)**. Rationale: already implemented and tested (41 tests); read-only, zero write authority; narrowest governance profile of the three candidates; exercises the full skill dispatch path via `skill_resolver.py` without mutation risk. `lint_repair` deferred — carries write authority and repair-loop governance complexity that should come after the dispatch seam is proven. Read-only research skill deferred — adds implementation overhead before the dispatch path is validated. Hard limits unchanged: no full skill-execution engine; no forced routing; no auto-promotion; no new authority paths; rollback plan required before execution semantics land; existing 5-iteration cap governance retained for any future `lint_repair` pilot. Implementation constraint: wire `repo_map` as callable skill through `skill_resolver.py` seam only; no changes to kernel guardrails, auditor review chain, or CEO GO signal authority. Rollback plan must be documented and committed before any execution semantics land. | Authorizes Stream D skill execution pilot using `repo_map` (5C.1) as the single narrow pilot path. Implementation may proceed once rollback plan is committed. Date: 2026-03-26. |
 | D-188 | governance/phase5c | P3 / Phase 5C execution semantics blocked pending explicit PM/CEO authorization | Phase 5C (Worker Inner Loop) is hereby APPROVED. Scope per ADR-001 §Future-State Plugin Layer §4: (a) 5C.1 repo map compression (`repo_map.py`: file → symbols → dependencies); (b) 5C.2 lint/test repair loop (`lint_repair_loop.py`, `test_repair_loop.py`, max 5 iterations then human escalation); (c) 5C.3 sandbox execution (`sandbox_executor.py`: Docker-based isolation). Prerequisites confirmed: 5A (benchmark harness, D-173) complete; 5B.1 (subagent routing matrix) complete per D-177/D-177a/D-177b; Phase 24C governance closure complete (D-186); P2 queue complete (D-187). Authority boundary: worker loop operates within existing kernel guardrails; it cannot bypass auditor review for high-risk changes or CEO GO signal for ONE_WAY decisions; repair loop has max 5-iteration limit before human escalation. No new authority paths introduced. No weakening of kernel minimums. Closure artifact: `docs/context/phase5c_approval.md`. Context packet must be regenerated via `python scripts/build_context_packet.py --validate` after this entry is committed. Approving authority: PM/CEO. | Authorizes P3 / Phase 5C execution semantics. Lifts the block recorded in D-187 and D-183. Implementation may proceed incrementally with validation at each sub-phase milestone (5C.1, 5C.2, 5C.3). Date: 2026-03-26. |
 
@@ -2854,7 +2850,8 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
   - Enforce mode is the default in `scripts/phase_end_handover.ps1` (D-184, 2026-03-22). For rollback, use `-AuditMode shadow` explicitly.
   - Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations.
 - What is next:
-  - D-183 P3 implementation authorized (D-191, 2026-03-26): (1) memory/rollback for skills, (2) manifest-driven selective install, (3) canonical-to-multi-target, (4) specialist delegation. Each item independent; rollback plan required before execution semantics land.
+  - D-191 P3 COMPLETE (D-192, 2026-03-26): all four items delivered on both canonical (src/sop) and compatibility (scripts/) surfaces. P3.1 rollback_state, P3.2 installs, P3.3 targets surfaced by skill_resolver.py; P3.4 specialist_delegation declared in skills/repo_map/skill.yaml. Canonical src/sop parity verified. 762 tests passing, 1 skipped.
+  - D-192 closeout entry committed. validate_skill_activation.py [OK]. routing validator 6/6 OK.
   - D-190 pilot COMPLETE: `repo_map` registered, dispatch seam proven, all checks pass.
   - Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).
   - Post-rollout monitoring period ends 2026-04-05.
@@ -2862,13 +2859,10 @@ Enforce mode is **active**. Phase 24C is **CLOSURE_COMPLETE** (D-186, 2026-03-23
   - Run `powershell -ExecutionPolicy Bypass -File scripts/phase_end_handover.ps1 -RepoRoot .` (enforce is default).
   - For emergency rollback only, add `-AuditMode shadow`.
 - Next Todos:
-  - Implement D-191 item 1: memory/rollback for skills (commit rollback plan first).
-  - Implement D-191 item 2: manifest-driven selective install.
-  - Implement D-191 item 3: canonical-to-multi-target.
-  - Implement D-191 item 4: specialist delegation.
+  - [COMPLETE] D-191 P3 all four items delivered (D-192, 2026-03-26). No pending P3 implementation items.
   - Continue daily enforce runs through monitoring period.
   - If FP rate >=5% or infra error, ROLLBACK IMMEDIATELY to shadow mode.
-  - Next: D-183 P3 items (manifest-driven selective install, canonical-to-multi-target, memory/rollback, specialist delegation) — pending PM/CEO authorization.
+  - Remaining active: D-183 P3 items beyond scope of D-191 (none — all four authorized items are delivered).
 
 ## 13) Approval Metadata
 ConfirmationRequired: NO (monitoring active)
