@@ -409,7 +409,7 @@ Each item is implemented and validated independently before the next begins. A d
 
 ---
 
-## D-192: D-191 P3 Implementation Complete — All Four Items Delivered on Canonical and Compatibility Surfaces
+## D-192: D-191 P3 Implementation Complete — All Four Items Delivered Across Canonical, Compatibility, and Tracked Manifest Surfaces
 
 **Date**: 2026-03-26  
 **Status**: CLOSED  
@@ -417,7 +417,7 @@ Each item is implemented and validated independently before the next begins. A d
 
 ### Summary
 
-All four D-191 P3 items are implemented, validated, and committed on both the canonical (`src/sop/scripts/utils/skill_resolver.py`) and compatibility (`scripts/utils/skill_resolver.py`) surfaces. Test coverage protects the new contract. Context surfaces updated.
+All four D-191 P3 items are implemented, validated, and committed across the canonical (`src/sop/scripts/utils/skill_resolver.py`), compatibility (`scripts/utils/skill_resolver.py`), and tracked skill-manifest surfaces. P3.4 is now evidenced on a tracked manifest surface rather than only on the local benchmark routing matrix. Test coverage protects the new contract. Context surfaces updated.
 
 ### Delivery Evidence
 
@@ -426,14 +426,14 @@ All four D-191 P3 items are implemented, validated, and committed on both the ca
 | P3.1 Memory/rollback | `skill_resolver.py` surfaces `rollback_state` from manifest | `baecf58` |
 | P3.2 Manifest-driven selective install | `skill_resolver.py` surfaces `installs` from manifest | `baecf58` |
 | P3.3 Canonical-to-multi-target | `skill_resolver.py` surfaces `targets` from manifest | `baecf58` |
-| P3.4 Specialist delegation | `specialist_deputy` gains `skill_delegation: [repo-map]` | `baecf58` |
-| Canonical surface (src/sop) | `_load_manifest` + P3 fields added | post-`447ca61` |
+| P3.4 Specialist delegation | `skills/repo_map/skill.yaml` declares `specialist_delegation.routable_to: specialist_deputy`; local `benchmark/subagent_routing_matrix.yaml` remains validator seam | `0cadfd3` |
+| Canonical surface (src/sop) | `_load_manifest` + P3 fields added | `5abc23a` |
 | Parity verified | `src/sop` and `scripts/` return identical 11-field shape | `test_src_scripts_resolver_parity` |
 | Test coverage | 3 new P3 tests in `test_skill_activation.py`, 3 in `test_cli_script_parity.py` | 51/51 pass |
-| Full suite | 756 passed, 1 skipped | 2026-03-26 |
-| `validate_skill_activation.py` | `[OK]` | 2026-03-26 |
-| Routing validator | 6/6 roles OK | 2026-03-26 |
-| Rollback plan | `docs/phase_brief/d191_p3_rollback_plan.md` | `baecf58` |
+| Full suite | 762 passed, 1 skipped | 2026-03-27 |
+| `validate_skill_activation.py` | `[OK]` | 2026-03-27 |
+| Routing validator | 6/6 roles OK | 2026-03-27 |
+| Rollback plan | `docs/phase_brief/d191_p3_rollback_plan.md` updated for tracked P3.4 declaration | present in main |
 
 ### Authority Boundary (Unchanged)
 

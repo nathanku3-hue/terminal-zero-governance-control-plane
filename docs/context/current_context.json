@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-27T03:45:20Z",
+  "generated_at_utc": "2026-03-27T04:01:31Z",
   "source_files": [
     "docs/decision log.md",
     "docs/handover/phase20_handover.md",
@@ -26,7 +26,7 @@
     "Phase 5C authority boundary: worker loop operates within kernel guardrails; cannot bypass auditor review or CEO GO signal; repair loop max 5 iterations."
   ],
   "what_is_next": [
-    "D-191 P3 COMPLETE (D-192, 2026-03-26): all four items delivered on both canonical (src/sop) and compatibility (scripts/) surfaces. P3.1 rollback_state, P3.2 installs, P3.3 targets surfaced by skill_resolver.py; P3.4 specialist_delegation declared in skills/repo_map/skill.yaml. Canonical src/sop parity verified. 762 tests passing, 1 skipped.",
+    "D-191 P3 COMPLETE (D-192, 2026-03-26): all four items delivered across canonical (src/sop), compatibility (scripts/), and tracked skill-manifest surfaces. P3.1 rollback_state, P3.2 installs, P3.3 targets surfaced by skill_resolver.py; P3.4 specialist_delegation declared in skills/repo_map/skill.yaml. Canonical src/sop parity verified. 762 tests passing, 1 skipped.",
     "D-192 closeout entry committed. validate_skill_activation.py [OK]. routing validator 6/6 OK.",
     "D-190 pilot COMPLETE: `repo_map` registered, dispatch seam proven, all checks pass.",
     "Continue daily enforce runs through monitoring period (do not revert to shadow unless FP rate >=5% or infra error).",

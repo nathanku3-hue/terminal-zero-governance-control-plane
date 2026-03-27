@@ -16,7 +16,7 @@ All four items are **additive, surface-only changes** to existing seams. No new 
 | P3.1 Memory/rollback | `skill_resolver.py` surfaces `rollback_state` from skill manifest | `skill_resolver.py` |
 | P3.2 Manifest-driven selective install | `skill_resolver.py` surfaces `installs` from skill manifest | `skill_resolver.py` |
 | P3.3 Canonical-to-multi-target | `skill_resolver.py` surfaces `targets` from skill manifest | `skill_resolver.py` |
-| P3.4 Specialist delegation | `subagent_routing_matrix.yaml` `specialist_deputy` gains `skill_delegation` list | `subagent_routing_matrix.yaml` |
+| P3.4 Specialist delegation | tracked `skills/repo_map/skill.yaml` gains `specialist_delegation`; local `benchmark/subagent_routing_matrix.yaml` remains validator seam | `skills/repo_map/skill.yaml` + local benchmark routing matrix |
 
 Skill manifests (`skills/*/skill.yaml`) gain optional `installs`, `targets`, and `rollback_state` fields. No existing field is removed or modified.
 
@@ -31,7 +31,7 @@ Roll back all P3 changes if ANY of the following occur:
 | `validate_skill_activation.py` fails | Revert `skill_resolver.py` to pre-P3 version |
 | `build_context_packet.py --validate` fails | Revert `skill_resolver.py` |
 | Full test suite regresses | Revert changes; fix root cause |
-| Routing validator fails | Revert `subagent_routing_matrix.yaml` |
+| Routing validator fails | Revert tracked `skills/repo_map/skill.yaml` specialist delegation block and remove the local benchmark delegation entry if present |
 | PM/CEO revokes D-191 | Revert all P3 surfaces immediately |
 
 ---
@@ -46,11 +46,13 @@ git revert <P3-commit-hash> --no-edit
 git checkout <pre-P3-hash> -- scripts/utils/skill_resolver.py
 ```
 
-### P3.4 — Revert routing matrix
+### P3.4 — Revert tracked specialist delegation declaration
 
 ```bash
-git checkout <pre-P3-hash> -- benchmark/subagent_routing_matrix.yaml
+git checkout <pre-P3-hash> -- skills/repo_map/skill.yaml
 ```
+
+If `benchmark/subagent_routing_matrix.yaml` exists locally, remove `repo-map` from `specialist_deputy.skill_delegation` there as well. The benchmark routing matrix is gitignored under `/benchmark/`, so this local cleanup is operational rather than tracked.
 
 ### Revert skill manifests
 
@@ -72,7 +74,7 @@ All four must pass before rollback is declared complete.
 ## 4. What Is NOT Rolled Back
 
 - `src/sop/scripts/repo_map.py` (D-189)
-- `skills/repo_map/skill.yaml` (D-190 pilot)
+- `skills/repo_map/skill.yaml` (D-190 pilot) except for the P3-added `specialist_delegation` block
 - `docs/phase_brief/repo_map_skill_rollback_plan.md` (D-190)
 - D-189, D-190, D-191 decision log entries
 
@@ -80,6 +82,6 @@ All four must pass before rollback is declared complete.
 
 ## 5. Governance Notes
 
-- P3 changes are advisory-surface additions only. They extend what the resolver surfaces; they do not add execution semantics.
+- P3 changes are advisory-surface additions only. They extend what the resolver surfaces and tracked skill metadata; they do not add execution semantics.
 - No new authority paths are introduced.
 - PM/CEO can revoke D-191 at any time. Full rollback is one `git revert`.
