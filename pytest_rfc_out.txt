@@ -1,0 +1,35 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: E:\Code\SOP\quant_current_scope
+configfile: pyproject.toml
+plugins: anyio-4.12.0, respx-0.22.0, cov-7.0.0
+collecting ... collected 11 items
+
+tests/test_run_fast_checks.py::test_parse_args_defaults PASSED           [  9%]
+tests/test_run_fast_checks.py::test_run_fast_checks_returns_hold_when_closure_not_ready FAILED [ 18%]
+tests/test_run_fast_checks.py::test_run_fast_checks_returns_pass_when_all_pass FAILED [ 27%]
+tests/test_run_fast_checks.py::test_run_fast_checks_fails_when_run_loop_cycle_output_is_ambiguous PASSED [ 36%]
+tests/test_run_fast_checks.py::test_run_fast_checks_returns_fail_on_hard_error PASSED [ 45%]
+tests/test_run_fast_checks.py::test_main_writes_json_output FAILED       [ 54%]
+tests/test_run_fast_checks.py::test_run_fast_checks_refreshes_cycle_before_closure_validation FAILED [ 63%]
+tests/test_run_fast_checks.py::test_check_selector_runs_only_named_checks PASSED [ 72%]
+tests/test_run_fast_checks.py::test_startup_gate_check_passes_when_readiness_ready PASSED [ 81%]
+tests/test_run_fast_checks.py::test_startup_gate_check_fails_when_readiness_needs_attention PASSED [ 90%]
+tests/test_run_fast_checks.py::test_freshness_hours_forwarded_to_validate_loop_closure PASSED [100%]
+
+=========================== short test summary info ===========================
+FAILED tests/test_run_fast_checks.py::test_run_fast_checks_returns_hold_when_closure_not_ready
+FAILED tests/test_run_fast_checks.py::test_run_fast_checks_returns_pass_when_all_pass
+FAILED tests/test_run_fast_checks.py::test_main_writes_json_output - assert 1...
+FAILED tests/test_run_fast_checks.py::test_run_fast_checks_refreshes_cycle_before_closure_validation
+========================= 4 failed, 7 passed in 0.09s =========================
+Exception ignored in atexit callback <function cleanup_numbered_dir at 0x00000124267AE560>:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\site-packages\_pytest\pathlib.py", line 374, in cleanup_numbered_dir
+    cleanup_dead_symlinks(root)
+  File "C:\Python314\Lib\site-packages\_pytest\pathlib.py", line 360, in cleanup_dead_symlinks
+    left_dir.unlink()
+  File "C:\Python314\Lib\pathlib\__init__.py", line 1047, in unlink
+    os.unlink(self)
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\Lenovo\\AppData\\Local\\Temp\\pytest-of-Lenovo\\pytest-current'

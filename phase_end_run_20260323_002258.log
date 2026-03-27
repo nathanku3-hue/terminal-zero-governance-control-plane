@@ -1,0 +1,31 @@
+Resolved Config:
+  repo_profile: default
+  repo_root: E:\Code\SOP\quant_current_scope
+  scan_root: E:\Code\SOP\quant_current_scope\docs
+  traceability_path: E:\Code\SOP\quant_current_scope\docs\pm_to_code_traceability.yaml
+  dispatch_manifest_path: E:\Code\SOP\quant_current_scope\docs\context\dispatch_manifest.json
+  worker_reply_path: E:\Code\SOP\quant_current_scope\docs\context\worker_reply_packet.json
+  worker_aggregate_path: E:\Code\SOP\quant_current_scope\docs\context\worker_status_aggregate.json
+  escalation_path: E:\Code\SOP\quant_current_scope\docs\context\escalation_events.json
+  digest_path: E:\Code\SOP\quant_current_scope\docs\context\ceo_bridge_digest.md
+  orphan_include: *.py, *.ps1, *.ts, *.tsx, *.js, *.jsx, *.yaml, *.yml
+  orphan_exclude: docs/archive/**
+  skip_orphan_gate: False
+  skip_dispatch_gate: False
+[PASS] G01_context_build (exit=0)
+[PASS] G02_context_validate (exit=0)
+[PASS] G03_worker_status_aggregate (exit=0)
+[PASS] G04_traceability_gate (exit=0)
+[PASS] G05_evidence_hash_gate (exit=0)
+[PASS] G06_worker_reply_gate (exit=0)
+[PASS] G07_orphan_change_gate (exit=0)
+[PASS] G08_dispatch_lifecycle_gate (exit=0)
+[PASS] G09_build_ceo_digest (exit=0)
+[PASS] G10_digest_freshness_gate (exit=0)
+[PASS] G11_auditor_review (exit=0)
+[PASS] G09b_rebuild_ceo_digest (exit=0)
+[PASS] G10b_digest_freshness_revalidation (exit=0)
+Run status: PASS
+Status JSON: E:\Code\SOP\quant_current_scope\docs\context\phase_end_logs\phase_end_handover_status_20260323_002259.json
+Summary MD: E:\Code\SOP\quant_current_scope\docs\context\phase_end_logs\phase_end_handover_summary_20260323_002259.md
+CEO GO signal refreshed: E:\Code\SOP\quant_current_scope\docs\context\ceo_go_signal.md
