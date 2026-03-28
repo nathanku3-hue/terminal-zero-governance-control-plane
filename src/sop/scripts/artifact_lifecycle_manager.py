@@ -13,11 +13,9 @@ D-183: scripts/artifact_lifecycle_manager.py must be byte-identical to this file
 """
 from __future__ import annotations
 
-import os
 import shutil
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 

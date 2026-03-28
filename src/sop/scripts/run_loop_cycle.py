@@ -8,7 +8,6 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
-from dataclasses import field
 from datetime import datetime
 from datetime import timezone
 from pathlib import Path
@@ -1829,8 +1828,6 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     final_exit_code = int(payload["final_exit_code"])
 
     # Phase 2.1 — emit run trace artifact
-    import time as _time_mod
-    import hashlib as _hl
     _run_start = runtime.generated_at
     _run_end = _utc_now()
     _duration = round((_run_end - _run_start).total_seconds(), 3)

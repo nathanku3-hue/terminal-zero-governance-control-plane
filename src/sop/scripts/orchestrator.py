@@ -3,7 +3,11 @@ Phase 3 -- RollbackManager, Production Validation, Distributed Coordination.
 D-183: scripts/orchestrator.py must be byte-identical to this file.
 """
 from __future__ import annotations
-import json, os, tempfile, statistics, sys
+import json
+import os
+import statistics
+import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -492,11 +496,16 @@ class LoopOrchestrator:
             "total_steps": len(rt.steps),
         }
         fec = [s["exit_code"] for s in rt.steps if s["status"]=="FAIL" and isinstance(s.get("exit_code"),int)]
-        if sc["error_count"]>0: fcode,fres=2,"ERROR"
-        elif any(c==2 for c in fec): fcode,fres=2,"ERROR"
-        elif fec: fcode,fres=1,"FAIL"
-        elif sc["hold_count"]>0: fcode,fres=0,"HOLD"
-        else: fcode,fres=0,"PASS"
+        if sc["error_count"]>0:
+            fcode,fres=2,"ERROR"
+        elif any(c==2 for c in fec):
+            fcode,fres=2,"ERROR"
+        elif fec:
+            fcode,fres=1,"FAIL"
+        elif sc["hold_count"]>0:
+            fcode,fres=0,"HOLD"
+        else:
+            fcode,fres=0,"PASS"
         cstep = next((s for s in rt.steps if s.get("name")=="evaluate_context_compaction_trigger"),None)
         comp = lcs(step=cstep, status_json=ctx.compaction_status_json)
         rrc = rt.repo_root_convenience or {}
@@ -521,12 +530,14 @@ class LoopOrchestrator:
                   "started_utc":rt.generated_at_utc,"ended_utc":rt.generated_at_utc,
                   "duration_seconds":0.0,"stdout":"","stderr":"","message":f"Missing script: {script_path}"}
             rt.steps.append(ms)
-            if _asn: _asn(ndp, rt.trace_id, ms)
+            if _asn:
+                _asn(ndp, rt.trace_id, ms)
             return
         cmd = [ctx.python_exe, str(script_path)] + script_args
         sr = _rc(step_name=step_name, command=cmd, cwd=ctx.repo_root)
         rt.steps.append(sr)
-        if _asn: _asn(ndp, rt.trace_id, sr)
+        if _asn:
+            _asn(ndp, rt.trace_id, sr)
 
     def _step_by_name(self, step_name: str) -> dict | None:
         """Closure 3: _step_by_name."""
@@ -535,13 +546,17 @@ class LoopOrchestrator:
     @staticmethod
     def _remove_if_exists(path: Path) -> None:
         """Closure 4: _remove_if_exists."""
-        try: path.unlink()
-        except (FileNotFoundError, OSError): pass
+        try:
+            path.unlink()
+        except (FileNotFoundError, OSError):
+            pass
 
     def _promote_exec_memory_outputs(self, memory_step, build_status) -> bool:
         """Closure 5: _promote_exec_memory_outputs."""
-        ctx = self.ctx; vep = self._h["_validate_exact_path"]
-        if memory_step is None: return False
+        ctx = self.ctx
+        vep = self._h["_validate_exact_path"]
+        if memory_step is None:
+            return False
         for actual, expected, label in (
             (ctx.exec_memory_current_json, ctx.context_dir/"exec_memory_packet_latest_current.json", "exec-memory current JSON"),
             (ctx.exec_memory_current_md, ctx.context_dir/"exec_memory_packet_latest_current.md", "exec-memory current MD"),
@@ -549,27 +564,45 @@ class LoopOrchestrator:
             (ctx.exec_memory_latest_md, ctx.context_dir/"exec_memory_packet_latest.md", "exec-memory latest MD"),
         ):
             err = vep(actual, expected, label)
-            if err: memory_step["status"]="FAIL"; memory_step["exit_code"]=2; memory_step["message"]=err; return False
+            if err:
+                memory_step["status"]="FAIL"
+                memory_step["exit_code"]=2
+                memory_step["message"]=err
+                return False
         if build_status is None:
-            memory_step["status"]="FAIL"; memory_step["exit_code"]=2; memory_step["message"]="Build status missing."; return False
+            memory_step["status"]="FAIL"
+            memory_step["exit_code"]=2
+            memory_step["message"]="Build status missing."
+            return False
         if not bool(build_status.get("authoritative_latest_written")):
             reason=str(build_status.get("reason","")).strip() or "not_authoritative"
-            if memory_step.get("status")=="PASS": memory_step["status"]="FAIL"; memory_step["exit_code"]=2
-            memory_step["message"]=f"Not authoritative ({reason})."; return False
-        if memory_step.get("status") not in {"PASS","FAIL"}: return False
+            if memory_step.get("status")=="PASS":
+                memory_step["status"]="FAIL"
+                memory_step["exit_code"]=2
+            memory_step["message"]=f"Not authoritative ({reason})."
+            return False
+        if memory_step.get("status") not in {"PASS","FAIL"}:
+            return False
         if not ctx.exec_memory_current_json.exists() or not ctx.exec_memory_current_md.exists():
-            memory_step["status"]="FAIL"; memory_step["exit_code"]=2; memory_step["message"]="Outputs not produced."; return False
+            memory_step["status"]="FAIL"
+            memory_step["exit_code"]=2
+            memory_step["message"]="Outputs not produced."
+            return False
         try:
             _atomic_write_text(ctx.exec_memory_latest_json, ctx.exec_memory_current_json.read_text(encoding="utf-8-sig"))
             _atomic_write_text(ctx.exec_memory_latest_md, ctx.exec_memory_current_md.read_text(encoding="utf-8-sig"))
         except OSError as exc:
-            memory_step["status"]="FAIL"; memory_step["exit_code"]=2; memory_step["message"]=f"Promote failed: {exc}"; return False
+            memory_step["status"]="FAIL"
+            memory_step["exit_code"]=2
+            memory_step["message"]=f"Promote failed: {exc}"
+            return False
         return True
 
     def _write_temp_summary_snapshot(self) -> bool:
         """Closure 7: _write_temp_summary_snapshot."""
         rt,ctx = self.runtime,self.ctx
-        _sds = self._h["_scan_disagreement_sla"]; _vep = self._h["_validate_exact_path"]
+        _sds = self._h["_scan_disagreement_sla"]
+        _vep = self._h["_validate_exact_path"]
         td = self.build_summary_payload(disagreement_sla=_sds(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now()))
         err = _vep(rt.temp_summary_path, ctx.context_dir/"loop_cycle_summary_current.json", "temp summary")
         if err:
@@ -577,7 +610,8 @@ class LoopOrchestrator:
                 "started_utc":rt.generated_at_utc,"ended_utc":rt.generated_at_utc,"duration_seconds":0.0,
                 "stdout":"","stderr":err,"message":err})
             return False
-        try: _atomic_write_text(rt.temp_summary_path, json.dumps(td, indent=2))
+        try:
+            _atomic_write_text(rt.temp_summary_path, json.dumps(td, indent=2))
         except OSError as exc:
             rt.steps.append({"name":"write_temp_summary","status":"ERROR","exit_code":None,"command":[],
                 "started_utc":rt.generated_at_utc,"ended_utc":rt.generated_at_utc,"duration_seconds":0.0,
@@ -590,7 +624,8 @@ class LoopOrchestrator:
         rt,ctx = self.runtime,self.ctx
         _sds = self._h["_scan_disagreement_sla"]
         summary = self.build_summary_payload(disagreement_sla=_sds(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now()))
-        try: _atomic_write_text(ctx.output_json, json.dumps(summary, indent=2) + "\n")
+        try:
+            _atomic_write_text(ctx.output_json, json.dumps(summary, indent=2) + "\n")
         except OSError as exc:
             rt.steps.append({"name":"write_round_contract_summary","status":"ERROR","exit_code":None,"command":[],
                 "started_utc":rt.generated_at_utc,"ended_utc":rt.generated_at_utc,"duration_seconds":0.0,
