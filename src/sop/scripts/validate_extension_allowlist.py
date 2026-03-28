@@ -335,7 +335,7 @@ def main():
         print(f"\n✓ Validation PASSED: {skill_count} skill(s) in allowlist")
         if project_config:
             active_count = len(project_config.get('active_skills', []))
-            print(f"✓ Project config valid: {active_count} active skill(s)")
+            print(f"PASS Project config valid: {active_count} active skill(s)")
         sys.exit(0)
 
 

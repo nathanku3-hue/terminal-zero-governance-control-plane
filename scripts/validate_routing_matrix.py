@@ -216,7 +216,7 @@ def main():
             print(f"  - {error}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"✓ Routing matrix valid: {len(data.get('roles', {}))} roles")
+    print(f"PASS Routing matrix valid: {len(data.get('roles', {}))} roles")
     sys.exit(0)
 
 

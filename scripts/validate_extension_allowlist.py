@@ -326,16 +326,16 @@ def main():
 
     # Report results
     if all_errors:
-        print(f"\n❌ Validation FAILED with {len(all_errors)} error(s):\n")
+        print(f"\nFAIL Validation FAILED with {len(all_errors)} error(s):\n")
         for error in all_errors:
             print(f"  - {error}")
         sys.exit(1)
     else:
         skill_count = len(allowlist.get('skills', []))
-        print(f"\n✓ Validation PASSED: {skill_count} skill(s) in allowlist")
+        print(f"\nPASS Validation PASSED: {skill_count} skill(s) in allowlist")
         if project_config:
             active_count = len(project_config.get('active_skills', []))
-            print(f"✓ Project config valid: {active_count} active skill(s)")
+            print(f"PASS Project config valid: {active_count} active skill(s)")
         sys.exit(0)
 
 
