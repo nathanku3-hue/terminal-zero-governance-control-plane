@@ -1,0 +1,35 @@
+# Extension Allowlist v1.0.0
+# Global allowlist of approved skills
+# Conforms to skills/schemas/allowlist_schema.yaml
+
+schema_version: "1.0.0"
+last_updated: "2026-03-28"
+
+skills:
+  - skill_name: safe-db-migration
+    version: 1.0.0
+    approved_by: PM/CEO
+    approval_decision_id: D-176
+    approval_date: "2026-03-13"
+    status: active
+    risk_level: HIGH
+    applicable_projects:
+      - all
+    # Phase 1.2: assigned_roles — roles that may use this skill.
+    # Omit to default to [worker] only.
+    assigned_roles:
+      - worker
+
+  - skill_name: repo-map
+    version: 1.0.0
+    approved_by: PM/CEO
+    approval_decision_id: D-190
+    approval_date: "2026-03-26"
+    status: active
+    risk_level: LOW
+    applicable_projects:
+      - all
+    # Phase 1.2: assigned_roles — available to both worker and auditor.
+    assigned_roles:
+      - worker
+      - auditor

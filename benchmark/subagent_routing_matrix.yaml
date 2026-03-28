@@ -1,0 +1,100 @@
+# Subagent Routing Matrix
+# Phase 5A.2: Role-to-artifact mapping for context isolation
+# All paths are repo-root-relative under E:\code\SOP\quant_current_scope
+# Token estimator: len(text) // 4 (from build_exec_memory_packet.py:246)
+
+roles:
+  startup_deputy:
+    description: "Initializes new execution rounds from seed contracts"
+    required_artifacts:
+      - docs/context/init_execution_card_latest.md
+      - docs/context/round_contract_seed_latest.md
+      - docs/loop_operating_contract.md
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - full chat history
+      - calibration history
+      - phase-end artifacts
+    max_context_tokens: 8000
+
+  execution_deputy:
+    description: "Executes mid-round work based on handoff instructions"
+    required_artifacts:
+      - docs/context/next_round_handoff_latest.md
+      - docs/loop_operating_contract.md
+      - docs/runbook_ops_active.md
+    optional_artifacts:
+      - docs/context/skill_activation_latest.json
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - CEO digest
+      - board decision brief
+      - docs/runbook_ops_reference.md
+    max_context_tokens: 8000
+    # Phase 6.2: routed to runbook_ops_active.md after split.
+    # loop_operating_contract.md (6496 tokens) is authority-critical and cannot be removed.
+    # runbook_ops_active.md replaces runbook_ops.md for a net saving of ~417 tokens.
+    # Actual tokens ~8459; budget target 8000; documented capped exception:
+    # loop_operating_contract.md is the irreducible hotspot for execution_deputy.
+    # Residual overage ~459 tokens is authority-doc bulk; no governance-safe reduction exists
+    # without a separate round. Exception acknowledged and capped.
+
+  specialist_deputy:
+    description: "Handles domain-specific expert requests"
+    required_artifacts:
+      - docs/context/expert_request_latest.md
+    optional_artifacts:
+      - docs/context/milestone_expert_roster_latest.json
+      - docs/context/skill_activation_latest.json
+    conditional_artifacts:
+      high_semantic_risk_work:
+        - docs/context/domain_falsification_pack_latest.md
+    excluded_artifacts:
+      - full repo context
+      - unrelated dossiers
+    max_context_tokens: 10000
+    # P3.4 (D-191): Specialist delegation — narrow read-only skills routable to this deputy
+    skill_delegation:
+      - repo-map
+
+  pm_research_deputy:
+    description: "Conducts PM/CEO research and strategic analysis"
+    required_artifacts:
+      - docs/context/pm_ceo_research_brief_latest.md
+      - docs/context/ceo_go_signal.md
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - technical implementation details
+      - audit trails
+    max_context_tokens: 8000
+
+  board_decision_deputy:
+    description: "Supports board-level decision making and loop closure"
+    required_artifacts:
+      - docs/context/board_decision_brief_latest.md
+      - docs/context/loop_closure_status_latest.json
+      - docs/context/ceo_go_signal.md
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - worker execution logs
+      - lint/test output
+    max_context_tokens: 6000
+
+  auditor_deputy:
+    description: "Reviews governance compliance and quality metrics"
+    required_artifacts:
+      - docs/context/auditor_calibration_report.json
+      - docs/context/auditor_promotion_dossier.json
+      - docs/context/loop_cycle_summary_latest.json
+    optional_artifacts: []
+    conditional_artifacts: {}
+    excluded_artifacts:
+      - advisory artifacts (next_round_handoff, expert_request)
+      - docs/context/auditor_fp_ledger.json
+    max_context_tokens: 8000
+    # Phase 6.2: auditor_deputy measured at 6459 tokens (within 8000 target).
+    # auditor_fp_ledger.json is cold-tier (MEMORY_TIER_CONTRACT.md) and explicitly excluded.
+    # Budget tightened from 10000 to 8000; no surface reduction required.

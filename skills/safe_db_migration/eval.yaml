@@ -1,0 +1,18 @@
+# Evaluation Requirements: safe-db-migration v1.0.0
+# Conforms to skills/schemas/eval_schema.yaml
+
+schema_version: "1.0.0"
+skill_name: safe-db-migration
+
+benchmark_requirements:
+  - benchmark_name: sql_accuracy
+    threshold: 0.85
+    operator: ">="
+    rationale: "Model must demonstrate high SQL competency to generate safe migration scripts without syntax errors or logic bugs"
+
+evaluation_frequency: per_model_version
+
+waiver_policy:
+  waiver_allowed: false
+  waiver_authority: pm_ceo
+  waiver_documentation_required: true

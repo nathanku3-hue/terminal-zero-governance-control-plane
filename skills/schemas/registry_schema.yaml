@@ -1,0 +1,94 @@
+# Skills Registry Schema v1.0.0
+# Defines the structure for skills/registry.yaml
+# Human-readable catalog of all available skills
+
+schema_version: "1.0.0"
+description: "Schema for skills registry - catalog of available skills"
+
+type: object
+required:
+  - schema_version
+  - last_updated
+  - skills
+
+properties:
+  schema_version:
+    type: string
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    description: "Semantic version of this schema"
+
+  last_updated:
+    type: string
+    format: date
+    description: "ISO date of last registry update (YYYY-MM-DD)"
+
+  skills:
+    type: array
+    description: "List of all skills in the registry"
+    items:
+      type: object
+      required:
+        - name
+        - version
+        - category
+        - description
+        - author
+        - approval_status
+        - approval_decision_id
+        - documentation
+      properties:
+        name:
+          type: string
+          pattern: "^[a-z0-9-]+$"
+          description: "Unique skill identifier (kebab-case)"
+
+        version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          description: "Semantic version (major.minor.patch)"
+
+        category:
+          type: string
+          enum:
+            - database
+            - frontend
+            - backend
+            - infrastructure
+            - testing
+            - security
+            - devops
+            - data
+          description: "Skill category for discovery"
+
+        description:
+          type: string
+          minLength: 10
+          maxLength: 200
+          description: "Brief description of skill purpose"
+
+        author:
+          type: string
+          description: "Skill author (Internal Team or contributor name)"
+
+        approval_status:
+          type: string
+          enum:
+            - active
+            - deprecated
+            - disabled
+          description: "Current approval status"
+
+        approval_decision_id:
+          type: string
+          pattern: "^D-[0-9]+[a-z]?$"
+          description: "Reference to decision log entry (e.g., D-176)"
+
+        documentation:
+          type: string
+          description: "Path to skill README.md"
+
+        examples:
+          type: array
+          description: "List of example file paths"
+          items:
+            type: string

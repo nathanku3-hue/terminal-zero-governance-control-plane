@@ -46,12 +46,7 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Deferred skill infrastructure (Phase 24C scope freeze)
-/skills/registry.yaml
-/skills/schemas/
-/skills/safe_db_migration/
-/.sop_config.yaml
-/extension_allowlist.yaml
+# Skill infrastructure scripts (validators only — not production entrypoints)
 scripts/validate_skill_registry.py
 scripts/validate_skill_manifest.py
 scripts/validate_extension_allowlist.py
@@ -68,8 +63,9 @@ docs/context/w11_status.md
 docs/context/workflow_status_test.json
 
 # Experimental/benchmark (not production)
-/benchmark/
-!/benchmark/subagent_routing_matrix.yaml
+/benchmark/results/
+/benchmark/baselines/
+/benchmark/suites/
 scripts/run_baseline_benchmark.py
 scripts/measure_context_reduction.py
 scripts/test_policy_proposal.py

@@ -1,0 +1,12 @@
+# Project Configuration v1.0.0
+# Project-local skill activation and guardrail settings
+# Conforms to skills/schemas/project_config_schema.yaml
+
+project_name: "quant_current_scope"
+guardrail_strength: "tight"
+
+active_skills:
+  - safe-db-migration
+  - repo-map
+
+disabled_skills: []

@@ -1,0 +1,135 @@
+# Skill: safe-db-migration v1.0.0
+# Conforms to skills/schemas/skill_schema.yaml
+
+schema_version: "1.0.0"
+name: safe-db-migration
+version: 1.0.0
+category: database
+description: "Execute database schema changes with rollback plan, backup verification, and zero data loss guarantees"
+author: "Internal Team"
+
+when_to_use:
+  - "Adding or removing columns"
+  - "Creating or dropping indexes"
+  - "Modifying constraints"
+  - "Data migrations between tables"
+  - "Schema refactoring with data preservation"
+
+steps:
+  - step_id: analyze_schema_change
+    description: "Analyze proposed schema change for impact and risks"
+    action: analyze
+    inputs:
+      - "Current schema definition"
+      - "Proposed schema change"
+      - "Production data statistics"
+    outputs:
+      - "Impact assessment report"
+      - "Risk classification (LOW/MEDIUM/HIGH)"
+    validation_criteria:
+      - "All affected tables identified"
+      - "Data loss risk assessed"
+      - "Lock duration estimated"
+
+  - step_id: generate_migration_script
+    description: "Generate forward migration SQL script"
+    action: generate
+    inputs:
+      - "Impact assessment report"
+      - "Target database type (PostgreSQL/MySQL/SQL Server)"
+    outputs:
+      - "Forward migration script"
+      - "Estimated execution time"
+    validation_criteria:
+      - "Script is idempotent"
+      - "Script includes transaction boundaries"
+      - "Script handles existing data safely"
+
+  - step_id: generate_rollback_script
+    description: "Generate rollback script for failure recovery"
+    action: generate
+    inputs:
+      - "Forward migration script"
+      - "Current schema definition"
+    outputs:
+      - "Rollback script"
+      - "Rollback validation queries"
+    validation_criteria:
+      - "Rollback script restores original state"
+      - "Rollback script is tested"
+      - "Data preservation verified"
+
+  - step_id: validate_data_integrity
+    description: "Validate data integrity before and after migration"
+    action: validate
+    inputs:
+      - "Forward migration script"
+      - "Rollback script"
+      - "Test database snapshot"
+    outputs:
+      - "Integrity test results"
+      - "Row count verification"
+      - "Constraint validation results"
+    validation_criteria:
+      - "No data loss in test run"
+      - "All constraints satisfied"
+      - "Rollback successfully tested"
+
+  - step_id: backup_verification
+    description: "Verify backup exists and is restorable"
+    action: validate
+    inputs:
+      - "Production database identifier"
+      - "Backup retention policy"
+    outputs:
+      - "Backup verification report"
+      - "Restore test results"
+    validation_criteria:
+      - "Recent backup exists (<24h)"
+      - "Backup is restorable"
+      - "Backup includes all affected tables"
+
+  - step_id: execute_migration
+    description: "Execute migration in production with monitoring"
+    action: execute
+    inputs:
+      - "Approved migration script"
+      - "Rollback script (ready)"
+      - "Monitoring dashboard"
+    outputs:
+      - "Execution log"
+      - "Performance metrics"
+      - "Success/failure status"
+    validation_criteria:
+      - "Migration completed within estimated time"
+      - "No errors in execution log"
+      - "Data integrity checks passed"
+
+  - step_id: post_migration_validation
+    description: "Validate migration success and data integrity"
+    action: validate
+    inputs:
+      - "Execution log"
+      - "Post-migration schema"
+      - "Data integrity queries"
+    outputs:
+      - "Validation report"
+      - "Performance comparison"
+    validation_criteria:
+      - "Schema matches expected state"
+      - "All data integrity checks passed"
+      - "Application connectivity verified"
+
+  - step_id: rollback_if_needed
+    description: "Execute rollback if validation fails"
+    action: rollback
+    inputs:
+      - "Rollback script"
+      - "Failure reason"
+    outputs:
+      - "Rollback execution log"
+      - "Restored state verification"
+    validation_criteria:
+      - "Original schema restored"
+      - "Original data restored"
+      - "Application functionality restored"

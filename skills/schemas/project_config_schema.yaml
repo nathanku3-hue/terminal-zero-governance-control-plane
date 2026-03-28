@@ -1,0 +1,67 @@
+# Project Config Schema v1.0.0
+# Defines the structure for .sop_config.yaml
+# Project-local skill activation and guardrail settings
+
+schema_version: "1.0.0"
+description: "Schema for .sop_config.yaml - project-local configuration"
+
+type: object
+required:
+  - project_name
+  - guardrail_strength
+  - active_skills
+
+properties:
+  project_name:
+    type: string
+    minLength: 1
+    description: "Unique project identifier"
+
+  guardrail_strength:
+    type: string
+    enum:
+      - loose
+      - medium
+      - tight
+    description: "Overall guardrail strength for this project"
+
+  active_skills:
+    type: array
+    description: "List of skills activated for this project (must be in global allowlist)"
+    items:
+      type: string
+      pattern: "^[a-z0-9-]+$"
+
+  disabled_skills:
+    type: array
+    description: "List of skills explicitly disabled for this project"
+    items:
+      type: string
+      pattern: "^[a-z0-9-]+$"
+
+  skill_overrides:
+    type: object
+    description: "Project-specific overrides for skill settings"
+    additionalProperties:
+      type: object
+      properties:
+        guardrail_strength:
+          type: string
+          enum:
+            - loose
+            - medium
+            - tight
+          description: "Override guardrail strength for specific skill"
+
+        custom_gates:
+          type: array
+          description: "Additional project-specific gates"
+          items:
+            type: object
+            properties:
+              gate_id:
+                type: string
+              description:
+                type: string
+              required:
+                type: boolean
