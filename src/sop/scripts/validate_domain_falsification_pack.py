@@ -5,7 +5,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 
 KEY_VALUE_PATTERN = re.compile(r"^\s*-\s*([A-Za-z0-9_]+)\s*:\s*(.*?)\s*$")

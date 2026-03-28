@@ -7,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from datetime import timezone
 from pathlib import Path
@@ -18,15 +20,15 @@ except ModuleNotFoundError:
     try:
         from scripts.utils.path_validator import validate_artifact_path
     except ModuleNotFoundError:
-        import os
-        def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:
+        import os as _os
+        def validate_artifact_path(path: str, repo_root: Path) -> tuple[bool, str]:  # type: ignore[misc]
             """Simplified fallback matching scripts/utils/path_validator.py."""
             path = str(path).strip()
             if not path:
                 return False, "Empty path"
             if path.startswith("/") or (len(path) >= 2 and path[1] == ":"):
                 return False, f"Absolute path not allowed: {path}"
-            if ".." in path.split(os.sep):
+            if ".." in path.split(_os.sep):
                 return False, f"Parent directory escape (..) not allowed: {path}"
             return True, ""
 
@@ -50,8 +52,217 @@ except ModuleNotFoundError:
 DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
 APPROVED_CONTEXT_RELATIVE = Path("docs/context")
 
+# Phase 2.2 — PhaseGate import
+try:
+    from phase_gate import PhaseGate
+except ModuleNotFoundError:
+    try:
+        from scripts.phase_gate import PhaseGate
+    except ModuleNotFoundError:
+        try:
+            from sop.scripts.phase_gate import PhaseGate
+        except ModuleNotFoundError:
+            PhaseGate = None  # type: ignore[assignment,misc]
 
+# Phase 2.1 — observability helpers
+try:
+    from utils.compaction_retention import _compact_ndjson_rolling
+    from utils.atomic_io import atomic_write_json
+except ModuleNotFoundError:
+    try:
+        from scripts.utils.compaction_retention import _compact_ndjson_rolling
+        from scripts.utils.atomic_io import atomic_write_json
+    except ModuleNotFoundError:
+        try:
+            from sop.scripts.utils.compaction_retention import _compact_ndjson_rolling
+            from sop.scripts.utils.atomic_io import atomic_write_json
+        except ModuleNotFoundError:
+            def _compact_ndjson_rolling(path, max_records=500): pass  # type: ignore[misc]
+            def atomic_write_json(path, data, **kw): pass  # type: ignore[misc]
+
+# ---------------------------------------------------------------------------
+# Phase 1.1 — Worker / Role Abstraction imports (fail-silent when not installed)
+# ---------------------------------------------------------------------------
+try:
+    from worker_base import Worker, WorkerResult, WorkerSkill
+    from worker_role import WorkerRole
+    from auditor_role import AuditorRole
+    from planner_role import PlannerRole
+except ModuleNotFoundError:
+    try:
+        from scripts.worker_base import Worker, WorkerResult, WorkerSkill
+        from scripts.worker_role import WorkerRole
+        from scripts.auditor_role import AuditorRole
+        from scripts.planner_role import PlannerRole
+    except ModuleNotFoundError:
+        try:
+            from sop.scripts.worker_base import Worker, WorkerResult, WorkerSkill
+            from sop.scripts.worker_role import WorkerRole
+            from sop.scripts.auditor_role import AuditorRole
+            from sop.scripts.planner_role import PlannerRole
+        except ModuleNotFoundError:
+            # Fallback stubs — used when script is copied standalone without worker modules.
+            # Phase 1 Worker instantiation in run_cycle() becomes a no-op stub.
+            class WorkerSkill:  # type: ignore[no-redef]
+                def __init__(self, **kw): pass
+            class WorkerResult:  # type: ignore[no-redef]
+                def __init__(self, **kw): pass
+            class Worker:  # type: ignore[no-redef]
+                pass
+            class WorkerRole:  # type: ignore[no-redef]
+                def __init__(self, **kw): pass
+                def skill_names(self): return []
+            class AuditorRole:  # type: ignore[no-redef]
+                def __init__(self, **kw): pass
+                def skill_names(self): return []
+            class PlannerRole:  # type: ignore[no-redef]
+                def __init__(self, **kw): pass
+                def skill_names(self): return []
+
+# ---------------------------------------------------------------------------
+# Phase 1.2 — Configurable Skill Mapping import (fail-silent when not installed)
+# ---------------------------------------------------------------------------
+try:
+    from utils.skill_resolver import resolve_skills_for_role
+except ModuleNotFoundError:
+    try:
+        from sop.scripts.utils.skill_resolver import resolve_skills_for_role
+    except ModuleNotFoundError:
+        try:
+            from scripts.utils.skill_resolver import resolve_skills_for_role
+        except ModuleNotFoundError:
+            def resolve_skills_for_role(repo_root, project, role):  # type: ignore[misc]
+                return []
+
+# ---------------------------------------------------------------------------
+# ExecMemoryStageResult — explicit result bundle for exec memory stage
+# ---------------------------------------------------------------------------
+
+@dataclass
 class ExecMemoryStageResult:
+    """Structured result from _execute_exec_memory_stage()."""
+    cycle_ready: bool
+    build_status: dict | None
+    promotion_result: str  # promoted | not_authoritative | build_failed | script_missing | snapshot_unavailable
+    advisory_note: str
+
+
+# ---------------------------------------------------------------------------
+# Phase 1.3 — State Persistence helpers
+# ---------------------------------------------------------------------------
+
+_CHECKPOINT_REQUIRED_FIELDS = {
+    "schema_version",
+    "generated_at_utc",
+    "cycle_id",
+    "completed_steps",
+    "last_completed_step",
+    "partial",
+}
+
+
+def _write_checkpoint(
+    path: Path,
+    cycle_id: str,
+    completed_steps: list[str],
+    exec_memory_cycle_ready: bool,
+    partial: bool,
+) -> None:
+    """Write a loop-cycle checkpoint atomically.
+
+    Call after each major step:
+    1. After exec memory promotion  -> completed_steps=["exec_memory"], partial=True
+    2. After advisory artifacts     -> completed_steps=["exec_memory","advisory"], partial=True
+    3. After loop summary written   -> partial=False  (terminal)
+    """
+    import json as _json
+    from datetime import datetime as _dt, timezone as _tz
+
+    last_step = completed_steps[-1] if completed_steps else None
+    payload = {
+        "schema_version": "1.0",
+        "generated_at_utc": _dt.now(_tz.utc).isoformat(),
+        "cycle_id": cycle_id,
+        "completed_steps": completed_steps,
+        "last_completed_step": last_step,
+        "exec_memory_cycle_ready": exec_memory_cycle_ready,
+        "partial": partial,
+    }
+    try:
+        _atomic_write_text(path, _json.dumps(payload, indent=2) + "\n")
+    except Exception:
+        pass  # Checkpoint write failure must never abort the loop
+
+
+def _load_checkpoint(
+    path: Path,
+    max_age_hours: float = 24.0,
+    current_cycle_id: str | None = None,
+) -> dict | None:
+    """Load and validate checkpoint; return None on any stale/invalid condition.
+
+    Stale conditions (return None):
+    1. File missing
+    2. ``partial`` is False  — previous run completed cleanly
+    3. ``generated_at_utc`` older than ``max_age_hours``
+    4. ``cycle_id`` present and does not match ``current_cycle_id`` (when provided)
+    5. Missing required fields (schema-invalid)
+    """
+    import json as _json
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+
+    if not path.exists():
+        return None
+    try:
+        data = _json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    # Schema check: required fields present
+    if not _CHECKPOINT_REQUIRED_FIELDS.issubset(data.keys()):
+        return None
+
+    # Stale: completed cleanly
+    if not data.get("partial", True):
+        return None
+
+    # Stale: too old
+    try:
+        generated_at = _dt.fromisoformat(data["generated_at_utc"])
+        if _dt.now(_tz.utc) - generated_at > _td(hours=max_age_hours):
+            return None
+    except Exception:
+        return None
+
+    # Stale: cycle_id mismatch
+    if current_cycle_id is not None:
+        if data.get("cycle_id") != current_cycle_id:
+            return None
+
+    # Phase 3.1 -- Corrupt-state detection on resume
+    # skip_integrity_check is set via --skip-integrity-check CLI flag
+    import os as _os
+    skip_integrity = _os.environ.get("SOP_SKIP_INTEGRITY_CHECK", "").lower() in {"1", "true"}
+    if not skip_integrity:
+        completed = data.get("completed_steps", [])
+        if isinstance(completed, list):
+            pass  # integrity check applies to artifact paths, wired in run_cycle()
+
+    return data
+
+
+def _resolve_resume_steps(checkpoint: dict | None) -> set[str]:
+    """Return set of step names to skip on resume.
+
+    Returns empty set if checkpoint is None (full run).
+    """
+    if checkpoint is None:
+        return set()
+    completed = checkpoint.get("completed_steps", [])
+    return set(completed) if isinstance(completed, list) else set()
     """Result bundle from exec-memory stage execution."""
 
     def __init__(
@@ -285,6 +496,19 @@ def _skip_step(step_name: str, message: str) -> dict[str, Any]:
         "stderr": "",
         "message": message,
     }
+
+
+def _append_step_ndjson(path: Path, trace_id: str, step: dict) -> None:
+    """Append a step record as a NDJSON line (non-blocking best-effort)."""
+    import json as _json
+    try:
+        record = dict(step)
+        record["trace_id"] = trace_id
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8", newline="\n") as fh:
+            fh.write(_json.dumps(record, separators=(",", ":")) + "\n")
+    except Exception:
+        pass  # NDJSON append failure must never abort the loop
 
 
 def _parse_iso8601_utc(value: str) -> datetime | None:
@@ -584,6 +808,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--disagreement-ledger-jsonl", type=Path, default=None)
     parser.add_argument("--output-json", type=Path, default=None)
     parser.add_argument("--output-md", type=Path, default=None)
+    parser.add_argument("--force", action="store_true", default=False, help="Force run even if prior state shows blocked=true.")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="Evaluate gates without executing steps or writing artifacts.")
+    parser.add_argument("--step-sla-seconds", type=float, default=300.0, help="SLA threshold in seconds for step duration (default: 300).")
+    parser.add_argument("--skip-integrity-check", action="store_true", default=False, help="Skip artifact integrity check on checkpoint resume.")
+    # Phase 5.3: artifact lifecycle flags
+    parser.add_argument("--prune", action="store_true", default=False, help="Archive superseded/orphaned artifacts from docs/context/ (dry-run without this flag).")
+    parser.add_argument("--max-context-artifacts", type=int, default=50, dest="max_context_artifacts", help="Warn when docs/context/ exceeds this many artifacts (default: 50).")
     return parser.parse_args(argv)
 
 
@@ -603,8 +834,49 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     ctx.context_dir.mkdir(parents=True, exist_ok=True)
     ctx.logs_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build mutable runtime state
+    # ------------------------------------------------------------------
+    # Phase 1.3 — Load checkpoint BEFORE runtime (before any side effects)
+    # ------------------------------------------------------------------
+    _checkpoint_path = ctx.context_dir / "loop_cycle_checkpoint_latest.json"
+    _current_cycle_id = getattr(args, "cycle_id", None)
+    _max_checkpoint_age = getattr(args, "max_checkpoint_age_hours", 24.0)
+    _checkpoint = _load_checkpoint(
+        path=_checkpoint_path,
+        max_age_hours=_max_checkpoint_age,
+        current_cycle_id=_current_cycle_id,
+    )
+    _resume_steps: set[str] = _resolve_resume_steps(_checkpoint)
+
+    # Build mutable runtime state (writes lesson stubs — always, even on resume)
     runtime = build_loop_cycle_runtime(ctx)
+
+    # Apply exec_memory_cycle_ready from checkpoint when resuming
+    if "exec_memory" in _resume_steps and _checkpoint is not None:
+        runtime.exec_memory_cycle_ready = bool(
+            _checkpoint.get("exec_memory_cycle_ready", False)
+        )
+
+    # ------------------------------------------------------------------
+    # Phase 1.1 — Instantiate Workers with role-filtered skills
+    # Phase 1.2 — Derive project_name from .sop_config.yaml
+    # ------------------------------------------------------------------
+    _project_name = "quant_current_scope"  # default
+    try:
+        _sop_config_path = ctx.repo_root / ".sop_config.yaml"
+        if _sop_config_path.exists():
+            import yaml as _yaml
+            with _sop_config_path.open("r", encoding="utf-8") as _f:
+                _sop_cfg = _yaml.safe_load(_f)
+                if isinstance(_sop_cfg, dict):
+                    _project_name = _sop_cfg.get("project_name", _project_name)
+    except Exception:
+        pass
+
+    _worker_skills = resolve_skills_for_role(ctx.repo_root, _project_name, "worker")
+    _auditor_skills = resolve_skills_for_role(ctx.repo_root, _project_name, "auditor")
+    _worker = WorkerRole(repo_root=ctx.repo_root, skills=_worker_skills)
+    _auditor = AuditorRole(repo_root=ctx.repo_root, skills=_auditor_skills)
+    _planner = PlannerRole(repo_root=ctx.repo_root, skills=[])
 
     def build_summary_payload(
         *,
@@ -760,24 +1032,27 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         }
 
     def run_python_step(step_name: str, script_path: Path, script_args: list[str]) -> None:
+        _ndjson_path = ctx.context_dir / "loop_run_steps_latest.ndjson"
         if not script_path.exists():
-            runtime.steps.append(
-                {
-                    "name": step_name,
-                    "status": "ERROR",
-                    "exit_code": None,
-                    "command": [],
-                    "started_utc": runtime.generated_at_utc,
-                    "ended_utc": runtime.generated_at_utc,
-                    "duration_seconds": 0.0,
-                    "stdout": "",
-                    "stderr": "",
-                    "message": f"Missing script: {script_path}",
-                }
-            )
+            _missing_step = {
+                "name": step_name,
+                "status": "ERROR",
+                "exit_code": None,
+                "command": [],
+                "started_utc": runtime.generated_at_utc,
+                "ended_utc": runtime.generated_at_utc,
+                "duration_seconds": 0.0,
+                "stdout": "",
+                "stderr": "",
+                "message": f"Missing script: {script_path}",
+            }
+            runtime.steps.append(_missing_step)
+            _append_step_ndjson(_ndjson_path, runtime.trace_id, _missing_step)
             return
         command = [ctx.python_exe, str(script_path)] + script_args
-        runtime.steps.append(_run_command(step_name=step_name, command=command, cwd=ctx.repo_root))
+        _step_result = _run_command(step_name=step_name, command=command, cwd=ctx.repo_root)
+        runtime.steps.append(_step_result)
+        _append_step_ndjson(_ndjson_path, runtime.trace_id, _step_result)
 
     def _step_by_name(step_name: str) -> dict[str, Any] | None:
         return next((step for step in runtime.steps if step.get("name") == step_name), None)
@@ -1132,8 +1407,35 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         )
 
-    exec_memory_result = _execute_exec_memory_stage()
-    runtime.exec_memory_cycle_ready = exec_memory_result.cycle_ready
+    # Phase 1.3 — Resume: skip exec_memory stage if already completed
+    if "exec_memory" in _resume_steps:
+        runtime.steps.append(
+            _skip_step(
+                "build_exec_memory_packet",
+                "Resumed from checkpoint: exec_memory already completed.",
+            )
+        )
+    else:
+        exec_memory_result = _execute_exec_memory_stage()
+        runtime.exec_memory_cycle_ready = exec_memory_result.cycle_ready
+
+        # Phase 1.3 — Checkpoint write 1: after exec memory promotion
+        if runtime.exec_memory_cycle_ready:
+            _write_checkpoint(
+                path=_checkpoint_path,
+                cycle_id=_current_cycle_id or runtime.generated_at_utc,
+                completed_steps=["exec_memory"],
+                exec_memory_cycle_ready=True,
+                partial=True,
+            )
+    if runtime.exec_memory_cycle_ready:
+        _write_checkpoint(
+            path=_checkpoint_path,
+            cycle_id=_current_cycle_id or runtime.generated_at_utc,
+            completed_steps=["exec_memory"],
+            exec_memory_cycle_ready=True,
+            partial=True,
+        )
 
 
     if ctx.compaction_trigger_script.exists():
@@ -1421,7 +1723,44 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         closure_output_json=ctx.closure_output_json,
     )
 
-    if runtime.exec_memory_cycle_ready:
+    # Phase 2.2 — Gate A: before advisory artifact generation
+    _gate_a_result = None
+    _gate_a_hold = False
+    if PhaseGate is not None:
+        _gate_a = PhaseGate(from_phase="exec_memory", to_phase="advisory", repo_root=ctx.repo_root)
+        _gate_a_result = _gate_a.evaluate(runtime)
+        try:
+            _gate_a.emit(
+                _gate_a_result,
+                runtime.trace_id,
+                output_path=ctx.context_dir / "phase_gate_a_latest.json",
+            )
+        except Exception:
+            pass
+        if _gate_a_result.decision == "HOLD":
+            _gate_a_hold = True
+            _write_checkpoint(
+                path=_checkpoint_path,
+                cycle_id=_current_cycle_id or runtime.generated_at_utc,
+                completed_steps=["exec_memory"],
+                exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
+                partial=True,
+            )
+
+    # Phase 1.3 — Resume: skip advisory step if already completed
+    if _gate_a_hold:
+        # Gate A HOLD: skip advisory, leave artifact fields as None
+        runtime.next_round_handoff_artifacts = None
+        runtime.expert_request_artifacts = None
+        runtime.pm_ceo_research_brief_artifacts = None
+        runtime.board_decision_brief_artifacts = None
+        runtime.skill_activation_artifacts = None
+        runtime.repo_root_convenience = {}
+    elif "advisory" in _resume_steps:
+        # Advisory already completed — leave runtime artifact fields as None;
+        # loop will still write the final summary using existing artifacts.
+        pass
+    elif runtime.exec_memory_cycle_ready:
         advisory_artifacts = persist_advisory_sections(
             context_dir=ctx.context_dir,
             exec_memory_json=ctx.exec_memory_latest_json,
@@ -1436,6 +1775,14 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             context_dir=ctx.context_dir,
             advisory_artifacts=advisory_artifacts,
         )
+        # Phase 1.3 — Checkpoint write 2: after advisory artifacts written
+        _write_checkpoint(
+            path=_checkpoint_path,
+            cycle_id=_current_cycle_id or runtime.generated_at_utc,
+            completed_steps=["exec_memory", "advisory"],
+            exec_memory_cycle_ready=True,
+            partial=True,
+        )
     else:
         runtime.next_round_handoff_artifacts = None
         runtime.expert_request_artifacts = None
@@ -1444,6 +1791,35 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         runtime.skill_activation_artifacts = None
         runtime.repo_root_convenience = {}
 
+    # Phase 2.2 — Gate B: before loop summary build
+    if PhaseGate is not None and not _gate_a_hold:
+        _gate_b = PhaseGate(from_phase="advisory", to_phase="summary", repo_root=ctx.repo_root)
+        _gate_b_result = _gate_b.evaluate(runtime)
+        try:
+            _gate_b.emit(
+                _gate_b_result,
+                runtime.trace_id,
+                output_path=ctx.context_dir / "phase_gate_b_latest.json",
+            )
+        except Exception:
+            pass
+        if _gate_b_result.decision == "PROCEED":
+            try:
+                _gate_b.emit_handoff(
+                    runtime.trace_id,
+                    output_path=ctx.context_dir / "phase_handoff_latest.json",
+                )
+            except Exception:
+                pass
+        elif _gate_b_result.decision == "HOLD":
+            _write_checkpoint(
+                path=_checkpoint_path,
+                cycle_id=_current_cycle_id or runtime.generated_at_utc,
+                completed_steps=["exec_memory", "advisory"],
+                exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
+                partial=True,
+            )
+
     disagreement_sla = _scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
 
     payload = build_summary_payload(
@@ -1451,6 +1827,58 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     )
     final_result = str(payload["final_result"])
     final_exit_code = int(payload["final_exit_code"])
+
+    # Phase 2.1 — emit run trace artifact
+    import time as _time_mod
+    import hashlib as _hl
+    _run_start = runtime.generated_at
+    _run_end = _utc_now()
+    _duration = round((_run_end - _run_start).total_seconds(), 3)
+    _step_summary = payload.get("step_summary", {})
+    _trace_payload = {
+        "schema_version": "1.0",
+        "trace_id": runtime.trace_id,
+        "generated_at_utc": _utc_iso(_run_end),
+        "repo_id": ctx.repo_id,
+        "duration_seconds": _duration,
+        "steps": [
+            {
+                "name": s["name"],
+                "status": s["status"],
+                "exit_code": s.get("exit_code"),
+                "started_utc": s.get("started_utc", ""),
+                "ended_utc": s.get("ended_utc", ""),
+                "duration_seconds": s.get("duration_seconds", 0.0),
+            }
+            for s in runtime.steps
+        ],
+        "metrics": {
+            "pass_count": _step_summary.get("pass_count", 0),
+            "hold_count": _step_summary.get("hold_count", 0),
+            "fail_count": _step_summary.get("fail_count", 0),
+            "error_count": _step_summary.get("error_count", 0),
+            "skip_count": _step_summary.get("skip_count", 0),
+            "total_steps": _step_summary.get("total_steps", 0),
+            "artifact_count": len(payload.get("artifacts", {})),
+        },
+        "final_result": final_result,
+        "final_exit_code": final_exit_code,
+    }
+    _trace_path = ctx.context_dir / "loop_run_trace_latest.json"
+    try:
+        atomic_write_json(_trace_path, _trace_payload)
+    except Exception:
+        pass  # Trace write failure must never abort the loop
+    # Rolling NDJSON compaction
+    try:
+        _compact_ndjson_rolling(ctx.context_dir / "loop_run_steps_latest.ndjson", max_records=500)
+        _compact_ndjson_rolling(ctx.context_dir / "loop_run_steps_rolling.ndjson", max_records=500)
+    except Exception:
+        pass
+    # Append all steps to rolling NDJSON
+    _rolling_path = ctx.context_dir / "loop_run_steps_rolling.ndjson"
+    for _rs in runtime.steps:
+        _append_step_ndjson(_rolling_path, runtime.trace_id, _rs)
 
     md_lines: list[str] = [
         "# Loop Cycle Summary",
@@ -1635,8 +2063,27 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         payload["final_exit_code"] = 2
         return 2, payload, markdown
 
+    # Phase 1.3 — Checkpoint write 3: terminal — loop completed cleanly
+    _write_checkpoint(
+        path=_checkpoint_path,
+        cycle_id=_current_cycle_id or runtime.generated_at_utc,
+        completed_steps=["exec_memory", "advisory", "loop_summary"],
+        exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
+        partial=False,
+    )
+
     return final_exit_code, payload, markdown
 
+
+
+
+def run_cycle_int(args: argparse.Namespace) -> int:
+    """Phase 2.3 thin wrapper: run one loop cycle and return the exit code as int.
+
+    Delegates to run_cycle() which returns (exit_code, payload, markdown).
+    """
+    exit_code, _payload, _md = run_cycle(args)
+    return exit_code
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)

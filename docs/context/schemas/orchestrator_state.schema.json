@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OrchestratorState",
+  "description": "Authoritative current state for the orchestrator. Written after every run. A fresh orchestrator loading this file knows the full system state without reading chat history.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "generated_at_utc",
+    "active_system",
+    "active_stream",
+    "blocked",
+    "last_changed",
+    "bottleneck",
+    "open_pm_decision",
+    "evidence_freshness"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID of the current run."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this state was generated."
+    },
+    "active_system": {
+      "type": "string",
+      "description": "Repository / system identifier."
+    },
+    "active_stream": {
+      "type": "string",
+      "description": "Active execution stream. 'main' in Phase 4; multi-stream deferred to Phase 5."
+    },
+    "blocked": {
+      "type": "boolean",
+      "description": "True if open_decision != 'None' or active_bottleneck != 'None'."
+    },
+    "last_changed": {
+      "type": "string",
+      "description": "Human-readable description of what changed last run."
+    },
+    "bottleneck": {
+      "type": "string",
+      "description": "Active bottleneck description or 'None'."
+    },
+    "open_pm_decision": {
+      "type": "string",
+      "description": "Open product/PM decision or 'None'."
+    },
+    "evidence_freshness": {
+      "type": "object",
+      "description": "mtime (ISO string) of each key artifact in context_dir. null if artifact missing.",
+      "additionalProperties": {
+        "type": ["string", "null"]
+      }
+    }
+  }
+}

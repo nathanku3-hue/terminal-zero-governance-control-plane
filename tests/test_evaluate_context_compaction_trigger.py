@@ -194,7 +194,7 @@ def test_trigger_emits_shared_memory_tier_contract(tmp_path: Path) -> None:
     bindings = payload["memory_tier_bindings"]
 
     assert contract["source_of_truth"] == "scripts/utils/memory_tiers.py"
-    assert contract["documentation"] == "docs/memory_tier_contract.md"
+    assert contract["documentation"] == "docs/context/MEMORY_TIER_CONTRACT.md"
 
     families = {item["family"]: item for item in contract["families"]}
     assert families["exec_memory_packet"]["tier"] == "hot"

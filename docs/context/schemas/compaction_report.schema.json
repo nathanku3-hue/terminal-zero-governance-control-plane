@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CompactionReport",
+  "description": "Output of TierAwareCompactor.run(). Records what was compacted, retained, skipped, and any errors.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_utc",
+    "blocked",
+    "compacted",
+    "retained",
+    "skipped_hot",
+    "errors"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this report was generated."
+    },
+    "blocked": {
+      "type": "boolean",
+      "description": "True if compaction was skipped because the current run is blocked (exit_code==1 without --force)."
+    },
+    "compacted": {
+      "type": "array",
+      "description": "Paths of artifacts that were compacted (NDJSON rolling window applied).",
+      "items": { "type": "string" }
+    },
+    "retained": {
+      "type": "array",
+      "description": "Paths of artifacts that were examined and retained without modification.",
+      "items": { "type": "string" }
+    },
+    "skipped_hot": {
+      "type": "array",
+      "description": "Paths of hot-tier artifacts that were explicitly skipped (never compacted).",
+      "items": { "type": "string" }
+    },
+    "errors": {
+      "type": "array",
+      "description": "Error messages for any artifacts that could not be processed.",
+      "items": { "type": "string" }
+    }
+  }
+}

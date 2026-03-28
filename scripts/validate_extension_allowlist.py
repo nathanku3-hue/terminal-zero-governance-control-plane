@@ -138,6 +138,21 @@ def validate_allowlist_schema(allowlist: Dict[str, Any]) -> List[str]:
             elif len(projects) == 0:
                 errors.append(f"{prefix}: applicable_projects must contain at least one entry")
 
+        # Validate optional assigned_roles (Phase 1.2)
+        if 'assigned_roles' in skill:
+            assigned_roles = skill['assigned_roles']
+            valid_roles = ['worker', 'auditor', 'planner']
+            if not isinstance(assigned_roles, list):
+                errors.append(f"{prefix}: assigned_roles must be a list")
+            elif len(assigned_roles) == 0:
+                errors.append(f"{prefix}: assigned_roles must be non-empty if present")
+            else:
+                for ar in assigned_roles:
+                    if ar not in valid_roles:
+                        errors.append(
+                            f"{prefix}: assigned_roles entry '{ar}' must be one of {valid_roles}"
+                        )
+
         # Validate conditional fields
         if 'status' in skill:
             if skill['status'] == 'deprecated':
@@ -311,16 +326,16 @@ def main():
 
     # Report results
     if all_errors:
-        print(f"\n[FAIL] Validation FAILED with {len(all_errors)} error(s):\n")
+        print(f"\n❌ Validation FAILED with {len(all_errors)} error(s):\n")
         for error in all_errors:
             print(f"  - {error}")
         sys.exit(1)
     else:
         skill_count = len(allowlist.get('skills', []))
-        print(f"\n[OK] Validation PASSED: {skill_count} skill(s) in allowlist")
+        print(f"\n✓ Validation PASSED: {skill_count} skill(s) in allowlist")
         if project_config:
             active_count = len(project_config.get('active_skills', []))
-            print(f"[OK] Project config valid: {active_count} active skill(s)")
+            print(f"✓ Project config valid: {active_count} active skill(s)")
         sys.exit(0)
 
 

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LoopRunTraceMaster",
+  "description": "Master trace emitted by LoopOrchestrator.run_parallel() at loop_run_trace_master_latest.json. Separate from Phase 2.1 loop_run_trace_latest.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "worker_count",
+    "quorum_policy",
+    "workers",
+    "aggregate_result",
+    "conflicts"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "trace_id": {"type": "string"},
+    "worker_count": {"type": "integer", "minimum": 1},
+    "quorum_policy": {"type": "string", "enum": ["all", "majority", "first"]},
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["worker_id", "trace_id", "final_result"],
+        "properties": {
+          "worker_id": {"type": "integer"},
+          "trace_id": {"type": "string"},
+          "final_result": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "aggregate_result": {"type": "string"},
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+}

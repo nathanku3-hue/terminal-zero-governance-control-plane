@@ -249,7 +249,7 @@ def main() -> int:
         print(f"✓ Skill activation valid: {skill_activation_json}")
         return 0
     else:
-        print(f"✗ Skill activation validation failed:", file=sys.stderr)
+        print("✗ Skill activation validation failed:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         return 1

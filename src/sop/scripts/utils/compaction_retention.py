@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 from typing import Mapping
 
@@ -52,6 +54,40 @@ _COLD_MANUAL_FALLBACK = (
         "reason": "Ledger-level deep dives stay manual-load only.",
     },
 )
+
+
+def _compact_ndjson_rolling(path: Path, max_records: int = 500) -> None:
+    """Prune an NDJSON file to the last ``max_records`` lines.
+
+    Reads all non-empty lines from ``path``, keeps the last ``max_records``,
+    and writes them back atomically via a temp-file rename.  No-op if the
+    file does not exist or has fewer than ``max_records`` lines.
+
+    Args:
+        path: Target NDJSON file path.
+        max_records: Maximum number of lines to retain (default 500).
+    """
+    if not path.exists():
+        return
+    try:
+        lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    except OSError:
+        return
+    if len(lines) <= max_records:
+        return
+    kept = lines[-max_records:]
+    import os
+    import tempfile
+    try:
+        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".tmp_ndjson_", suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("\n".join(kept) + "\n")
+        os.replace(tmp, path)
+    except OSError:
+        try:
+            Path(tmp).unlink(missing_ok=True)  # type: ignore[possibly-undefined]
+        except Exception:
+            pass
 
 
 def build_compaction_policy_snapshot() -> dict[str, Any]:

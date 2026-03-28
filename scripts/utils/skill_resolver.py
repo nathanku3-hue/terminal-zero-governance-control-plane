@@ -7,6 +7,9 @@ P3 extensions (D-191):
 - P3.1: Surface rollback_state from skill manifest (memory/rollback for skills)
 - P3.2: Surface installs from skill manifest (manifest-driven selective install)
 - P3.3: Surface targets from skill manifest (canonical-to-multi-target)
+
+Phase 1.2 extension (additive):
+- resolve_skills_for_role(): per-role WorkerSkill list; resolve_active_skills() unchanged.
 """
 
 from __future__ import annotations
@@ -22,7 +25,11 @@ if __name__ == "__main__":
     if str(_project_root) not in sys.path:
         sys.path.insert(0, str(_project_root))
 
-from scripts.utils.json_utils import safe_load_json_object
+try:
+    from sop.scripts.utils.json_utils import safe_load_json_object  # noqa: F401
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    pass
 
 try:
     import yaml
@@ -55,7 +62,7 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
     """Resolve active skills from project config against global allowlist.
 
     Semantics match validate_extension_allowlist.py:235:
-    - Read .sop_config.yaml → active_skills list
+    - Read .sop_config.yaml -> active_skills list
     - For each skill:
       - Check in extension_allowlist.yaml
       - Verify status == "active"
@@ -66,6 +73,12 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
       - Load manifest and surface P3 fields: rollback_state, installs, targets
 
     Fail-soft: Return status + warnings on errors.
+
+    NOTE: assigned_roles is intentionally NOT surfaced in the returned skill
+    dicts.  Per-role filtering is a Worker instantiation concern handled by
+    resolve_skills_for_role().  This function and the emitted skill_activation
+    artifact remain project-global.  build_exec_memory_packet.py:1891 and
+    validate_skill_activation.py:117 call this function without modification.
 
     Args:
         repo_root: Repository root path
@@ -188,7 +201,9 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
         if not isinstance(targets, list):
             targets = []
 
-        # Build skill metadata
+        # Build skill metadata.
+        # NOTE: assigned_roles is intentionally excluded from this dict.
+        # It is an allowlist-internal field used only by resolve_skills_for_role().
         skill_metadata: dict[str, Any] = {
             "name": skill_name,
             "version": str(version),
@@ -222,6 +237,78 @@ def resolve_active_skills(repo_root: Path, project_name: str) -> dict[str, Any]:
         "warnings": warnings,
         "errors": errors,
     }
+
+
+def resolve_skills_for_role(
+    repo_root: Path, project: str, role: str
+) -> list[Any]:
+    """Return WorkerSkill list for a given role.
+
+    Filters the global allowlist by the skill's optional ``assigned_roles``
+    field.  Skills that do not have ``assigned_roles`` default to ``[worker]``.
+
+    ``resolve_active_skills()`` signature is UNCHANGED — this is an additive
+    function only.  Per-role injection is a Worker instantiation concern;
+    the emitted ``skill_activation`` artifact is NOT role-filtered.
+
+    NOTE: validate_skill_activation.py:117 logic is unchanged.
+    NOTE: build_exec_memory_packet.py:1891 call is unchanged.
+    NOTE: assigned_roles does NOT appear in the emitted skill_activation artifact.
+
+    Args:
+        repo_root: Repository root path.
+        project: Project name (matches applicable_projects in allowlist).
+        role: Role name to filter for ("worker", "auditor", "planner").
+
+    Returns:
+        List of ``WorkerSkill`` instances whose ``assigned_roles`` include
+        ``role`` (or whose ``assigned_roles`` is absent, defaulting to worker).
+    """
+    # Import WorkerSkill here to avoid top-level circular import concerns.
+    try:
+        from sop.scripts.worker_base import WorkerSkill  # type: ignore[import]
+    except ModuleNotFoundError:
+        try:
+            from scripts.worker_base import WorkerSkill  # type: ignore[import]
+        except ModuleNotFoundError:
+            from worker_base import WorkerSkill  # type: ignore[import]
+
+    # Re-use the project-global resolver to get the full resolved set.
+    result = resolve_active_skills(repo_root, project)
+    if result["status"] == "failed":
+        return []
+
+    worker_skills: list[Any] = []
+
+    # Load allowlist once to read assigned_roles (not surfaced in result["skills"]).
+    allowlist_path = repo_root / "extension_allowlist.yaml"
+    allowlist = _load_yaml_safe(allowlist_path) or {}
+    allowlist_map: dict[str, dict[str, Any]] = {}
+    for entry in allowlist.get("skills", []):
+        name = entry.get("skill_name")
+        if name:
+            allowlist_map[name] = entry
+
+    for skill_meta in result["skills"]:
+        name = skill_meta["name"]
+        entry = allowlist_map.get(name, {})
+        # Default assigned_roles to ["worker"] if absent.
+        assigned_roles: list[str] = entry.get("assigned_roles", ["worker"])
+        if not isinstance(assigned_roles, list) or not assigned_roles:
+            assigned_roles = ["worker"]
+        if role not in assigned_roles:
+            continue
+        worker_skills.append(
+            WorkerSkill(
+                name=name,
+                version=skill_meta["version"],
+                risk_level=skill_meta["risk_level"],
+                approval_decision_id=skill_meta["approval_decision_id"],
+                applicable_projects=entry.get("applicable_projects", []),
+            )
+        )
+
+    return worker_skills
 
 
 if __name__ == "__main__":

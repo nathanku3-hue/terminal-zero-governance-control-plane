@@ -1053,7 +1053,7 @@ def _render_round_contract_seed(payload: dict[str, Any]) -> str:
         f"- RISK_TIER: {interrogation['risk_tier']}",
         f"- EXECUTION_LANE: {interrogation['execution_lane']}",
         f"- WORKFLOW_LANE: {interrogation.get('workflow_lane', 'DEFAULT')}",
-        f"- WORKFLOW_LANE_RATIONALE: TODO(one line on why this governance lane is appropriate)",
+        "- WORKFLOW_LANE_RATIONALE: TODO(one line on why this governance lane is appropriate)",
         f"- QA_PRE_ESCALATION_REQUEST: {interrogation.get('qa_pre_escalation_request', 'NO')}",
         f"- SOCRATIC_CHALLENGE_REQUEST: {interrogation.get('socratic_challenge_request', 'NO')}",
         f"- INTUITION_GATE: {interrogation['intuition_gate']}",

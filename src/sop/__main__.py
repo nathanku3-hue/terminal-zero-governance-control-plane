@@ -116,6 +116,17 @@ def cmd_run(args: argparse.Namespace) -> int:
         cli_args.extend(["--allow-hold", args.allow_hold])
     if args.context_dir:
         cli_args.extend(["--context-dir", args.context_dir])
+    if getattr(args, "force", False):
+        cli_args.append("--force")
+    if getattr(args, "dry_run", False):
+        cli_args.append("--dry-run")
+    if getattr(args, "step_sla_seconds", None) is not None:
+        cli_args.extend(["--step-sla-seconds", str(args.step_sla_seconds)])
+    # Phase 5.3: forward lifecycle flags
+    if getattr(args, "prune", False):
+        cli_args.append("--prune")
+    if getattr(args, "max_context_artifacts", 50) != 50:  # non-default
+        cli_args.extend(["--max-context-artifacts", str(args.max_context_artifacts)])
 
     return _run_script("run_loop_cycle.py", cli_args)
 
@@ -221,6 +232,12 @@ For subcommand help: sop <command> --help
     p_run.add_argument("--skip-phase-end", action="store_true", help="Skip phase-end processing")
     p_run.add_argument("--allow-hold", help="Allow hold state (true/false)")
     p_run.add_argument("--context-dir", help="Context directory (default: docs/context)")
+    p_run.add_argument("--force", action="store_true", default=False, help="Force run even if prior orchestrator state shows blocked=true.")
+    p_run.add_argument("--dry-run", action="store_true", default=False, help="Evaluate gates without executing steps or writing artifacts.")
+    p_run.add_argument("--step-sla-seconds", type=float, default=None, help="SLA threshold in seconds for step duration.")
+    # Phase 5.3: artifact lifecycle flags
+    p_run.add_argument("--prune", action="store_true", default=False, help="Archive superseded/orphaned artifacts from docs/context/.")
+    p_run.add_argument("--max-context-artifacts", type=int, default=50, dest="max_context_artifacts", help="Warn when docs/context/ exceeds this many files (default: 50).")
     p_run.set_defaults(func=cmd_run)
 
     # validate

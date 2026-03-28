@@ -17,9 +17,15 @@ if __name__ == "__main__":
     if str(_project_root) not in sys.path:
         sys.path.insert(0, str(_project_root))
 
-from scripts.utils.memory_tiers import bind_memory_tier_paths
-from scripts.utils.memory_tiers import build_memory_tier_snapshot
-from scripts.utils.compaction_retention import evaluate_compaction_guardrails
+try:
+    from sop.scripts.utils.memory_tiers import bind_memory_tier_paths
+    from sop.scripts.utils.memory_tiers import build_memory_tier_snapshot
+    from sop.scripts.utils.compaction_retention import evaluate_compaction_guardrails
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.memory_tiers import bind_memory_tier_paths
+    from scripts.utils.memory_tiers import build_memory_tier_snapshot
+    from scripts.utils.compaction_retention import evaluate_compaction_guardrails
 
 
 CRITERIA_ORDER = [

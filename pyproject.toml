@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8,<10",
+  "ruff>=0.4,<1",
 ]
 
 [project.scripts]
@@ -26,11 +27,13 @@ sop = "sop.__main__:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-sop = ["py.typed", "scripts/**", "templates/**"]
+sop = ["py.typed", "scripts/**", "templates/**", "schemas/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 tmp_path_retention_policy = "none"
 markers = [
   "parity: CLI-vs-script parity contract tests",
+  "state_persistence: Phase 1.3 checkpoint and resume tests",
+  "integration: end-to-end integration tests requiring live filesystem",
 ]

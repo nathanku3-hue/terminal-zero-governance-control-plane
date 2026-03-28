@@ -8,10 +8,10 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 try:
-    from utils.path_validator import validate_artifact_path
+    from sop.scripts.utils.path_validator import validate_artifact_path
 except ModuleNotFoundError:
     try:
         from scripts.utils.path_validator import validate_artifact_path
@@ -836,7 +836,7 @@ def _derive_static_docs_nodes(repo_root: Path) -> list[WorkflowNode]:
 
     # PublicEntry node
     readme_path = repo_root / "README.md"
-    contributing_path = repo_root / "CONTRIBUTING.md"
+    _contributing_path = repo_root / "CONTRIBUTING.md"  # noqa: F841
     public_entry_status = "green" if readme_path.exists() else "yellow"
     public_entry_label = "READY" if readme_path.exists() else "BLOCKED"
     public_entry_blockers = [] if readme_path.exists() else ["README.md missing"]
@@ -1052,7 +1052,7 @@ def _render_workflow_status_markdown(
 
     for idx, node in enumerate(nodes, 1):
         node_title = node.get("title", "Unknown")
-        node_id = node.get("node_id", "unknown")
+        _node_id = node.get("node_id", "unknown")  # noqa: F841
         status_color = node.get("status_color", "gray")
         progress_state = node.get("progress_state", "UNKNOWN")
         owner_role = node.get("owner_role", "N/A")

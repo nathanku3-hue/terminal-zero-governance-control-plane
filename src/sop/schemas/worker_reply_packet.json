@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sop:worker_reply_packet",
+  "title": "WorkerReplyPacket",
+  "description": "Schema for the worker reply packet emitted at the end of each governance loop cycle.",
+  "type": "object",
+  "required": ["schema_version", "generated_at_utc", "overall_color"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the packet was generated."
+    },
+    "overall_color": {
+      "type": "string",
+      "enum": ["green", "yellow", "red"],
+      "description": "Aggregate health signal for the loop cycle."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Active phase identifier."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of the cycle outcome."
+    },
+    "validation_tokens": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["PASS", "BLOCK", "DRIFT", "INSUFFICIENT"]
+      },
+      "description": "Validation token stream for this cycle."
+    },
+    "blocked_next_step": {
+      "type": "string",
+      "description": "The specific next step that is blocked, if overall_color is red."
+    },
+    "active_bottleneck": {
+      "type": "string",
+      "description": "The active bottleneck preventing progress."
+    }
+  },
+  "additionalProperties": true
+}

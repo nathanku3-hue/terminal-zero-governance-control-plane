@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BridgeContract",
+  "description": "Bridge contract artifact translating execution truth into planner language. Written after every run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "generated_at_utc",
+    "gate_result",
+    "system_delta",
+    "pm_delta",
+    "open_decision",
+    "recommended_next_step",
+    "do_not_redecide"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID of the current run."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this contract was generated."
+    },
+    "gate_result": {
+      "type": "string",
+      "description": "Overall gate decision: PROCEED or HOLD."
+    },
+    "system_delta": {
+      "type": "string",
+      "description": "Summary of what changed in the system this run."
+    },
+    "pm_delta": {
+      "type": "string",
+      "description": "What changed in product meaning. 'Insufficient history' when fewer than 2 baseline records."
+    },
+    "open_decision": {
+      "type": "string",
+      "description": "The one decision required before the next run is meaningful. 'None' if absent."
+    },
+    "recommended_next_step": {
+      "type": "string",
+      "description": "The single most valuable next action for the planner."
+    },
+    "do_not_redecide": {
+      "type": "array",
+      "description": "Decisions already settled that must not be re-opened. Empty on first run.",
+      "minItems": 0,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -48,6 +47,11 @@ class LoopCycleContext:
     skip_phase_end: bool
     phase_end_audit_mode: str
     allow_hold: bool
+    step_sla_seconds: float
+    force: bool
+    # Phase 5.3: artifact lifecycle flags
+    prune: bool
+    max_context_artifacts: int
 
     # Artifact paths - auditor reports
     weekly_report_json: Path
@@ -296,6 +300,10 @@ def build_loop_cycle_context(args: argparse.Namespace) -> LoopCycleContext:
         skip_phase_end=args.skip_phase_end,
         phase_end_audit_mode=args.phase_end_audit_mode,
         allow_hold=bool(args.allow_hold),
+        step_sla_seconds=getattr(args, "step_sla_seconds", 300.0),
+        force=bool(getattr(args, "force", False)),
+        prune=bool(getattr(args, "prune", False)),
+        max_context_artifacts=int(getattr(args, "max_context_artifacts", 50)),
 
         # Artifact paths - auditor reports
         weekly_report_json=weekly_report_json,

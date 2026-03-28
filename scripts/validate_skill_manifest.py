@@ -139,7 +139,7 @@ def validate_guardrails_yaml(skill_dir: Path, skill_name: str) -> List[str]:
 def validate_eval_yaml(skill_dir: Path, skill_name: str) -> List[str]:
     """Validate eval.yaml against schema and benchmark evidence."""
     errors = []
-    warnings = []
+    _warnings: list[str] = []  # noqa: F841
     eval_path = skill_dir / 'eval.yaml'
 
     if not eval_path.exists():
@@ -313,12 +313,12 @@ def main():
 
     # Report results
     if all_errors:
-        print(f"\n[FAIL] Validation FAILED with {len(all_errors)} error(s):\n")
+        print(f"\n❌ Validation FAILED with {len(all_errors)} error(s):\n")
         for error in all_errors:
             print(f"  - {error}")
         sys.exit(1)
     else:
-        print(f"\n[OK] Validation PASSED: {skill_name} manifest is valid")
+        print(f"\n✓ Validation PASSED: {skill_name} manifest is valid")
         sys.exit(0)
 
 

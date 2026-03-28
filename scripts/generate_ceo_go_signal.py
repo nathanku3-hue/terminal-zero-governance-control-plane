@@ -10,6 +10,21 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from sop.scripts.ceo_go_signal_contract import (
+        AUTOMATED_CRITERIA_KEYS,
+        CRITERIA_ORDER,
+        criterion_met,
+        criterion_status_display,
+        criterion_value,
+        detect_phase,
+        determine_recommended_action,
+        extract_infra_failures,
+        load_json_fail_open,
+        promotion_criteria,
+        to_int,
+    )
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
     from scripts.ceo_go_signal_contract import (
         AUTOMATED_CRITERIA_KEYS,
         CRITERIA_ORDER,

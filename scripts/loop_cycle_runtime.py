@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from loop_cycle_context import LoopCycleContext
+    from sop.scripts.loop_cycle_context import LoopCycleContext
 except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
     from scripts.loop_cycle_context import LoopCycleContext
 
 
@@ -103,6 +104,9 @@ class LoopCycleRuntime:
     generated_at: datetime
     generated_at_utc: str
 
+    # Observability — Phase 2.1
+    trace_id: str = field(default="")
+
     # Execution tracking
     steps: list[dict[str, Any]] = field(default_factory=list)
     exec_memory_cycle_ready: bool = False
@@ -137,6 +141,12 @@ def build_loop_cycle_runtime(ctx: LoopCycleContext) -> LoopCycleRuntime:
     generated_at = _utc_now()
     generated_at_utc = _utc_iso(generated_at)
 
+    # Phase 2.1 - generate trace_id: <utc_compact>-<4 hex chars from hash>
+    import hashlib as _hashlib
+    _compact = generated_at.strftime("%Y%m%dT%H%M%SZ")
+    _hex4 = _hashlib.sha256(generated_at_utc.encode()).hexdigest()[:4]
+    trace_id = f"{_compact}-{_hex4}"
+
     lessons_paths = _write_lessons_stubs(
         context_dir=ctx.context_dir,
         generated_at_utc=generated_at_utc,
@@ -147,6 +157,7 @@ def build_loop_cycle_runtime(ctx: LoopCycleContext) -> LoopCycleRuntime:
     return LoopCycleRuntime(
         generated_at=generated_at,
         generated_at_utc=generated_at_utc,
+        trace_id=trace_id,
         steps=[],
         exec_memory_cycle_ready=False,
         temp_summary_path=temp_summary_path,

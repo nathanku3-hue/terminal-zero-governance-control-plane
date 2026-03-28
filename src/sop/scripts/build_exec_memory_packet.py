@@ -1596,7 +1596,7 @@ def _build_weekly_ceo_summary(
         criteria = dossier.get("promotion_criteria", {})
         met_count = sum(1 for v in criteria.values() if isinstance(v, dict) and v.get("met") is True)
         total_count = len([k for k in criteria.keys() if k != "c1_24b_close"])
-        lines.append(f"## Promotion Status")
+        lines.append("## Promotion Status")
         lines.append(f"Criteria met: {met_count}/{total_count}")
         lines.append("")
 
@@ -1604,7 +1604,7 @@ def _build_weekly_ceo_summary(
     if calibration:
         totals = calibration.get("totals", {})
         items = totals.get("items_reviewed", 0)
-        lines.append(f"## Auditor Calibration")
+        lines.append("## Auditor Calibration")
         lines.append(f"Items reviewed: {items}")
 
     return "\n".join(lines)
@@ -2101,28 +2101,28 @@ def main() -> int:
     # Build markdown companion
     md_lines = [
         "# Exec Memory Packet",
-        f"",
+        "",
         f"**Generated:** {packet['generated_at_utc']}",
         f"**Schema:** {packet['schema_version']}",
-        f"",
-        f"## Token Budget",
-        f"",
-        f"| Context | Budget | Actual | Status |",
-        f"|---------|--------|--------|--------|",
-        f"| PM | {args.pm_budget_tokens} | {pm_tokens} | {'✅ OK' if pm_budget_ok else '❌ OVER'} |",
-        f"| CEO | {args.ceo_budget_tokens} | {ceo_tokens} | {'✅ OK' if ceo_budget_ok else '❌ OVER'} |",
-        f"",
-        f"## Source Bindings",
-        f"",
+        "",
+        "## Token Budget",
+        "",
+        "| Context | Budget | Actual | Status |",
+        "|---------|--------|--------|--------|",
+        f"| PM | {args.pm_budget_tokens} | {pm_tokens} | {'[OK] OK' if pm_budget_ok else '[FAIL] OVER'} |",
+        f"| CEO | {args.ceo_budget_tokens} | {ceo_tokens} | {'[OK] OK' if ceo_budget_ok else '[FAIL] OVER'} |",
+        "",
+        "## Source Bindings",
+        "",
     ]
 
     for src in source_bindings:
         md_lines.append(f"- {src}")
 
     md_lines.extend([
-        f"",
-        f"## Automation Uncertainty Status",
-        f"",
+        "",
+        "## Automation Uncertainty Status",
+        "",
         f"- Status: {automation_uncertainty_status['status']}",
         f"- MachineConfidence: {automation_uncertainty_status['machine_confidence']}",
         f"- EvidenceStatus: {automation_uncertainty_status['evidence_status']}",
@@ -2137,8 +2137,8 @@ def main() -> int:
         f"- BoardReentryRequired: {'YES' if automation_uncertainty_status['board_reentry_required'] else 'NO'}",
         f"- BoundaryRegistry: {automation_uncertainty_status['boundary_registry']}",
         f"- ReasonCodes: {', '.join(automation_uncertainty_status['reason_codes']) if automation_uncertainty_status['reason_codes'] else 'none'}",
-        f"",
-        f"```text",
+        "",
+        "```text",
         f"AUTOMATION_UNCERTAINTY_STATUS: {automation_uncertainty_status['status']}",
         f"MACHINE_CONFIDENCE: {automation_uncertainty_status['machine_confidence']}",
         f"EVIDENCE_STATUS: {automation_uncertainty_status['evidence_status']}",
@@ -2156,13 +2156,13 @@ def main() -> int:
         f"REASON_CODES: {','.join(automation_uncertainty_status['reason_codes']) if automation_uncertainty_status['reason_codes'] else 'none'}",
         f"BOUNDARY_REGISTRY: {automation_uncertainty_status['boundary_registry']}",
         f"RETIRE_WHEN: {' && '.join(automation_uncertainty_status['retirement_criteria'])}",
-        f"```",
-        f"",
-        f"## Replanning",
-        f"",
+        "```",
+        "",
+        "## Replanning",
+        "",
         f"- BlockingGapCount: {replanning['blocking_gap_count']}",
         f"- NextReplanRecommendation: {replanning['next_replan_recommendation']}",
-        f"",
+        "",
     ])
 
     for detail in automation_uncertainty_status["reason_details"]:
@@ -2177,15 +2177,15 @@ def main() -> int:
         )
 
     md_lines.extend([
-        f"",
-        f"## Next Round Handoff",
-        f"",
+        "",
+        "## Next Round Handoff",
+        "",
         f"- Status: {next_round_handoff['status']}",
         f"- RecommendedIntent: {next_round_handoff['recommended_intent']}",
         f"- RecommendedScope: {next_round_handoff['recommended_scope']}",
         f"- DoneWhenChecks: {', '.join(next_round_handoff['recommended_done_when_checks'])}",
         f"- ArtifactsToRefresh: {', '.join(next_round_handoff['artifacts_to_refresh']) if next_round_handoff['artifacts_to_refresh'] else 'none'}",
-        f"",
+        "",
     ])
     _append_advisory_split_markdown(
         md_lines,
@@ -2194,14 +2194,14 @@ def main() -> int:
         paste_ready_block=next_round_handoff["paste_ready_block"],
     )
     md_lines.extend([
-        f"## Expert Request",
-        f"",
+        "## Expert Request",
+        "",
         f"- Status: {expert_request['status']}",
         f"- TargetExpert: {expert_request['target_expert']}",
         f"- Question: {expert_request['question']}",
         f"- DecisionDependsOn: {expert_request['decision_depends_on']}",
         f"- SourceArtifacts: {', '.join(expert_request['source_artifacts']) if expert_request['source_artifacts'] else 'none'}",
-        f"",
+        "",
     ])
     _append_advisory_split_markdown(
         md_lines,
@@ -2210,14 +2210,14 @@ def main() -> int:
         paste_ready_block=expert_request["paste_ready_block"],
     )
     md_lines.extend([
-        f"## PM/CEO Research Brief",
-        f"",
+        "## PM/CEO Research Brief",
+        "",
         f"- Status: {pm_ceo_research_brief['status']}",
         f"- DelegatedTo: {pm_ceo_research_brief['delegated_to']}",
         f"- Question: {pm_ceo_research_brief['question']}",
         f"- DecisionDependsOn: {pm_ceo_research_brief['decision_depends_on']}",
         f"- SourceArtifacts: {', '.join(pm_ceo_research_brief['source_artifacts']) if pm_ceo_research_brief['source_artifacts'] else 'none'}",
-        f"",
+        "",
     ])
     _append_advisory_split_markdown(
         md_lines,
@@ -2226,14 +2226,14 @@ def main() -> int:
         paste_ready_block=pm_ceo_research_brief["paste_ready_block"],
     )
     md_lines.extend([
-        f"## Board Decision Brief",
-        f"",
+        "## Board Decision Brief",
+        "",
         f"- Status: {board_decision_brief['status']}",
         f"- DecisionTopic: {board_decision_brief['decision_topic']}",
         f"- DecisionClass: {board_decision_brief['decision_class']}",
         f"- RiskTier: {board_decision_brief['risk_tier']}",
         f"- SourceArtifacts: {', '.join(board_decision_brief['source_artifacts']) if board_decision_brief['source_artifacts'] else 'none'}",
-        f"",
+        "",
     ])
     _append_advisory_split_markdown(
         md_lines,
@@ -2242,8 +2242,8 @@ def main() -> int:
         paste_ready_block=board_decision_brief["paste_ready_block"],
     )
     md_lines.extend([
-        f"## Retrieval Namespaces",
-        f"",
+        "## Retrieval Namespaces",
+        "",
     ])
 
     for ns_name, ns_sources in retrieval_namespaces.items():

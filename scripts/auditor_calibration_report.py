@@ -8,12 +8,15 @@ import tempfile
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 try:
-    from scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
-except Exception:
-    from ceo_go_signal_contract import resolve_c1_signoff_criterion  # type: ignore[no-redef]
+    from sop.scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    try:
+        from scripts.ceo_go_signal_contract import resolve_c1_signoff_criterion
+    except Exception:
+        from ceo_go_signal_contract import resolve_c1_signoff_criterion  # type: ignore[no-redef]
 
 
 def _now_utc_iso() -> str:
@@ -473,26 +476,26 @@ def main() -> None:
     # Build Markdown report
     md_lines = [
         f"# Auditor Calibration Report ({args.mode.upper()})",
-        f"",
+        "",
         f"**Generated:** {report['generated_at_utc']}",
         f"**Runs included:** {len(runs)}",
         f"**Time range:** {args.from_utc or 'N/A'} to {args.to_utc or 'N/A'}",
-        f"",
-        f"## Summary",
-        f"",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "",
+        "## Summary",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Items reviewed | {total_items} |",
         f"| CRITICAL | {severity_counts['critical']} |",
         f"| HIGH | {severity_counts['high']} |",
         f"| MEDIUM | {severity_counts['medium']} |",
         f"| LOW | {severity_counts['low']} |",
         f"| INFO | {severity_counts['info']} |",
-        f"",
-        f"## FP Analysis",
-        f"",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "",
+        "## FP Analysis",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Ledger loaded | {ledger_loaded} |",
         f"| C/H total | {ch_total} |",
         f"| C/H annotated | {ch_annotated} |",
@@ -500,15 +503,15 @@ def main() -> None:
         f"| C/H FP count | {ch_fp_count} |",
         f"| FP rate | {f'{fp_rate:.2%}' if fp_rate is not None else 'N/A'} |",
         f"| Annotation coverage | {annotation_coverage_ch:.2%} |",
-        f"",
+        "",
     ]
 
     if per_rule:
         md_lines.extend([
-            f"## Per-Rule Breakdown",
-            f"",
-            f"| Rule ID | Total | C | H | M | L | I | FP |",
-            f"|---------|-------|---|---|---|---|---|-----|"
+            "## Per-Rule Breakdown",
+            "",
+            "| Rule ID | Total | C | H | M | L | I | FP |",
+            "|---------|-------|---|---|---|---|---|-----|"
         ])
         for rule_id in sorted(per_rule.keys()):
             r = per_rule[rule_id]
@@ -517,10 +520,10 @@ def main() -> None:
 
     if weekly_buckets:
         md_lines.extend([
-            f"## Weekly Windows",
-            f"",
-            f"| Week | Items | C | H | M | L | I |",
-            f"|------|-------|---|---|---|---|---|"
+            "## Weekly Windows",
+            "",
+            "| Week | Items | C | H | M | L | I |",
+            "|------|-------|---|---|---|---|---|"
         ])
         for week in sorted(weekly_buckets.keys()):
             w = weekly_buckets[week]
@@ -529,10 +532,10 @@ def main() -> None:
 
     if args.mode == "dossier":
         md_lines.extend([
-            f"## Promotion Dossier",
-            f"",
-            f"| Criterion | Met | Value |",
-            f"|-----------|-----|-------|"
+            "## Promotion Dossier",
+            "",
+            "| Criterion | Met | Value |",
+            "|-----------|-----|-------|"
         ])
         for crit_id, crit in criteria.items():
             met_str = "[OK]" if crit["met"] is True else ("[FAIL]" if crit["met"] is False else "[WARN]")

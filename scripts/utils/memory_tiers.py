@@ -8,7 +8,7 @@ from typing import Mapping
 
 MEMORY_TIER_SCHEMA_VERSION = "1.0.0"
 MEMORY_TIER_SOURCE_PATH = "scripts/utils/memory_tiers.py"
-MEMORY_TIER_CONTRACT_DOC_PATH = "docs/memory_tier_contract.md"
+MEMORY_TIER_CONTRACT_DOC_PATH = "docs/context/MEMORY_TIER_CONTRACT.md"
 
 
 _MEMORY_TIER_FAMILIES: dict[str, dict[str, Any]] = {
@@ -174,6 +174,124 @@ _MEMORY_TIER_FAMILIES: dict[str, dict[str, Any]] = {
         "description": "Ledger-level auditor deep-dive evidence reserved for manual fallback review.",
         "artifact_paths": (
             "docs/context/auditor_fp_ledger.json",
+        ),
+    },
+    # --- Phase 2-4 families (added Phase 5) ---
+    # Hot tier
+    "loop_run_trace": {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Per-run execution trace written after every loop cycle.",
+        "artifact_paths": (
+            "docs/context/loop_run_trace_latest.json",
+        ),
+    },
+    "loop_cycle_checkpoint": {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Checkpoint state enabling resume after partial loop cycle.",
+        "artifact_paths": (
+            "docs/context/loop_cycle_checkpoint_latest.json",
+        ),
+    },
+    "orchestrator_state": {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Authoritative orchestrator self-state; loaded on every startup.",
+        "artifact_paths": (
+            "docs/context/orchestrator_state_latest.json",
+        ),
+    },
+    # Warm tier
+    "phase_gate_a": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Phase gate A evaluation result (exec_memory -> advisory).",
+        "artifact_paths": (
+            "docs/context/phase_gate_a_latest.json",
+        ),
+    },
+    "phase_gate_b": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Phase gate B evaluation result (advisory -> summary).",
+        "artifact_paths": (
+            "docs/context/phase_gate_b_latest.json",
+        ),
+    },
+    "phase_handoff": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Phase handoff artifact emitted on gate B PROCEED.",
+        "artifact_paths": (
+            "docs/context/phase_handoff_latest.json",
+        ),
+    },
+    "run_drift": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Run-to-baseline drift detection result for current loop cycle.",
+        "artifact_paths": (
+            "docs/context/run_drift_latest.json",
+        ),
+    },
+    "rollback": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Rollback state artifact written when a HOLD triggers revert.",
+        "artifact_paths": (
+            "docs/context/rollback_latest.json",
+        ),
+    },
+    "bridge_contract": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Bridge contract translating execution truth to PM/planner language.",
+        "artifact_paths": (
+            "docs/context/bridge_contract_current.md",
+            "docs/context/bridge_contract_current.json",
+        ),
+    },
+    "planner_packet": {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Compact fresh-context packet; planner enters from it alone.",
+        "artifact_paths": (
+            "docs/context/planner_packet_current.md",
+            "docs/context/planner_packet_current.json",
+        ),
+    },
+    # Cold tier
+    "loop_run_steps": {
+        "tier": "cold",
+        "access": "manual_fallback",
+        "description": "Rolling NDJSON log of all step records for the current loop run.",
+        "artifact_paths": (
+            "docs/context/loop_run_steps_latest.ndjson",
+        ),
+    },
+    "run_regression_baseline": {
+        "tier": "cold",
+        "access": "manual_fallback",
+        "description": "Rolling NDJSON baseline used for drift detection across runs.",
+        "artifact_paths": (
+            "docs/context/run_regression_baseline.ndjson",
+        ),
+    },
+    "worker_merge": {
+        "tier": "cold",
+        "access": "manual_fallback",
+        "description": "Parallel worker merge result from run_parallel() coordination.",
+        "artifact_paths": (
+            "docs/context/worker_merge_latest.json",
+        ),
+    },
+    "loop_run_trace_master": {
+        "tier": "cold",
+        "access": "manual_fallback",
+        "description": "Master trace aggregating all parallel worker traces.",
+        "artifact_paths": (
+            "docs/context/loop_run_trace_master_latest.json",
         ),
     },
 }

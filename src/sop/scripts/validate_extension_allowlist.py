@@ -138,6 +138,21 @@ def validate_allowlist_schema(allowlist: Dict[str, Any]) -> List[str]:
             elif len(projects) == 0:
                 errors.append(f"{prefix}: applicable_projects must contain at least one entry")
 
+        # Validate optional assigned_roles (Phase 1.2)
+        if 'assigned_roles' in skill:
+            assigned_roles = skill['assigned_roles']
+            valid_roles = ['worker', 'auditor', 'planner']
+            if not isinstance(assigned_roles, list):
+                errors.append(f"{prefix}: assigned_roles must be a list")
+            elif len(assigned_roles) == 0:
+                errors.append(f"{prefix}: assigned_roles must be non-empty if present")
+            else:
+                for ar in assigned_roles:
+                    if ar not in valid_roles:
+                        errors.append(
+                            f"{prefix}: assigned_roles entry '{ar}' must be one of {valid_roles}"
+                        )
+
         # Validate conditional fields
         if 'status' in skill:
             if skill['status'] == 'deprecated':

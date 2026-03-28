@@ -1,5 +1,12 @@
 # Terminal Zero In-Loop Operations Runbook
 
+> **Phase 6 split**: This file has been split into two files.
+> - **Active (in-loop)**: `docs/runbook_ops_active.md` — loaded by `execution_deputy`
+> - **Reference (non-runtime)**: `docs/runbook_ops_reference.md` — operator reference only
+>
+> This file is retained as a redirect stub. Prefer the split files above.
+
+
 > Internal in-loop execution guidance for the current governance control plane.
 > This runbook intentionally stays narrow: it covers the active `run_loop_cycle.py` path only.
 

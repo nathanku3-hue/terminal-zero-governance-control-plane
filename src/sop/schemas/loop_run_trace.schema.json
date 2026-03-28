@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LoopRunTrace",
+  "description": "Structured observability trace emitted at the end of every loop cycle run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "generated_at_utc",
+    "repo_id",
+    "duration_seconds",
+    "steps",
+    "metrics",
+    "final_result",
+    "final_exit_code"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{4}$",
+      "description": "Unique run trace identifier: <utc_compact>-<4 hex chars>."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this trace was generated."
+    },
+    "repo_id": {
+      "type": "string",
+      "description": "Repository identifier."
+    },
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total wall-clock duration of the run in seconds."
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered list of step execution records.",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "exit_code", "started_utc", "ended_utc", "duration_seconds"],
+        "properties": {
+          "name": {"type": "string"},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "ERROR", "SKIP", "HOLD"]},
+          "exit_code": {"type": ["integer", "null"]},
+          "started_utc": {"type": "string"},
+          "ended_utc": {"type": "string"},
+          "duration_seconds": {"type": "number", "minimum": 0}
+        },
+        "additionalProperties": true
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["pass_count", "hold_count", "fail_count", "error_count", "total_steps"],
+      "properties": {
+        "pass_count": {"type": "integer", "minimum": 0},
+        "hold_count": {"type": "integer", "minimum": 0},
+        "fail_count": {"type": "integer", "minimum": 0},
+        "error_count": {"type": "integer", "minimum": 0},
+        "skip_count": {"type": "integer", "minimum": 0},
+        "total_steps": {"type": "integer", "minimum": 0},
+        "artifact_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "final_result": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "ERROR", "HOLD"],
+      "description": "Overall result of the loop cycle run."
+    },
+    "final_exit_code": {
+      "type": "integer",
+      "description": "Exit code: 0=PASS/HOLD, 1=FAIL, 2=ERROR."
+    }
+  }
+}

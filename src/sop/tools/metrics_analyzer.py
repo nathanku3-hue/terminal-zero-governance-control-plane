@@ -101,11 +101,11 @@ class MetricsAnalyzer:
         # Calculate statistics
         total = len(records)
         successful = sum(1 for r in records if r.success)
-        failed = total - successful
+        _failed = total - successful  # noqa: F841
         success_rate = successful / total if total > 0 else 0
         
         avg_duration = sum(r.duration_ms for r in records) / total if total > 0 else 0
-        max_duration = max(r.duration_ms for r in records) if records else 0
+        _max_duration = max(r.duration_ms for r in records) if records else 0  # noqa: F841
         
         # Generate unique recommendation IDs with counter
         base_id = int(datetime.now(timezone.utc).timestamp() * 1000)

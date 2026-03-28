@@ -144,7 +144,7 @@ def main():
 
     # Calculate baseline
     baseline_tokens, baseline_artifacts = calculate_baseline_context(data, repo_root)
-    print(f"Baseline Context (all artifacts for all roles):")
+    print("Baseline Context (all artifacts for all roles):")
     print(f"  Total artifacts: {len(baseline_artifacts)}")
     print(f"  Total tokens: {baseline_tokens:,}")
     print()
@@ -154,7 +154,7 @@ def main():
     total_savings = 0
     role_count = len(roles)
 
-    print(f"Per-Role Context Analysis:")
+    print("Per-Role Context Analysis:")
     print()
 
     for role_name, role_config in roles.items():
@@ -181,7 +181,7 @@ def main():
     avg_savings = total_savings / role_count if role_count > 0 else 0
     avg_reduction_pct = (avg_savings / baseline_tokens * 100) if baseline_tokens > 0 else 0
 
-    print(f"Summary:")
+    print("Summary:")
     print(f"  Total roles: {role_count}")
     print(f"  Average savings per role: {avg_savings:,.0f} tokens ({avg_reduction_pct:.1f}% reduction)")
     print(f"  Total baseline tokens: {baseline_tokens:,}")

@@ -6,7 +6,6 @@ import os
 import sys
 import tempfile
 from datetime import datetime
-from datetime import timezone
 from pathlib import Path
 from typing import Any
 
@@ -15,8 +14,13 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR.parent) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR.parent))
 
-from scripts.utils.time_utils import utc_now
-from scripts.utils.time_utils import utc_iso
+try:
+    from sop.scripts.utils.time_utils import utc_now
+    from sop.scripts.utils.time_utils import utc_iso
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    from scripts.utils.time_utils import utc_now
+    from scripts.utils.time_utils import utc_iso
 
 # Default settings from the plan
 DEFAULT_TTL_SECONDS = 300
@@ -217,7 +221,7 @@ def main() -> int:
             aggregate_payload["summary"]["escalated"] += 1
             
             task_id = heartbeat.get("current_task", {}).get("task_id", "Unknown")
-            stale_since = None # We cannot know exact stale_since without history, fallback to last_write
+            _stale_since = None  # noqa: F841  # cannot know without history
             last_write = _parse_iso(heartbeat.get("last_write_utc", ""))
             
             esc_event = {

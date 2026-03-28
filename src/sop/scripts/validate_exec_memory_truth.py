@@ -387,7 +387,7 @@ def _write_output_md(path: Path, status: dict[str, Any]) -> None:
     lines = [
         "# Exec Memory Packet Validation",
         "",
-        f"**Status:** {'✅ PASS' if status['valid'] else '❌ FAIL'}",
+        f"**Status:** {'[OK] PASS' if status['valid'] else '[FAIL] FAIL'}",
         f"**Timestamp:** {status['validated_at_utc']}",
         "",
     ]

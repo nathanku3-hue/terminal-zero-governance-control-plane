@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlannerPacket",
+  "description": "Compact fresh-context packet for planner entry. A fresh worker loading this file gets the full picture without reading the whole repo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "generated_at_utc",
+    "run_result",
+    "current_context",
+    "active_brief",
+    "bridge_truth_summary",
+    "decision_tail",
+    "blocked_next_step",
+    "active_bottleneck"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID of the current run."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this packet was generated."
+    },
+    "run_result": {
+      "type": "string",
+      "description": "Overall result of the run: PASS, HOLD, FAIL, ERROR."
+    },
+    "current_context": {
+      "type": "string",
+      "description": "One paragraph: what the system is, what phase it is in, what the last run achieved."
+    },
+    "active_brief": {
+      "type": "string",
+      "description": "The current task or phase goal in one sentence."
+    },
+    "bridge_truth_summary": {
+      "type": "string",
+      "description": "SYSTEM_DELTA + RECOMMENDED_NEXT_STEP from bridge_contract_current."
+    },
+    "decision_tail": {
+      "type": "array",
+      "description": "Last 10 decisions carried forward (JSON shadow); Markdown renders last 3. Empty on first run.",
+      "minItems": 0,
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_next_step": {
+      "type": "string",
+      "description": "The OPEN_DECISION from bridge contract, or 'None'."
+    },
+    "active_bottleneck": {
+      "type": "string",
+      "description": "The highest-priority unresolved blocker. 'None' if no active blocker."
+    }
+  }
+}

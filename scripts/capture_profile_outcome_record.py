@@ -334,7 +334,7 @@ def main(argv: list[str] | None = None) -> int:
 
     _atomic_write_json(output_path, payload)
 
-    print(f"PROFILE_OUTCOME_CAPTURE_STATUS: WRITTEN")
+    print("PROFILE_OUTCOME_CAPTURE_STATUS: WRITTEN")
     print(f"OUTPUT_PATH: {output_path}")
     print(f"PROJECT_PROFILE: {project_profile}")
     print(f"LOOP_CLOSURE_RESULT: {loop_closure_result}")

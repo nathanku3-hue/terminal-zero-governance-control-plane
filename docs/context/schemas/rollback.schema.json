@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RollbackResult",
+  "description": "Artifact emitted by RollbackManager.revert() after a Gate HOLD or exception triggers an artifact revert.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "triggered_at_utc",
+    "trigger",
+    "artifacts_reverted",
+    "artifacts_not_found",
+    "rollback_result"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID of the run that triggered rollback."
+    },
+    "triggered_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when rollback was triggered."
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["gate_a_hold", "gate_b_hold", "gate_hold", "exception"],
+      "description": "What caused the rollback."
+    },
+    "artifacts_reverted": {
+      "type": "array",
+      "description": "Artifacts that were successfully restored.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "restored_from", "status"],
+        "properties": {
+          "path": {"type": "string"},
+          "restored_from": {"type": "string"},
+          "status": {"type": "string"}
+        }
+      }
+    },
+    "artifacts_not_found": {
+      "type": "array",
+      "description": "Artifact paths that were in scope but not found in snapshot.",
+      "items": {"type": "string"}
+    },
+    "rollback_result": {
+      "type": "string",
+      "enum": ["CLEAN", "PARTIAL", "FAILED"],
+      "description": "CLEAN=all reverted, PARTIAL=some missing, FAILED=error during revert."
+    }
+  }
+}

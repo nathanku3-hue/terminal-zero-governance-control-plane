@@ -563,7 +563,7 @@ def test_memory_tier_contract_uses_shared_mapping(tmp_path: Path) -> None:
     bindings = packet["memory_tier_bindings"]
 
     assert contract["source_of_truth"] == "scripts/utils/memory_tiers.py"
-    assert contract["documentation"] == "docs/memory_tier_contract.md"
+    assert contract["documentation"] == "docs/context/MEMORY_TIER_CONTRACT.md"
 
     families = {item["family"]: item for item in contract["families"]}
     assert families["loop_cycle_summary"]["tier"] == "hot"

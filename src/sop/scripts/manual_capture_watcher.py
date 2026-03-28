@@ -29,6 +29,16 @@ DEFAULT_MIN_IMAGE_BYTES = 1024
 
 MISSING_CAPTURE_TOKEN = "REAL_CAPTURE_MISSING"
 
+# Terminal polling: lines in terminal .txt files that match this pattern are
+# treated as evidence signals.  Two syntaxes are recognised:
+#   EVIDENCE:<path>          explicit signal written to terminal by operator
+#   Any bare/quoted path ending with a recognised image extension
+TERMINAL_EVIDENCE_SIGNAL_RE = re.compile(
+    r"(?:EVIDENCE:\s*(?P<signal>[^\s]+))"
+    r"|(?:(?P<path>(?:[A-Za-z]:[/\\]|[/\\]|\.)[^\s'\"]*\.(?:png|jpg|jpeg|webp)))",
+    re.IGNORECASE,
+)
+
 
 class ManualCaptureError(RuntimeError):
     pass
@@ -489,6 +499,70 @@ def _list_drop_images(drop_dir: Path) -> list[Path]:
     return files
 
 
+def _default_terminal_dir() -> Path | None:
+    """Return the Cursor terminals folder for this project, or None if not detectable."""
+    userprofile = Path(os.environ.get("USERPROFILE", "~")).expanduser()
+    cursor_projects = userprofile / ".cursor" / "projects"
+    if not cursor_projects.exists():
+        return None
+    # Map the workspace root to the slug Cursor uses (drive colon → hyphen, backslashes → hyphens)
+    # e.g.  E:\Code\SOP  →  e-Code-SOP
+    try:
+        workspace = Path(__file__).resolve().parents[3]
+        slug = workspace.as_posix().replace(":", "").replace("/", "-").lstrip("-")
+        candidate = cursor_projects / slug / "terminals"
+        if candidate.exists():
+            return candidate
+        # Fallback: search for any terminals folder whose slug contains the repo name
+        repo_name = workspace.name
+        for entry in cursor_projects.iterdir():
+            if repo_name.lower() in entry.name.lower():
+                t = entry / "terminals"
+                if t.exists():
+                    return t
+    except Exception:
+        pass
+    return None
+
+
+def _scan_terminal_files(terminal_dir: Path) -> list[Path]:
+    """Scan all .txt files in *terminal_dir* and return image paths found in them.
+
+    Two signal syntaxes are accepted (case-insensitive):
+      EVIDENCE:<path>          explicit operator signal
+      Any bare filesystem path ending in .png/.jpg/.jpeg/.webp
+    Returned paths are deduplicated and ordered by first appearance.
+    """
+    if not terminal_dir.exists():
+        return []
+    found: list[Path] = []
+    seen: set[str] = set()
+    for txt_file in sorted(terminal_dir.glob("*.txt"), key=lambda p: p.stat().st_mtime):
+        try:
+            # Read last 8 KB only — terminals can be huge
+            size = txt_file.stat().st_size
+            offset = max(0, size - 8192)
+            with open(txt_file, "r", encoding="utf-8", errors="replace") as fh:
+                if offset:
+                    fh.seek(offset)
+                tail = fh.read()
+        except OSError:
+            continue
+        for line in tail.splitlines():
+            m = TERMINAL_EVIDENCE_SIGNAL_RE.search(line)
+            if not m:
+                continue
+            raw = m.group("signal") or m.group("path")
+            if not raw:
+                continue
+            raw = raw.strip("'\"")
+            key = raw.lower()
+            if key not in seen:
+                seen.add(key)
+                found.append(Path(raw))
+    return found
+
+
 def _safe_token(value: str) -> str:
     token = re.sub(r"[^A-Za-z0-9]+", "_", value.strip().lower()).strip("_")
     if not token:
@@ -589,12 +663,25 @@ def process_cycle(
     accept_any_filename: bool,
     now: datetime,
     alerts: dict[str, Any],
+    terminal_poll: bool = False,
+    terminal_dir: Path | None = None,
 ) -> dict[str, Any]:
     now_iso = _iso_utc(now)
     items = queue.get("items", [])
     if not isinstance(items, list):
         raise ManualCaptureError("Queue payload 'items' must be a list")
-    fallback_images = _list_drop_images(drop_dir) if accept_any_filename else []
+
+    # When terminal_poll is active, harvest image paths from Cursor terminal files
+    # instead of scanning the Evidence_Drop folder.
+    if terminal_poll:
+        terminal_images = _scan_terminal_files(terminal_dir) if terminal_dir else []
+        fallback_images: list[Path] = terminal_images  # treat as accept_any_filename pool
+        _accept_any = True
+        _move = True  # terminal paths are the source; always move/copy into evidence_dir
+    else:
+        fallback_images = _list_drop_images(drop_dir) if accept_any_filename else []
+        _accept_any = accept_any_filename
+        _move = move_from_drop
     consumed_fallback: set[str] = set()
 
     for item in items:
@@ -614,11 +701,14 @@ def process_cycle(
             )
             file_pattern = str(item["file_pattern"])
 
-        matched = _find_matching_capture(drop_dir=drop_dir, pattern=file_pattern)
+        # Drop-dir pattern match is skipped in terminal_poll mode (no drop folder).
+        matched: Path | None = None
         matched_via_fallback = False
-        if matched is None and accept_any_filename:
+        if not terminal_poll:
+            matched = _find_matching_capture(drop_dir=drop_dir, pattern=file_pattern)
+        if matched is None and _accept_any:
             for candidate in fallback_images:
-                key = str(candidate.resolve())
+                key = str(candidate.resolve()) if candidate.is_absolute() else str(candidate)
                 if key in consumed_fallback:
                     continue
                 consumed_fallback.add(key)
@@ -638,13 +728,13 @@ def process_cycle(
                 )
                 continue
 
-            if matched_via_fallback:
+            if matched_via_fallback or terminal_poll:
                 destination = _dedupe_destination(
                     evidence_dir / _build_auto_filename(item=item, now=now, extension=matched.suffix)
                 )
             else:
                 destination = _dedupe_destination(evidence_dir / matched.name)
-            effective_move = move_from_drop or matched_via_fallback
+            effective_move = _move or matched_via_fallback
             _copy_capture_file(source=matched, destination=destination, move_file=effective_move)
             digest = _sha256_of_file(destination)
             item["status"] = "RECEIVED"
@@ -824,6 +914,24 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="In single-occupancy mode, do not auto-claim active owner when state has no owner.",
     )
+    parser.add_argument(
+        "--terminal-poll",
+        action="store_true",
+        help=(
+            "Disable Evidence_Drop folder scanning entirely and instead poll Cursor IDE "
+            "terminal files for evidence image paths. "
+            "Signals recognised: 'EVIDENCE:<path>' or any bare path ending in .png/.jpg/.jpeg/.webp."
+        ),
+    )
+    parser.add_argument(
+        "--terminal-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Directory containing Cursor terminal .txt files to poll. "
+            "Defaults to auto-detected ~/.cursor/projects/<slug>/terminals/."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -926,6 +1034,15 @@ def _run_once(args: argparse.Namespace) -> tuple[dict[str, int], int]:
         now=now,
     )
     alerts = _load_or_init_alerts(args.alerts, _iso_utc(now))
+
+    # Resolve terminal directory when terminal_poll is requested
+    terminal_dir: Path | None = None
+    if args.terminal_poll:
+        if args.terminal_dir is not None:
+            terminal_dir = args.terminal_dir.resolve()
+        else:
+            terminal_dir = _default_terminal_dir()
+
     queue = process_cycle(
         queue=queue,
         drop_dir=args.drop_dir,
@@ -937,6 +1054,8 @@ def _run_once(args: argparse.Namespace) -> tuple[dict[str, int], int]:
         accept_any_filename=args.accept_any_filename,
         now=now,
         alerts=alerts,
+        terminal_poll=args.terminal_poll,
+        terminal_dir=terminal_dir,
     )
     updated_lines = _update_index_lines(lines=lines, rows=rows, queue=queue, now=now)
     summary = summarize_queue(queue)

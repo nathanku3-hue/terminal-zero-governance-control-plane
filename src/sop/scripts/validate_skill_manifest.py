@@ -139,7 +139,7 @@ def validate_guardrails_yaml(skill_dir: Path, skill_name: str) -> List[str]:
 def validate_eval_yaml(skill_dir: Path, skill_name: str) -> List[str]:
     """Validate eval.yaml against schema and benchmark evidence."""
     errors = []
-    warnings = []
+    _warnings: list[str] = []  # noqa: F841
     eval_path = skill_dir / 'eval.yaml'
 
     if not eval_path.exists():

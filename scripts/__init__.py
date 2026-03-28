@@ -1,2 +1,1 @@
-"""Scripts package marker for stable test-time imports."""
-
+"""SOP kernel scripts package."""

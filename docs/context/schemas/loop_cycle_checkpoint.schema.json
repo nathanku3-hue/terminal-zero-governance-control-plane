@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LoopCycleCheckpoint",
+  "description": "Single-loop checkpoint written after each major step. Enables resume from interruption without re-executing completed steps.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_utc",
+    "cycle_id",
+    "completed_steps",
+    "last_completed_step",
+    "partial"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this checkpoint was written."
+    },
+    "cycle_id": {
+      "type": "string",
+      "description": "Cycle identifier (ISO 8601 UTC timestamp of cycle start, or --cycle-id arg)."
+    },
+    "completed_steps": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["exec_memory", "advisory", "loop_summary"]
+      },
+      "description": "Ordered list of major steps that completed successfully."
+    },
+    "last_completed_step": {
+      "type": ["string", "null"],
+      "description": "Name of the last successfully completed step, or null if none completed."
+    },
+    "exec_memory_cycle_ready": {
+      "type": "boolean",
+      "description": "Whether exec memory promotion succeeded before checkpoint was written."
+    },
+    "partial": {
+      "type": "boolean",
+      "description": "True while the loop is in progress; false after loop_summary written (terminal)."
+    }
+  }
+}

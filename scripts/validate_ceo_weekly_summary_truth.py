@@ -8,21 +8,31 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from scripts.ceo_go_signal_contract import (
+    from sop.scripts.ceo_go_signal_contract import (
         AUTOMATED_CRITERIA_KEYS,
         CRITERIA_ORDER,
         criterion_met,
         criterion_status_display,
         extract_infra_failures,
     )
-except Exception:
-    from ceo_go_signal_contract import (  # type: ignore[no-redef]
-        AUTOMATED_CRITERIA_KEYS,
-        CRITERIA_ORDER,
-        criterion_met,
-        criterion_status_display,
-        extract_infra_failures,
-    )
+except ModuleNotFoundError:
+    # Fallback for direct script execution (development mode)
+    try:
+        from scripts.ceo_go_signal_contract import (
+            AUTOMATED_CRITERIA_KEYS,
+            CRITERIA_ORDER,
+            criterion_met,
+            criterion_status_display,
+            extract_infra_failures,
+        )
+    except Exception:
+        from ceo_go_signal_contract import (  # type: ignore[no-redef]
+            AUTOMATED_CRITERIA_KEYS,
+            CRITERIA_ORDER,
+            criterion_met,
+            criterion_status_display,
+            extract_infra_failures,
+        )
 
 
 KNOWN_CRITERIA_CODES = tuple(short_code for short_code, _ in CRITERIA_ORDER)
@@ -31,7 +41,7 @@ CRITERION_CODE_REGEX = re.compile(
     rf"\b(?P<code>{CRITERION_CODE_PATTERN})\b", re.IGNORECASE
 )
 CRITERION_PAIR_PATTERN = re.compile(
-    rf"\b(?P<code>{CRITERION_CODE_PATTERN})\s*[:=]\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|[OK]|[FAIL]|[WARN]?|[WARN])\b",
+    rf"\b(?P<code>{CRITERION_CODE_PATTERN})\s*[:=]\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|✅|❌|⚠️?|⚠)\b",
     re.IGNORECASE,
 )
 CRITERION_LINE_PATTERN = re.compile(
@@ -39,7 +49,7 @@ CRITERION_LINE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 STATUS_AT_START_PATTERN = re.compile(
-    r"^\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|[OK]|[FAIL]|[WARN]?|[WARN])\s*(?P<rest>.*)$",
+    r"^\s*(?P<status>MANUAL_CHECK|PASS|FAIL|TRUE|FALSE|✅|❌|⚠️?|⚠)\s*(?P<rest>.*)$",
     re.IGNORECASE,
 )
 ACTION_LINE_PATTERN = re.compile(
@@ -115,11 +125,11 @@ def _normalize_status_token(raw: str) -> str | None:
     if "/" in upper and any(token in upper for token in ("PASS", "FAIL", "MANUAL_CHECK")):
         return None
 
-    if "[FAIL]" in cleaned:
+    if "❌" in cleaned:
         return "FAIL"
-    if "[OK]" in cleaned:
+    if "✅" in cleaned:
         return "PASS"
-    if "[WARN]" in cleaned:
+    if "⚠" in cleaned:
         return "MANUAL_CHECK"
 
     if re.search(r"\bMANUAL[\s_]?CHECK\b", upper):
@@ -128,6 +138,11 @@ def _normalize_status_token(raw: str) -> str | None:
     if re.fullmatch(r"TRUE", upper):
         return "PASS"
     if re.fullmatch(r"FALSE", upper):
+        return "FAIL"
+
+    if re.search(r"\[OK\]", upper):
+        return "PASS"
+    if re.search(r"\[FAIL\]", upper):
         return "FAIL"
 
     has_pass = bool(re.search(r"\bPASS\b", upper))

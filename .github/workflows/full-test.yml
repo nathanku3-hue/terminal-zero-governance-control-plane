@@ -37,6 +37,14 @@ jobs:
           ./.venv/bin/python -m pip install --upgrade pip
           ./.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
 
+      - name: Lint with ruff (Windows)
+        if: runner.os == 'Windows'
+        run: .\.venv\Scripts\ruff check src/ scripts/
+
+      - name: Lint with ruff (Linux)
+        if: runner.os != 'Windows'
+        run: ./.venv/bin/ruff check src/ scripts/
+
       - name: Run full test suite (Windows)
         if: runner.os == 'Windows'
         run: .\.venv\Scripts\python -m pytest -q

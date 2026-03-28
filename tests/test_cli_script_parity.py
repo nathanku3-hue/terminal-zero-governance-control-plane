@@ -31,6 +31,7 @@ LOOP_ARTIFACTS = [
     "docs/context/pm_ceo_research_brief_latest.json",
     "docs/context/board_decision_brief_latest.json",
     "docs/context/skill_activation_latest.json",
+    "docs/context/loop_cycle_checkpoint_latest.json",  # Phase 1.3
 ]
 
 # Advisory surface artifacts

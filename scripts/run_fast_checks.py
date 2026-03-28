@@ -74,7 +74,7 @@ def _status_for_check(name: str, exit_code: int, stdout: str, stderr: str) -> st
                 return "PASS"
             if normed == "READINESS_STATUS: NEEDS_ATTENTION":
                 return "HOLD"
-        # Header present but no recognised readiness status -> HOLD (unknown state)
+        # Header present but no recognised readiness status → HOLD (unknown state)
         return "HOLD"
 
     if name == "validate_loop_closure":

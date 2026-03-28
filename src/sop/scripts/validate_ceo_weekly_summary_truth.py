@@ -140,6 +140,11 @@ def _normalize_status_token(raw: str) -> str | None:
     if re.fullmatch(r"FALSE", upper):
         return "FAIL"
 
+    if re.search(r"\[OK\]", upper):
+        return "PASS"
+    if re.search(r"\[FAIL\]", upper):
+        return "FAIL"
+
     has_pass = bool(re.search(r"\bPASS\b", upper))
     has_fail = bool(re.search(r"\bFAIL\b", upper))
     if has_pass and not has_fail:

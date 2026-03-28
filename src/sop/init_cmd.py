@@ -74,6 +74,52 @@ def _copy_templates(target_templates_dir: Path) -> List[str]:
     return copied
 
 
+
+def _get_schemas_dir() -> Path:
+    """Get schemas directory.
+
+    Priority:
+    1. Development: src/sop/schemas/ (adjacent to this file)
+    2. Installed: package data sop/schemas/
+    """
+    dev_schemas = Path(__file__).parent / "schemas"
+    if dev_schemas.exists():
+        return dev_schemas
+
+    try:
+        return Path(str(resources.files("sop.schemas")))
+    except (TypeError, ModuleNotFoundError):
+        pass
+
+    raise FileNotFoundError(
+        "Could not locate sop schemas directory.\n"
+        "  If installed: try reinstalling with 'pip install --force-reinstall terminal-zero-governance'\n"
+        "  If in dev: ensure you're running from the repository root"
+    )
+
+
+def _copy_schemas(target_schemas_dir: Path) -> List[str]:
+    """Copy JSON schemas from kernel to docs/context/schemas/ in the target directory."""
+    try:
+        source_dir = _get_schemas_dir()
+    except FileNotFoundError as exc:
+        print(f"Warning: {exc}", file=sys.stderr)
+        return []
+
+    if not source_dir.exists():
+        print(f"Warning: Schemas source not found: {source_dir}", file=sys.stderr)
+        return []
+
+    target_schemas_dir.mkdir(parents=True, exist_ok=True)
+    copied = []
+
+    for schema_file in source_dir.glob("*.json"):
+        dst = target_schemas_dir / schema_file.name
+        shutil.copy2(schema_file, dst)
+        copied.append(schema_file.name)
+
+    return copied
+
 def _create_config(target_config: Path) -> None:
     """Create minimal .sop/config.yaml."""
     target_config.parent.mkdir(parents=True, exist_ok=True)
@@ -196,6 +242,14 @@ def do_init(args) -> int:
             print(f"  Copied {len(copied)} templates")
         else:
             print("  Warning: No templates copied")
+
+    # Copy schemas into docs/context/schemas/
+    schemas_dir = target_dir / "docs" / "context" / "schemas"
+    schema_files = _copy_schemas(schemas_dir)
+    if schema_files:
+        print(f"  Copied {len(schema_files)} schemas to docs/context/schemas/")
+    else:
+        print("  Warning: No schemas copied to docs/context/schemas/")
 
     # Create config
     config_path = target_dir / ".sop" / "config.yaml"

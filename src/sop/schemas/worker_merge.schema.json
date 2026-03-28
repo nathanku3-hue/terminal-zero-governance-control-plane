@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WorkerMerge",
+  "description": "Emitted by LoopOrchestrator.run_parallel() to record conflict detection and quorum result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "triggered_at_utc",
+    "quorum_policy",
+    "worker_count",
+    "workers",
+    "conflicts",
+    "aggregate_result"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "trace_id": {"type": "string"},
+    "triggered_at_utc": {"type": "string", "format": "date-time"},
+    "quorum_policy": {"type": "string", "enum": ["all", "majority", "first"]},
+    "worker_count": {"type": "integer", "minimum": 1},
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["worker_id", "trace_id", "final_result"],
+        "properties": {
+          "worker_id": {"type": "integer"},
+          "trace_id": {"type": "string"},
+          "final_result": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["worker_ids", "field", "values"],
+        "properties": {
+          "worker_ids": {"type": "array", "items": {"type": "integer"}},
+          "field": {"type": "string"},
+          "values": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "aggregate_result": {"type": "string"}
+  }
+}

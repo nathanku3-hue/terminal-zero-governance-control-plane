@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RunDrift",
+  "description": "Drift detection result emitted every run by LoopOrchestrator after comparing against baseline records.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "generated_at_utc",
+    "baseline_record_count",
+    "alerts"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID of the current run."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this report was generated."
+    },
+    "baseline_record_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of baseline records used for comparison."
+    },
+    "alerts": {
+      "type": "array",
+      "description": "List of drift or regression alerts. Empty = clean.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["alert_type", "message"],
+        "properties": {
+          "alert_type": {
+            "type": "string",
+            "enum": ["DRIFT_ALERT", "PERF_REGRESSION"]
+          },
+          "message": {"type": "string"}
+        }
+      }
+    }
+  }
+}

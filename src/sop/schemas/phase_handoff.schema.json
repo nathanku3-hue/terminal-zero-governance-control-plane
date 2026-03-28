@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PhaseHandoff",
+  "description": "Automated phase handoff artifact written when Gate B returns PROCEED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "from_phase",
+    "to_phase",
+    "triggered_at_utc"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version string."
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Trace ID of the run that triggered this handoff."
+    },
+    "from_phase": {
+      "type": "string",
+      "description": "Source phase name."
+    },
+    "to_phase": {
+      "type": "string",
+      "description": "Target phase name."
+    },
+    "triggered_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this handoff was triggered."
+    }
+  }
+}

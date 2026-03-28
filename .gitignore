@@ -69,6 +69,7 @@ docs/context/workflow_status_test.json
 
 # Experimental/benchmark (not production)
 /benchmark/
+!/benchmark/subagent_routing_matrix.yaml
 scripts/run_baseline_benchmark.py
 scripts/measure_context_reduction.py
 scripts/test_policy_proposal.py
@@ -80,6 +81,9 @@ docs/context/phase_end_logs/
 
 # Archive
 docs/archive/
+
+# Phase 5.3: artifact lifecycle archive (local cleanup only; not committed)
+docs/context/archive/
 
 # Decisions directory (working docs)
 docs/decisions/
