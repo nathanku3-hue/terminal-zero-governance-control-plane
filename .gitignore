@@ -17,6 +17,11 @@ e2e_test/
 docs/context/*_latest.json
 docs/context/*_latest.md
 !docs/context/product_comparison_latest.md
+!docs/context/init_execution_card_latest.md
+!docs/context/round_contract_seed_latest.md
+!docs/context/loop_cycle_summary_latest.json
+!docs/context/loop_closure_status_latest.json
+!docs/context/round_contract_latest.md
 docs/context/auditor_calibration_report.json
 docs/context/auditor_calibration_report.md
 docs/context/auditor_promotion_dossier.json
@@ -81,5 +86,5 @@ docs/archive/
 # Phase 5.3: artifact lifecycle archive (local cleanup only; not committed)
 docs/context/archive/
 
-# Decisions directory (working docs)
-docs/decisions/
+# Decisions directory (working docs — most are committed; only transient drafts excluded)
+# docs/decisions/ files are tracked by default
