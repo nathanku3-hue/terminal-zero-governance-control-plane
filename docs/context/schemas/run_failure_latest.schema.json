@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "run_failure_latest.schema.json",
+  "title": "RunFailureArtifact",
+  "description": "Schema for run_failure_latest.json written by sop._failure_reporter. This file is the sole authority for test_schema_drift.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "failure_class",
+    "run_id",
+    "entrypoint",
+    "execution_mode",
+    "tool_version",
+    "package_version",
+    "python_version",
+    "platform",
+    "cwd",
+    "repo_root",
+    "module_origins",
+    "failed_at",
+    "failed_component",
+    "reason",
+    "recoverability",
+    "install_check",
+    "provenance_check",
+    "final_result"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version string. Optional field additions = minor bump. Required field additions = major bump. Type changes = major bump.",
+      "const": "1.1"
+    },
+    "failure_class": {
+      "type": "string",
+      "description": "Machine-parseable failure classification.",
+      "enum": [
+        "INSTALL_ERROR",
+        "IMPORT_ERROR",
+        "GATE_BLOCK",
+        "CONTRACT_VIOLATION",
+        "ENTRYPOINT_DIVERGENCE",
+        "EXECUTION_ERROR",
+        "OBSERVABILITY_ERROR"
+      ]
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this run (e.g. UTC ISO timestamp or UUID)."
+    },
+    "entrypoint": {
+      "type": "string",
+      "description": "How the process was invoked, e.g. 'sop run', 'python run_loop_cycle.py', 'python -m sop run'."
+    },
+    "execution_mode": {
+      "type": "string",
+      "description": "Execution mode, e.g. 'cli', 'module', 'script'."
+    },
+    "tool_version": {
+      "type": "string",
+      "description": "Version of the terminal-zero-governance package."
+    },
+    "package_version": {
+      "type": "string",
+      "description": "Version of the sop package (may equal tool_version)."
+    },
+    "python_version": {
+      "type": "string",
+      "description": "Full sys.version string of the Python interpreter used."
+    },
+    "platform": {
+      "type": "string",
+      "description": "platform.platform() string identifying the OS."
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Working directory at time of failure."
+    },
+    "repo_root": {
+      "type": "string",
+      "description": "Resolved absolute path to the repository root passed via --repo-root."
+    },
+    "module_origins": {
+      "type": "object",
+      "description": "Map of critical module names to their resolved __file__ paths.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "failed_at": {
+      "type": "string",
+      "description": "ISO 8601 UTC timestamp of when the failure was detected."
+    },
+    "failed_component": {
+      "type": "string",
+      "description": "Name of the component that failed (e.g. 'PhaseGate', 'run_cycle', 'WorkerRole')."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable description of why the failure occurred."
+    },
+    "recoverability": {
+      "type": "string",
+      "description": "Whether the failure is retryable without code changes.",
+      "enum": ["RETRYABLE", "REQUIRES_FIX"]
+    },
+    "install_check": {
+      "type": "string",
+      "description": "Result of install preflight check: 'ok', 'failed', or 'unknown'."
+    },
+    "provenance_check": {
+      "type": "string",
+      "description": "Result of module provenance check: 'ok', 'diverged', or 'unknown'."
+    },
+    "final_result": {
+      "type": "string",
+      "description": "Always 'ERROR' for failure artifacts.",
+      "const": "ERROR"
+    },
+    "error_code": {
+      "type": "string",
+      "description": "Machine-parseable error code from error_code_registry.json. 'UNKNOWN' when registry absent or lookup fails."
+    },
+    "attempt_id": {
+      "description": "Identifier for a specific attempt within a run. Null when not tracked.",
+      "oneOf": [
+        {"type": "string"},
+        {"type": "null"}
+      ]
+    },
+    "failure_origin": {
+      "type": "string",
+      "description": "Coarse-grained lifecycle phase where the failure originated.",
+      "enum": ["preflight", "import", "runtime", "gate"]
+    },
+    "spec_phase": {
+      "description": "Spec phase label active at time of failure (e.g. 'phase3'). Null when not tracked.",
+      "oneOf": [
+        {"type": "string"},
+        {"type": "null"}
+      ]
+    },
+    "decision_basis_count": {
+      "description": "Number of decision-basis entries evaluated before failure. Null when not tracked.",
+      "oneOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "null"}
+      ]
+    },
+    "evaluation_outcome_source": {
+      "description": "Which evaluator produced the outcome leading to failure. Null when not tracked.",
+      "oneOf": [
+        {"type": "string"},
+        {"type": "null"}
+      ]
+    }
+  },
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "description": "Reference to a single artifact captured at gate time for drift detection.",
+      "properties": {
+        "mtime_utc": {
+          "description": "ISO 8601 UTC modification time of the artifact, or null if unreadable.",
+          "oneOf": [{"type": "string"}, {"type": "null"}]
+        },
+        "hash": {
+          "description": "sha256 hex digest (64 chars), or null if artifact absent/unreadable/oversized.",
+          "oneOf": [{"type": "string"}, {"type": "null"}]
+        },
+        "content_kind": {
+          "type": "string",
+          "description": "Inferred content type: json, markdown, yaml, ndjson, or unknown."
+        },
+        "hash_strategy": {
+          "type": "string",
+          "description": "Hash algorithm used.",
+          "const": "sha256"
+        }
+      },
+      "required": ["mtime_utc", "hash", "content_kind", "hash_strategy"]
+    }
+  },
+  "additionalProperties": true
+}

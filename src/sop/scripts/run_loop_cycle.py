@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -51,6 +52,57 @@ except ModuleNotFoundError:
 DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
 APPROVED_CONTEXT_RELATIVE = Path("docs/context")
 
+# ---------------------------------------------------------------------------
+# H-NEW-2 — Failure reporter: must be imported before any hard-import block
+# so that _write_hard_failure is defined when PhaseGate / Role imports fail.
+# ---------------------------------------------------------------------------
+try:
+    from sop._failure_reporter import write_run_failure as _wr_fn, build_failure_payload as _bfp_fn  # type: ignore[assignment]
+except ModuleNotFoundError:
+    try:
+        from sop._failure_reporter import write_run_failure as _wr_fn, build_failure_payload as _bfp_fn  # type: ignore[no-redef,assignment]
+    except ModuleNotFoundError:
+        _wr_fn = None  # type: ignore[assignment]
+        _bfp_fn = None  # type: ignore[assignment]
+
+
+def _write_hard_failure(
+    failure_class: str,
+    failed_component: str,
+    reason: str,
+    recoverability: str,
+) -> None:
+    """Write run_failure_latest.json before a hard ImportError is raised.
+
+    Safe to call at module level — never raises, never blocks the ImportError
+    that follows it.
+    """
+    if _wr_fn is None or _bfp_fn is None:
+        # Failure reporter itself unavailable — emit minimal stderr envelope.
+        import sys as _sys
+        print(
+            f"FATAL failure_class={failure_class}"
+            f" failed_component={failed_component}"
+            f" recoverability={recoverability}"
+            f" artifact_write_failed=true",
+            file=_sys.stderr,
+        )
+        return
+    import os as _os
+    from pathlib import Path as _Path
+    _dest = _Path(_os.getcwd()) / "docs" / "context"
+    _payload = _bfp_fn(
+        failure_class=failure_class,
+        run_id="pre-init",
+        entrypoint="unknown",
+        execution_mode="unknown",
+        failed_component=failed_component,
+        reason=reason,
+        recoverability=recoverability,
+    )
+    _wr_fn(_dest, _payload)
+
+
 # Phase 2.2 — PhaseGate import
 try:
     from phase_gate import PhaseGate
@@ -61,7 +113,11 @@ except ModuleNotFoundError:
         try:
             from sop.scripts.phase_gate import PhaseGate
         except ModuleNotFoundError:
-            PhaseGate = None  # type: ignore[assignment,misc]
+            _write_hard_failure("IMPORT_ERROR", "PhaseGate", "PhaseGate could not be imported", "REQUIRES_FIX")
+            raise ImportError(
+                "PhaseGate could not be imported from any known path. "
+                "Install the package: pip install terminal-zero-governance"
+            )
 
 # Phase 2.1 — observability helpers
 try:
@@ -100,38 +156,32 @@ except ModuleNotFoundError:
             from sop.scripts.auditor_role import AuditorRole
             from sop.scripts.planner_role import PlannerRole
         except ModuleNotFoundError:
-            # Fallback stubs — used when script is copied standalone without worker modules.
-            # Phase 1 Worker instantiation in run_cycle() becomes a no-op stub.
-            class WorkerSkill:  # type: ignore[no-redef]
-                def __init__(self, **kw): pass
-            class WorkerResult:  # type: ignore[no-redef]
-                def __init__(self, **kw): pass
-            class Worker:  # type: ignore[no-redef]
-                pass
-            class WorkerRole:  # type: ignore[no-redef]
-                def __init__(self, **kw): pass
-                def skill_names(self): return []
-            class AuditorRole:  # type: ignore[no-redef]
-                def __init__(self, **kw): pass
-                def skill_names(self): return []
-            class PlannerRole:  # type: ignore[no-redef]
-                def __init__(self, **kw): pass
-                def skill_names(self): return []
+            _write_hard_failure("IMPORT_ERROR", "WorkerRole/AuditorRole/PlannerRole", "Worker/Auditor/Planner roles could not be imported", "REQUIRES_FIX")
+            raise ImportError(
+                "Worker/Auditor/Planner roles could not be imported. "
+                "Install the package: pip install terminal-zero-governance"
+            )
 
 # ---------------------------------------------------------------------------
 # Phase 1.2 — Configurable Skill Mapping import (fail-silent when not installed)
 # ---------------------------------------------------------------------------
+_SKILL_RESOLVER_AVAILABLE = False
 try:
-    from utils.skill_resolver import resolve_skills_for_role
-except ModuleNotFoundError:
+    from utils.skill_resolver import resolve_skills_for_role, resolve_active_skills
+    _SKILL_RESOLVER_AVAILABLE = True
+except (ModuleNotFoundError, ImportError):
     try:
-        from sop.scripts.utils.skill_resolver import resolve_skills_for_role
-    except ModuleNotFoundError:
+        from sop.scripts.utils.skill_resolver import resolve_skills_for_role, resolve_active_skills  # type: ignore[no-redef]
+        _SKILL_RESOLVER_AVAILABLE = True
+    except (ModuleNotFoundError, ImportError):
         try:
-            from scripts.utils.skill_resolver import resolve_skills_for_role
-        except ModuleNotFoundError:
+            from scripts.utils.skill_resolver import resolve_skills_for_role, resolve_active_skills  # type: ignore[no-redef]
+            _SKILL_RESOLVER_AVAILABLE = True
+        except (ModuleNotFoundError, ImportError):
             def resolve_skills_for_role(repo_root, project, role):  # type: ignore[misc]
                 return []
+            def resolve_active_skills(repo_root, project):  # type: ignore[misc]
+                return {"status": "failed", "skills": [], "warnings": [], "errors": ["resolver unavailable"]}
 
 # ---------------------------------------------------------------------------
 # ExecMemoryStageResult — explicit result bundle for exec memory stage
@@ -147,6 +197,55 @@ class ExecMemoryStageResult:
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# F.1 — Artifact reference helpers (sha256 drift detection)
+# ---------------------------------------------------------------------------
+
+def _sha256_file(path: "Path") -> "str | None":
+    """Return sha256 hex digest of *path*, or None if absent/unreadable/oversized."""
+    try:
+        data = path.read_bytes()
+        if len(data) > 10 * 1024 * 1024:  # 10 MB cap
+            return None  # emit WARN step at call site if needed
+        return hashlib.sha256(data).hexdigest()
+    except Exception:
+        return None  # allowlisted: artifact may not exist at gate time
+
+
+def _classify_content_kind(path: "Path") -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        return "json"
+    if suffix in (".md", ".markdown"):
+        return "markdown"
+    if suffix in (".yaml", ".yml"):
+        return "yaml"
+    if suffix == ".ndjson":
+        return "ndjson"
+    return "unknown"
+
+
+def _file_mtime_utc(path: "Path") -> "str | None":
+    try:
+        import datetime as _dt
+        mtime = path.stat().st_mtime
+        return _dt.datetime.fromtimestamp(mtime, tz=_dt.timezone.utc).isoformat()
+    except Exception:
+        return None
+
+
+def _build_artifact_refs(paths: "list[Path]") -> dict:
+    refs: dict = {}
+    for p in paths:
+        refs[p.name] = {
+            "mtime_utc": _file_mtime_utc(p),
+            "hash": _sha256_file(p),
+            "content_kind": _classify_content_kind(p),
+            "hash_strategy": "sha256",
+        }
+    return refs
+
+
 # Phase 1.3 — State Persistence helpers
 # ---------------------------------------------------------------------------
 
@@ -533,7 +632,95 @@ def _parse_bool(value: str) -> bool:
     raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
 
 
+def _build_hold_summary_payload(
+    *,
+    gate_a_hold: bool,
+    gate_b_hold: bool,
+    gate_decisions: list[dict],
+    steps: list | None = None,
+    artifacts: dict | None = None,
+    ctx_fields: dict | None = None,
+) -> dict[str, Any]:
+    """H-3: Build a summary payload for a Gate HOLD outcome.
+
+    Returns final_result='HOLD', final_exit_code=0.
+    Includes real step data and artifacts so trace/output writes are complete.
+    """
+    from datetime import datetime as _dt, timezone as _tz
+    _now = _dt.now(_tz.utc).isoformat()
+    _gate_name = "gate_a" if gate_a_hold else "gate_b"
+    _steps = steps or []
+    _step_summary: dict[str, Any] = {
+        "pass_count": sum(1 for s in _steps if s.get("status") == "PASS"),
+        "hold_count": sum(1 for s in _steps if s.get("status") == "HOLD") + 1,
+        "fail_count": sum(1 for s in _steps if s.get("status") == "FAIL"),
+        "error_count": sum(1 for s in _steps if s.get("status") == "ERROR"),
+        "skip_count": sum(1 for s in _steps if s.get("status") == "SKIP"),
+        "total_steps": len(_steps),
+    }
+    _payload: dict[str, Any] = {
+        "schema_version": "1.0.0",
+        "generated_at_utc": _now,
+        "final_result": "HOLD",
+        "final_exit_code": 0,
+        "hold_reason": f"{_gate_name} decision=HOLD",
+        "gate_decisions": gate_decisions,
+        "steps": _steps,
+        "step_summary": _step_summary,
+    }
+    if artifacts is not None:
+        _payload["artifacts"] = artifacts
+    if ctx_fields is not None:
+        _payload.update(ctx_fields)
+    return _payload
+
+def _write_hard_failure(
+    failure_class: str,
+    failed_component: str,
+    reason: str,
+    recoverability: str,
+) -> None:
+    """Module-level shim: write run_failure_latest.json with available context.
+
+    Called from _error_result(), the OSError output-write catch, and main().
+    Has no dependency on run_cycle() context — uses only module-level info.
+    Emits FATAL envelope to stderr if the write itself fails.
+    """
+    try:
+        from sop._failure_reporter import write_run_failure, build_failure_payload
+    except Exception:
+        try:
+            from sop._failure_reporter import write_run_failure, build_failure_payload  # type: ignore[no-redef]
+        except Exception:
+            # Cannot import reporter — emit raw FATAL and return
+            print(
+                f"FATAL failure_class={failure_class}"
+                f" failed_component={failed_component}"
+                f" recoverability={recoverability}"
+                f" artifact_write_failed=true",
+                file=sys.stderr,
+            )
+            return
+    try:
+        import uuid as _uuid
+        _run_id = str(_uuid.uuid4())
+    except Exception:
+        _run_id = "unknown"
+    payload = build_failure_payload(
+        failure_class=failure_class,
+        run_id=_run_id,
+        entrypoint="run_loop_cycle.py",
+        execution_mode="script",
+        failed_component=failed_component,
+        reason=reason,
+        recoverability=recoverability,
+    )
+    _dest = Path("docs/context")
+    write_run_failure(_dest, payload)
+
+
 def _error_result(message: str) -> tuple[int, dict[str, Any], str]:
+    _write_hard_failure("EXECUTION_ERROR", "run_cycle", message, "REQUIRES_FIX")
     generated_at_utc = _utc_iso(_utc_now())
     payload = {
         "schema_version": "1.0.0",
@@ -873,6 +1060,18 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
 
     _worker_skills = resolve_skills_for_role(ctx.repo_root, _project_name, "worker")
     _auditor_skills = resolve_skills_for_role(ctx.repo_root, _project_name, "auditor")
+
+    # H-5: distinguish broken install from legitimately empty-skill repo
+    if not _SKILL_RESOLVER_AVAILABLE:
+        _skills_status = "RESOLVER_UNAVAILABLE"
+    else:
+        _skills_result = resolve_active_skills(ctx.repo_root, _project_name)
+        if _skills_result["status"] == "failed":
+            _skills_status = "RESOLVER_UNAVAILABLE"
+        else:
+            _skills_status = "EMPTY_BY_DESIGN" if not _worker_skills else "OK"
+    runtime.skills_status = _skills_status  # H-5: stored as metadata, not a pipeline step
+
     _worker = WorkerRole(repo_root=ctx.repo_root, skills=_worker_skills)
     _auditor = AuditorRole(repo_root=ctx.repo_root, skills=_auditor_skills)
     _planner = PlannerRole(repo_root=ctx.repo_root, skills=[])
@@ -1723,28 +1922,43 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     )
 
     # Phase 2.2 — Gate A: before advisory artifact generation
-    _gate_a_result = None
     _gate_a_hold = False
-    if PhaseGate is not None:
-        _gate_a = PhaseGate(from_phase="exec_memory", to_phase="advisory", repo_root=ctx.repo_root)
-        _gate_a_result = _gate_a.evaluate(runtime)
-        try:
-            _gate_a.emit(
-                _gate_a_result,
-                runtime.trace_id,
-                output_path=ctx.context_dir / "phase_gate_a_latest.json",
-            )
-        except Exception:
-            pass
-        if _gate_a_result.decision == "HOLD":
-            _gate_a_hold = True
-            _write_checkpoint(
-                path=_checkpoint_path,
-                cycle_id=_current_cycle_id or runtime.generated_at_utc,
-                completed_steps=["exec_memory"],
-                exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
-                partial=True,
-            )
+    _gate_b_hold = False   # H-3
+    _gate_decisions: list[dict] = []
+    # F.1 — artifact reference paths for gate integrity tracking
+    # sha256 for drift detection and equivalence.
+    # hash=None if artifact absent or unreadable at gate time (non-fatal).
+    _GATE_ARTIFACT_PATHS = [
+        ctx.context_dir / "loop_run_trace_latest.json",
+    ]
+    _gate_a = PhaseGate(from_phase="exec_memory", to_phase="advisory", repo_root=ctx.repo_root)
+    _gate_a_result = _gate_a.evaluate(runtime)
+    # H-3: record gate_a decision
+    _gate_decisions.append({
+        "name": "gate_a",
+        "decision": _gate_a_result.decision,
+        "gate_executed": True,
+        "gate_impl": type(_gate_a).__module__ + "." + type(_gate_a).__qualname__,
+        "evaluated_at_utc": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+        "artifact_refs": _build_artifact_refs(_GATE_ARTIFACT_PATHS),  # F.1 addition
+    })
+    try:
+        _gate_a.emit(
+            _gate_a_result,
+            runtime.trace_id,
+            output_path=ctx.context_dir / "phase_gate_a_latest.json",
+        )
+    except Exception as e:
+        runtime.steps.append({"name": "gate_a_emit", "status": "WARN", "exit_code": None, "message": str(e)})
+    if _gate_a_result.decision == "HOLD":
+        _gate_a_hold = True
+        _write_checkpoint(
+            path=_checkpoint_path,
+            cycle_id=_current_cycle_id or runtime.generated_at_utc,
+            completed_steps=["exec_memory"],
+            exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
+            partial=True,
+        )
 
     # Phase 1.3 — Resume: skip advisory step if already completed
     if _gate_a_hold:
@@ -1791,26 +2005,37 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         runtime.repo_root_convenience = {}
 
     # Phase 2.2 — Gate B: before loop summary build
-    if PhaseGate is not None and not _gate_a_hold:
+    # _gate_a_hold is set exclusively by Gate A evaluation above.
+    if not _gate_a_hold:
         _gate_b = PhaseGate(from_phase="advisory", to_phase="summary", repo_root=ctx.repo_root)
         _gate_b_result = _gate_b.evaluate(runtime)
+        # H-3: record gate_b decision
+        _gate_decisions.append({
+            "name": "gate_b",
+            "decision": _gate_b_result.decision,
+            "gate_executed": True,
+            "gate_impl": type(_gate_b).__module__ + "." + type(_gate_b).__qualname__,
+            "evaluated_at_utc": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+            "artifact_refs": _build_artifact_refs(_GATE_ARTIFACT_PATHS),  # F.1 addition
+        })
         try:
             _gate_b.emit(
                 _gate_b_result,
                 runtime.trace_id,
                 output_path=ctx.context_dir / "phase_gate_b_latest.json",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            runtime.steps.append({"name": "gate_b_emit", "status": "WARN", "exit_code": None, "message": str(e)})
         if _gate_b_result.decision == "PROCEED":
             try:
                 _gate_b.emit_handoff(
                     runtime.trace_id,
                     output_path=ctx.context_dir / "phase_handoff_latest.json",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                runtime.steps.append({"name": "gate_b_handoff_emit", "status": "WARN", "exit_code": None, "message": str(e)})
         elif _gate_b_result.decision == "HOLD":
+            _gate_b_hold = True  # H-3
             _write_checkpoint(
                 path=_checkpoint_path,
                 cycle_id=_current_cycle_id or runtime.generated_at_utc,
@@ -1818,12 +2043,60 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
                 partial=True,
             )
+    else:
+        # Gate A already held — record gate_b as skipped
+        _gate_decisions.append({
+            "name": "gate_b",
+            "decision": "HOLD",
+            "gate_executed": False,
+            "skipped_reason": "gate_a_hold=True",
+            "evaluated_at_utc": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+            "artifact_refs": {},  # gate not executed, no artifacts to ref
+        })
 
+    _any_gate_hold = _gate_a_hold or _gate_b_hold
     disagreement_sla = _scan_disagreement_sla(path=ctx.disagreement_ledger_jsonl, now_utc=_utc_now())
-
-    payload = build_summary_payload(
-        disagreement_sla=disagreement_sla,
+    # H-3: gate HOLD only applies when no ERROR/critical-FAIL steps exist.
+    # If exec_memory or another step produced ERROR/FAIL(exit_code=2), ERROR wins.
+    _has_critical_error = any(
+        s.get("status") == "ERROR" or
+        (s.get("status") == "FAIL" and s.get("exit_code") == 2)
+        for s in runtime.steps
     )
+    if _any_gate_hold and not _has_critical_error:
+        _hold_artifacts = {
+            "weekly_report_json": str(ctx.weekly_report_json),
+            "dossier_json": str(ctx.dossier_json),
+            "exec_memory_latest_promoted": runtime.exec_memory_cycle_ready,
+            "closure_output_json": str(ctx.closure_output_json),
+            "summary_output_json": str(ctx.output_json),
+        }
+        _hold_ctx_fields = {
+            "repo_root": str(ctx.repo_root),
+            "context_dir": str(ctx.context_dir),
+            "skip_phase_end": ctx.skip_phase_end,
+            "allow_hold": ctx.allow_hold,
+            "freshness_hours": ctx.freshness_hours,
+            "lessons": {
+                "worker": str(runtime.lessons_paths["worker"]),
+                "auditor": str(runtime.lessons_paths["auditor"]),
+            },
+        }
+        payload = _build_hold_summary_payload(
+            gate_a_hold=_gate_a_hold,
+            gate_b_hold=_gate_b_hold,
+            gate_decisions=_gate_decisions,
+            steps=list(runtime.steps),
+            artifacts=_hold_artifacts,
+            ctx_fields=_hold_ctx_fields,
+        )
+    else:
+        _base_payload = build_summary_payload(
+            disagreement_sla=disagreement_sla,
+        )
+        # H-3: inject gate_decisions into healthy-path payload
+        _base_payload["gate_decisions"] = _gate_decisions
+        payload = _base_payload
     final_result = str(payload["final_result"])
     final_exit_code = int(payload["final_exit_code"])
 
@@ -1864,8 +2137,14 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     _trace_path = ctx.context_dir / "loop_run_trace_latest.json"
     try:
         atomic_write_json(_trace_path, _trace_payload)
-    except Exception:
-        pass  # Trace write failure must never abort the loop
+    except Exception as e:
+        runtime.steps.append({
+            "name": "trace_write",
+            "status": "WARN",
+            "exit_code": None,
+            "message": str(e),
+            "reason": str(e),
+        })  # Trace write failure must never abort the loop
     # Rolling NDJSON compaction
     try:
         _compact_ndjson_rolling(ctx.context_dir / "loop_run_steps_latest.ndjson", max_records=500)
@@ -2055,7 +2334,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     try:
         _atomic_write_text(ctx.output_json, json.dumps(payload, indent=2) + "\n")
         _atomic_write_text(ctx.output_md, markdown)
-    except OSError:
+    except OSError as e:
+        _write_hard_failure("EXECUTION_ERROR", "output_write", str(e), "RETRYABLE")
         payload["final_result"] = "ERROR"
         payload["final_exit_code"] = 2
         return 2, payload, markdown
@@ -2068,6 +2348,23 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         exec_memory_cycle_ready=runtime.exec_memory_cycle_ready,
         partial=False,
     )
+
+    # K.2: observability pack drift marker check
+    _obs_pack_path = ctx.context_dir / "observability_pack_current.md"
+    if _obs_pack_path.exists():
+        runtime.steps.append({
+            "name": "observability_pack",
+            "status": "OK",
+            "exit_code": 0,
+            "message": "",
+        })
+    else:
+        runtime.steps.append({
+            "name": "observability_pack",
+            "status": "WARN",
+            "exit_code": None,
+            "message": "observability_pack_current.md not found — drift markers unavailable",
+        })
 
     return final_exit_code, payload, markdown
 
@@ -2084,16 +2381,23 @@ def run_cycle_int(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    exit_code, payload, _ = run_cycle(args)
-    print(payload["final_result"])
-    # Debug output for CI failures
-    if payload["final_result"] in ("ERROR", "FAIL"):
-        print(f"DEBUG: message={payload.get('message', 'N/A')}", file=sys.stderr)
-        if payload.get("steps"):
-            print(f"DEBUG: total_steps={len(payload['steps'])}", file=sys.stderr)
-            for step in payload["steps"]:
-                print(f"DEBUG: step={step.get('name')} status={step.get('status')} exit_code={step.get('exit_code')} message={step.get('message', '')[:100]}", file=sys.stderr)
-    return exit_code
+    try:
+        exit_code, payload, _ = run_cycle(args)
+        print(payload["final_result"])
+        # Debug output for CI failures
+        if payload["final_result"] in ("ERROR", "FAIL"):
+            print(f"DEBUG: message={payload.get('message', 'N/A')}", file=sys.stderr)
+            if payload.get("steps"):
+                print(f"DEBUG: total_steps={len(payload['steps'])}", file=sys.stderr)
+                for step in payload["steps"]:
+                    print(f"DEBUG: step={step.get('name')} status={step.get('status')} exit_code={step.get('exit_code')} message={step.get('message', '')[:100]}", file=sys.stderr)
+        return exit_code
+    except Exception as e:
+        # Only fires if exception escapes run_cycle() entirely.
+        # run_failure_latest.json has NOT been written on this path.
+        # Do NOT call _write_hard_failure if run_cycle() returned normally with ERROR.
+        _write_hard_failure("EXECUTION_ERROR", "run_cycle", str(e), "REQUIRES_FIX")
+        return 2
 
 
 if __name__ == "__main__":

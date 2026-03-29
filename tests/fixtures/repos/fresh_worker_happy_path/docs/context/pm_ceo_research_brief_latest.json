@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-29T07:31:29.263882Z",
+  "source_exec_memory_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\exec_memory_packet_latest.json",
+  "pm_ceo_research_brief": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "delegated_to": "principal",
+    "supporting_experts": [
+      "unknown"
+    ],
+    "question": "What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?",
+    "decision_depends_on": "Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate",
+    "source_artifacts": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "required_tradeoff_dimensions": [
+      "impact",
+      "risk",
+      "effort",
+      "maintainability"
+    ],
+    "options_required": 3,
+    "decision_deadline": "Before the next escalation attempt.",
+    "evidence_required": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "lineup_review_required": true,
+    "lineup_review_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "candidate_new_domains": [],
+    "approved_roster_snapshot": {
+      "milestone_id": "unknown",
+      "mandatory_domains": [],
+      "optional_domains": []
+    },
+    "machine_view": "SURFACE: pm_ceo_research_brief\nSTATUS: ACTION_REQUIRED\nDELEGATED_TO: principal\nSUPPORTING_EXPERTS: unknown\nQUESTION: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUIRED_TRADEOFF_DIMENSIONS: impact,risk,effort,maintainability\nOPTIONS_REQUIRED: 3\nDECISION_DEADLINE: Before the next escalation attempt.\nEVIDENCE_REQUIRED: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nLINEUP_REVIEW_REQUIRED: YES\nLINEUP_REVIEW_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nCANDIDATE_NEW_DOMAINS: none\nAPPROVED_ROSTER_MILESTONE_ID: unknown",
+    "human_brief": "Status ACTION_REQUIRED. Delegate to principal with question: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane? Support from experts: unknown. Decision depends on Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate and requires 3 options scored across impact, risk, effort, maintainability. Evidence required: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md. Lineup review required: YES (ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED). This brief is advisory only and informs PM/CEO synthesis without changing decision authority.",
+    "paste_ready_block": "PM_CEO_RESEARCH_BRIEF_MODE: ADVISORY_EXEC_MEMORY_PACKET\nPM_CEO_RESEARCH_STATUS: ACTION_REQUIRED\nDELEGATED_TO: principal\nSUPPORTING_EXPERTS: unknown\nQUESTION: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUIRED_TRADEOFF_DIMENSIONS: impact,risk,effort,maintainability\nOPTIONS_REQUIRED: 3\nDECISION_DEADLINE: Before the next escalation attempt.\nEVIDENCE_REQUIRED: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nLINEUP_REVIEW_REQUIRED: YES\nLINEUP_REVIEW_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nCANDIDATE_NEW_DOMAINS: none\nAPPROVED_ROSTER_MILESTONE_ID: unknown\nREQUESTED_OUTPUT_FORMAT: Return options, tradeoffs, recommendation, open risks, and artifact references.\nADVISORY_NOTE: Delegated research informs PM/CEO synthesis; PM/CEO retains final decision authority."
+  }
+}

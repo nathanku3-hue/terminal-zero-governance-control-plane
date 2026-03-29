@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-26T06:50:12Z",
+  "generated_at_utc": "2026-03-29T11:04:35Z",
   "result": "NOT_READY",
   "exit_code": 1,
   "freshness_hours": 72.0,
@@ -131,9 +131,9 @@
         "--round-contract-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md",
         "--loop-summary-json",
-        "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_cycle_summary_latest.json",
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmp39rjp306\\loop_summary_preview.json",
         "--closure-json",
-        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmp12yw077u\\closure_preview.json"
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmp39rjp306\\closure_preview.json"
       ],
       "exit_code": 0,
       "details": "[OK] DONE_WHEN_CHECKS validation passed."
@@ -219,7 +219,7 @@
       "path": "",
       "command": [],
       "exit_code": null,
-      "details": "required_startup_card_md (E:\\Code\\SOP\\quant_current_scope\\docs\\context\\init_execution_card_latest.md) age=112.11h; startup_intake_json (E:\\Code\\SOP\\quant_current_scope\\docs\\context\\startup_intake_latest.json) age=112.11h"
+      "details": "required_startup_card_md (E:\\Code\\SOP\\quant_current_scope\\docs\\context\\init_execution_card_latest.md) age=188.35h; startup_intake_json (E:\\Code\\SOP\\quant_current_scope\\docs\\context\\startup_intake_latest.json) age=188.35h"
     },
     {
       "name": "go_signal_truth_gate",

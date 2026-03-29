@@ -1,0 +1,778 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-29T07:31:29.263882Z",
+  "inputs": {
+    "loop_summary": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\loop_cycle_summary_current.json",
+    "dossier": "docs\\context\\auditor_promotion_dossier.json",
+    "calibration": "docs\\context\\auditor_calibration_report.json",
+    "go_signal": "docs\\context\\ceo_go_signal.md",
+    "decision_log": null,
+    "milestone_expert_roster": "docs/context/milestone_expert_roster_latest.json",
+    "sop_config": null,
+    "extension_allowlist": null,
+    "skill_registry": null
+  },
+  "input_status": {
+    "critical": [
+      {
+        "file": "ceo_go_signal.md",
+        "path": "docs\\context\\ceo_go_signal.md",
+        "status": "loaded"
+      }
+    ],
+    "important": [
+      {
+        "file": "auditor_promotion_dossier.json",
+        "path": "docs\\context\\auditor_promotion_dossier.json",
+        "status": "loaded"
+      },
+      {
+        "file": "auditor_calibration_report.json",
+        "path": "docs\\context\\auditor_calibration_report.json",
+        "status": "loaded"
+      }
+    ],
+    "optional": [
+      {
+        "file": "loop_cycle_summary_current.json",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\loop_cycle_summary_current.json",
+        "status": "loaded"
+      },
+      {
+        "file": "decision log.md",
+        "path": "docs\\decision log.md",
+        "status": "missing_or_invalid"
+      },
+      {
+        "file": ".sop_config.yaml",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\.sop_config.yaml",
+        "status": "missing_or_invalid"
+      },
+      {
+        "file": "extension_allowlist.yaml",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\extension_allowlist.yaml",
+        "status": "missing_or_invalid"
+      },
+      {
+        "file": "registry.yaml",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\skills\\registry.yaml",
+        "status": "missing_or_invalid"
+      }
+    ]
+  },
+  "token_budget": {
+    "pm_budget": 3000,
+    "ceo_budget": 1800,
+    "pm_actual": 49,
+    "ceo_actual": 99,
+    "pm_budget_ok": true,
+    "ceo_budget_ok": true
+  },
+  "memory_tier_contract": {
+    "schema_version": "1.0.0",
+    "source_of_truth": "scripts/utils/memory_tiers.py",
+    "documentation": "docs/context/MEMORY_TIER_CONTRACT.md",
+    "families": [
+      {
+        "tier": "hot",
+        "access": "default_input",
+        "description": "Current loop execution state and blocker summary.",
+        "artifact_paths": [
+          "docs/context/loop_cycle_summary_latest.json",
+          "docs/context/loop_cycle_summary_latest.md",
+          "docs/context/loop_cycle_summary_current.json"
+        ],
+        "family": "loop_cycle_summary"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Latest promotion criteria, FP analysis, and per-rule summary.",
+        "artifact_paths": [
+          "docs/context/auditor_promotion_dossier.json",
+          "docs/context/auditor_promotion_dossier.md"
+        ],
+        "family": "auditor_promotion_dossier"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Latest auditor calibration totals and weekly report summary.",
+        "artifact_paths": [
+          "docs/context/auditor_calibration_report.json",
+          "docs/context/auditor_calibration_report.md"
+        ],
+        "family": "auditor_calibration_report"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Latest CEO go-signal and blocking-reason markdown.",
+        "artifact_paths": [
+          "docs/context/ceo_go_signal.md"
+        ],
+        "family": "ceo_go_signal"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Governance decision log summarized into PM memory.",
+        "artifact_paths": [
+          "docs/decision log.md"
+        ],
+        "family": "decision_log"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Current approved milestone expert roster for lineup decisions.",
+        "artifact_paths": [
+          "docs/context/milestone_expert_roster_latest.json"
+        ],
+        "family": "milestone_expert_roster"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Project-local skill activation configuration used to derive skill context.",
+        "artifact_paths": [
+          ".sop_config.yaml"
+        ],
+        "family": "project_skill_config"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Global allowlist that constrains skill activation visibility.",
+        "artifact_paths": [
+          "extension_allowlist.yaml"
+        ],
+        "family": "extension_allowlist"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Registry metadata used to describe active skills in memory outputs.",
+        "artifact_paths": [
+          "skills/registry.yaml"
+        ],
+        "family": "skill_registry"
+      },
+      {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Current exec-memory packet consumed by later loop stages and compaction checks.",
+        "artifact_paths": [
+          "docs/context/exec_memory_packet_latest.json",
+          "docs/context/exec_memory_packet_latest.md",
+          "docs/context/exec_memory_packet_latest_current.json",
+          "docs/context/exec_memory_packet_latest_current.md"
+        ],
+        "family": "exec_memory_packet"
+      },
+      {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Build-status machine state for the current exec-memory packet.",
+        "artifact_paths": [
+          "docs/context/exec_memory_packet_build_status_latest.json",
+          "docs/context/exec_memory_packet_build_status_current.json"
+        ],
+        "family": "exec_memory_build_status"
+      },
+      {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Latest bounded next-round handoff surface derived from current loop artifacts.",
+        "artifact_paths": [
+          "docs/context/next_round_handoff_latest.json",
+          "docs/context/next_round_handoff_latest.md"
+        ],
+        "family": "next_round_handoff"
+      },
+      {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Latest specialist request surface derived from current loop artifacts.",
+        "artifact_paths": [
+          "docs/context/expert_request_latest.json",
+          "docs/context/expert_request_latest.md"
+        ],
+        "family": "expert_request"
+      },
+      {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Latest PM/CEO research brief derived from current loop artifacts.",
+        "artifact_paths": [
+          "docs/context/pm_ceo_research_brief_latest.json",
+          "docs/context/pm_ceo_research_brief_latest.md"
+        ],
+        "family": "pm_ceo_research_brief"
+      },
+      {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Latest board decision brief derived from current loop artifacts.",
+        "artifact_paths": [
+          "docs/context/board_decision_brief_latest.json",
+          "docs/context/board_decision_brief_latest.md"
+        ],
+        "family": "board_decision_brief"
+      },
+      {
+        "tier": "warm",
+        "access": "derived_output",
+        "description": "Current skill-activation view derived from project config and allowlist inputs.",
+        "artifact_paths": [
+          "docs/context/skill_activation_latest.json"
+        ],
+        "family": "skill_activation"
+      }
+    ],
+    "cold_manual_fallbacks": [
+      {
+        "tier": "cold",
+        "access": "manual_fallback",
+        "description": "Ledger-level auditor deep-dive evidence reserved for manual fallback review.",
+        "artifact_paths": [
+          "docs/context/auditor_fp_ledger.json"
+        ],
+        "family": "auditor_fp_ledger"
+      }
+    ]
+  },
+  "compaction_retention_contract": {
+    "schema_version": "1.0.0",
+    "source_of_truth": "scripts/utils/compaction_retention.py",
+    "documentation": "docs/compaction_behavior_contract.md",
+    "required_always": [
+      {
+        "surface": "next_round_handoff",
+        "packet_section": "next_round_handoff",
+        "reason": "Primary blocker-to-action handoff must survive compaction."
+      },
+      {
+        "surface": "expert_request",
+        "packet_section": "expert_request",
+        "reason": "Specialist escalation request must survive compaction."
+      },
+      {
+        "surface": "pm_ceo_research_brief",
+        "packet_section": "pm_ceo_research_brief",
+        "reason": "Leadership research brief must survive compaction."
+      },
+      {
+        "surface": "board_decision_brief",
+        "packet_section": "board_decision_brief",
+        "reason": "Board-level decision framing must survive compaction."
+      }
+    ],
+    "required_if_present": [
+      {
+        "surface": "replanning",
+        "packet_section": "replanning",
+        "reason": "Replanning payload is retained when present."
+      },
+      {
+        "surface": "automation_uncertainty_status",
+        "packet_section": "automation_uncertainty_status",
+        "reason": "Automation uncertainty context is retained when present."
+      }
+    ],
+    "cold_manual_fallback": [
+      {
+        "surface": "auditor_fp_ledger",
+        "artifact_path": "docs/context/auditor_fp_ledger.json",
+        "access": "manual_fallback",
+        "reason": "Ledger-level deep dives stay manual-load only."
+      }
+    ]
+  },
+  "memory_tier_bindings": {
+    "inputs": [
+      {
+        "family": "loop_cycle_summary",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\loop_cycle_summary_current.json",
+        "tier": "hot",
+        "access": "default_input"
+      },
+      {
+        "family": "auditor_promotion_dossier",
+        "path": "docs\\context\\auditor_promotion_dossier.json",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "auditor_calibration_report",
+        "path": "docs\\context\\auditor_calibration_report.json",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "ceo_go_signal",
+        "path": "docs\\context\\ceo_go_signal.md",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "decision_log",
+        "path": "docs\\decision log.md",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "milestone_expert_roster",
+        "path": "docs\\context\\milestone_expert_roster_latest.json",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "project_skill_config",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\.sop_config.yaml",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "extension_allowlist",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\extension_allowlist.yaml",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "skill_registry",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\skills\\registry.yaml",
+        "tier": "warm",
+        "access": "default_input"
+      }
+    ],
+    "outputs": [
+      {
+        "family": "exec_memory_packet",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\exec_memory_packet_latest_current.json",
+        "tier": "hot",
+        "access": "derived_output"
+      },
+      {
+        "family": "exec_memory_build_status",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\exec_memory_packet_build_status_current.json",
+        "tier": "hot",
+        "access": "derived_output"
+      },
+      {
+        "family": "next_round_handoff",
+        "path": "docs\\context\\next_round_handoff_latest.json",
+        "tier": "warm",
+        "access": "derived_output"
+      },
+      {
+        "family": "expert_request",
+        "path": "docs\\context\\expert_request_latest.json",
+        "tier": "warm",
+        "access": "derived_output"
+      },
+      {
+        "family": "pm_ceo_research_brief",
+        "path": "docs\\context\\pm_ceo_research_brief_latest.json",
+        "tier": "warm",
+        "access": "derived_output"
+      },
+      {
+        "family": "board_decision_brief",
+        "path": "docs\\context\\board_decision_brief_latest.json",
+        "tier": "warm",
+        "access": "derived_output"
+      },
+      {
+        "family": "skill_activation",
+        "path": "docs\\context\\skill_activation_latest.json",
+        "tier": "warm",
+        "access": "derived_output"
+      }
+    ]
+  },
+  "hierarchical_summary": {
+    "working_summary": "Final result: FAIL\nSteps total: 5\nStep outcomes: PASS=3, HOLD=0, FAIL=1, ERROR=0, SKIP=1\nBlocking steps: refresh_dossier",
+    "issue_summary": "Promotion blockers: c2_min_items, c3_min_weeks",
+    "daily_pm_summary": "## Working Context\nFinal result: FAIL\nSteps total: 5\nStep outcomes: PASS=3, HOLD=0, FAIL=1, ERROR=0, SKIP=1\nBlocking steps: refresh_dossier\n\n## Issues\nPromotion blockers: c2_min_items, c3_min_weeks\n",
+    "weekly_ceo_summary": "## CEO Go Signal\ntor_promotion_dossier.json`\n- Calibration JSON: `E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\auditor_calibration_report.json`\n- Signal Markdown: `E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\ceo_go_signal.md`\n\n\n## Promotion Status\nCriteria met: 4/6\n\n## Auditor Calibration\nItems reviewed: 0"
+  },
+  "replanning": {
+    "status": "ACTION_REQUIRED",
+    "observed_loop_final_result": "FAIL",
+    "observed_go_action": "HOLD",
+    "blocking_gaps": [
+      {
+        "source": "loop_cycle_summary",
+        "source_path": "docs/context/loop_cycle_summary_latest.json",
+        "code": "final_result:FAIL",
+        "detail": "Loop cycle final_result is FAIL."
+      },
+      {
+        "source": "loop_cycle_summary",
+        "source_path": "docs/context/loop_cycle_summary_latest.json",
+        "code": "step:refresh_dossier",
+        "detail": "FAIL: No step message recorded."
+      },
+      {
+        "source": "auditor_promotion_dossier",
+        "source_path": "docs/context/auditor_promotion_dossier.json",
+        "code": "c1_24b_close",
+        "detail": "Manual check required: MANUAL_CHECK"
+      },
+      {
+        "source": "auditor_promotion_dossier",
+        "source_path": "docs/context/auditor_promotion_dossier.json",
+        "code": "c2_min_items",
+        "detail": "0 >= 30"
+      },
+      {
+        "source": "auditor_promotion_dossier",
+        "source_path": "docs/context/auditor_promotion_dossier.json",
+        "code": "c3_min_weeks",
+        "detail": "0 consecutive weeks >= 2"
+      },
+      {
+        "source": "ceo_go_signal",
+        "source_path": "docs/context/ceo_go_signal.md",
+        "code": "recommended_action",
+        "detail": "CEO go signal action is HOLD."
+      },
+      {
+        "source": "ceo_go_signal",
+        "source_path": "docs/context/ceo_go_signal.md",
+        "code": "blocking_reason",
+        "detail": "C2 not met (0 >= 30)."
+      },
+      {
+        "source": "ceo_go_signal",
+        "source_path": "docs/context/ceo_go_signal.md",
+        "code": "blocking_reason",
+        "detail": "C3 not met (0 consecutive weeks >= 2)."
+      }
+    ],
+    "blocking_gap_count": 8,
+    "next_replan_recommendation": "Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.",
+    "recommended_artifacts_to_refresh": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ]
+  },
+  "next_round_handoff": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "recommended_intent": "Complete the remaining manual signoff path after automated criteria are satisfied.",
+    "recommended_scope": "Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure.",
+    "non_goals": "Do not claim escalation readiness before both automated and manual criteria are evidenced.",
+    "done_when": "Manual signoff is captured with refreshed artifacts and closure is rerun against the latest evidence.",
+    "recommended_done_when_checks": [
+      "startup_gate_status",
+      "go_signal_action_gate",
+      "freshness_gate",
+      "done_when_checks_gate",
+      "go_signal_truth_gate"
+    ],
+    "primary_blockers": [
+      "recommended_action",
+      "blocking_reason",
+      "final_result:FAIL",
+      "step:refresh_dossier"
+    ],
+    "artifacts_to_refresh": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "observed_go_action": "HOLD",
+    "next_replan_recommendation": "Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.",
+    "machine_view": "SURFACE: next_round_handoff\nSTATUS: ACTION_REQUIRED\nRECOMMENDED_INTENT: Complete the remaining manual signoff path after automated criteria are satisfied.\nRECOMMENDED_SCOPE: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure.\nDONE_WHEN: Manual signoff is captured with refreshed artifacts and closure is rerun against the latest evidence.\nDONE_WHEN_CHECKS: startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nPRIMARY_BLOCKERS: recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier\nARTIFACTS_TO_REFRESH: docs/context/loop_cycle_summary_latest.json, docs/context/auditor_promotion_dossier.json, docs/context/ceo_go_signal.md\nOBSERVED_GO_ACTION: HOLD\nNEXT_REPLAN_RECOMMENDATION: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.",
+    "human_brief": "Status ACTION_REQUIRED. Complete the remaining manual signoff path after automated criteria are satisfied. Focus this scope on Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. Done when Manual signoff is captured with refreshed artifacts and closure is rerun against the latest evidence. Required checks: startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate. Primary blockers: recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier. Artifacts to refresh: docs/context/loop_cycle_summary_latest.json, docs/context/auditor_promotion_dossier.json, docs/context/ceo_go_signal.md. This handoff is advisory only; startup interrogation remains authoritative before execution.",
+    "paste_ready_block": "HANDOFF_MODE: ADVISORY_EXEC_MEMORY_PACKET\nHANDOFF_STATUS: ACTION_REQUIRED\nORIGINAL_INTENT: Complete the remaining manual signoff path after automated criteria are satisfied.\nDELIVERABLE_THIS_SCOPE: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure.\nNON_GOALS: Do not claim escalation readiness before both automated and manual criteria are evidenced.\nDONE_WHEN: Manual signoff is captured with refreshed artifacts and closure is rerun against the latest evidence.\nDONE_WHEN_CHECKS: startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nPRIMARY_BLOCKERS: recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier\nARTIFACTS_TO_REFRESH: docs/context/loop_cycle_summary_latest.json, docs/context/auditor_promotion_dossier.json, docs/context/ceo_go_signal.md\nNEXT_REPLAN_RECOMMENDATION: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nADVISORY_NOTE: Generated from current exec memory artifacts; startup interrogation remains authoritative before execution."
+  },
+  "expert_request": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "target_expert": "unknown",
+    "requested_domain": "qa",
+    "roster_fit": "ROSTER_MISSING",
+    "board_reentry_required": true,
+    "board_reentry_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "milestone_id": "unknown",
+    "trigger_reason": "execution_blocker_or_validation_gap",
+    "question": "What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?",
+    "why_blocked": "Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.",
+    "decision_depends_on": "Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate",
+    "source_artifacts": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "requested_output_format": "Return: verdict, key findings, top 1-3 risks, recommended next action, and artifact/path references.",
+    "machine_view": "SURFACE: expert_request\nSTATUS: ACTION_REQUIRED\nTARGET_EXPERT: unknown\nREQUESTED_DOMAIN: qa\nROSTER_FIT: ROSTER_MISSING\nBOARD_REENTRY_REQUIRED: YES\nBOARD_REENTRY_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nMILESTONE_ID: unknown\nTRIGGER_REASON: execution_blocker_or_validation_gap\nQUESTION: What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?\nWHY_BLOCKED: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUESTED_OUTPUT_FORMAT: Return: verdict, key findings, top 1-3 risks, recommended next action, and artifact/path references.",
+    "human_brief": "Status ACTION_REQUIRED. Requested domain: qa. Assigned expert: unknown. Roster fit: ROSTER_MISSING. Trigger reason: execution_blocker_or_validation_gap. Question: What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice? Decision depends on Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate. Source artifacts: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md. This request is advisory only and informs Worker/PM judgment without changing decision authority.",
+    "paste_ready_block": "EXPERT_REQUEST_MODE: ADVISORY_EXEC_MEMORY_PACKET\nEXPERT_REQUEST_STATUS: ACTION_REQUIRED\nTARGET_EXPERT: unknown\nREQUESTED_DOMAIN: qa\nROSTER_FIT: ROSTER_MISSING\nBOARD_REENTRY_REQUIRED: YES\nBOARD_REENTRY_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nMILESTONE_ID: unknown\nTRIGGER_REASON: execution_blocker_or_validation_gap\nQUESTION: What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?\nWHY_BLOCKED: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUESTED_OUTPUT_FORMAT: Return: verdict, key findings, top 1-3 risks, recommended next action, and artifact/path references.\nADVISORY_NOTE: Generated from current exec memory artifacts; expert input informs Worker/PM judgment and does not override the authority model."
+  },
+  "pm_ceo_research_brief": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "delegated_to": "principal",
+    "supporting_experts": [
+      "unknown"
+    ],
+    "question": "What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?",
+    "decision_depends_on": "Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate",
+    "source_artifacts": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "required_tradeoff_dimensions": [
+      "impact",
+      "risk",
+      "effort",
+      "maintainability"
+    ],
+    "options_required": 3,
+    "decision_deadline": "Before the next escalation attempt.",
+    "evidence_required": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "lineup_review_required": true,
+    "lineup_review_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "candidate_new_domains": [],
+    "approved_roster_snapshot": {
+      "milestone_id": "unknown",
+      "mandatory_domains": [],
+      "optional_domains": []
+    },
+    "machine_view": "SURFACE: pm_ceo_research_brief\nSTATUS: ACTION_REQUIRED\nDELEGATED_TO: principal\nSUPPORTING_EXPERTS: unknown\nQUESTION: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUIRED_TRADEOFF_DIMENSIONS: impact,risk,effort,maintainability\nOPTIONS_REQUIRED: 3\nDECISION_DEADLINE: Before the next escalation attempt.\nEVIDENCE_REQUIRED: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nLINEUP_REVIEW_REQUIRED: YES\nLINEUP_REVIEW_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nCANDIDATE_NEW_DOMAINS: none\nAPPROVED_ROSTER_MILESTONE_ID: unknown",
+    "human_brief": "Status ACTION_REQUIRED. Delegate to principal with question: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane? Support from experts: unknown. Decision depends on Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate and requires 3 options scored across impact, risk, effort, maintainability. Evidence required: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md. Lineup review required: YES (ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED). This brief is advisory only and informs PM/CEO synthesis without changing decision authority.",
+    "paste_ready_block": "PM_CEO_RESEARCH_BRIEF_MODE: ADVISORY_EXEC_MEMORY_PACKET\nPM_CEO_RESEARCH_STATUS: ACTION_REQUIRED\nDELEGATED_TO: principal\nSUPPORTING_EXPERTS: unknown\nQUESTION: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUIRED_TRADEOFF_DIMENSIONS: impact,risk,effort,maintainability\nOPTIONS_REQUIRED: 3\nDECISION_DEADLINE: Before the next escalation attempt.\nEVIDENCE_REQUIRED: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nLINEUP_REVIEW_REQUIRED: YES\nLINEUP_REVIEW_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nCANDIDATE_NEW_DOMAINS: none\nAPPROVED_ROSTER_MILESTONE_ID: unknown\nREQUESTED_OUTPUT_FORMAT: Return options, tradeoffs, recommendation, open risks, and artifact references.\nADVISORY_NOTE: Delegated research informs PM/CEO synthesis; PM/CEO retains final decision authority."
+  },
+  "board_decision_brief": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "decision_topic": "What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?",
+    "decision_deadline": "Before the next escalation attempt.",
+    "decision_class": "ONE_WAY",
+    "risk_tier": "HIGH",
+    "source_artifacts": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "ceo_lens": {
+      "business_upside": "Complete the remaining manual signoff path after automated criteria are satisfied.",
+      "strategic_risk": "High",
+      "reversibility": "Harder to reverse",
+      "timing_priority": "Before the next escalation attempt."
+    },
+    "cto_lens": {
+      "architecture_coherence": "Prefer minimal change that preserves the fail-closed control plane.",
+      "interface_stability": "Do not widen interfaces or contracts until current blockers are resolved.",
+      "maintenance_impact": "Choose the option with the smallest long-term control-plane complexity increase.",
+      "platform_debt_impact": "Avoid new architecture or policy layers for this decision path."
+    },
+    "coo_lens": {
+      "execution_load": "Focused remediation",
+      "dependency_coordination": "Requires PM coordination across Worker, Auditor, and expert lanes",
+      "rollout_readiness": "Not rollout-ready",
+      "operational_burden": "Elevated due to blocker resolution and evidence refresh"
+    },
+    "expert_lens": {
+      "target_expert": "unknown",
+      "supporting_experts": [
+        "unknown"
+      ],
+      "specialist_question": "What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?",
+      "unknowns": [
+        "[loop_cycle_summary] final_result:FAIL: Loop cycle final_result is FAIL.",
+        "[loop_cycle_summary] step:refresh_dossier: FAIL: No step message recorded.",
+        "[auditor_promotion_dossier] c1_24b_close: Manual check required: MANUAL_CHECK",
+        "[auditor_promotion_dossier] c2_min_items: 0 >= 30",
+        "[auditor_promotion_dossier] c3_min_weeks: 0 consecutive weeks >= 2",
+        "[ceo_go_signal] recommended_action: CEO go signal action is HOLD.",
+        "[ceo_go_signal] blocking_reason: C2 not met (0 >= 30).",
+        "[ceo_go_signal] blocking_reason: C3 not met (0 consecutive weeks >= 2)."
+      ]
+    },
+    "lineup_decision_needed": true,
+    "lineup_gap_domains": [],
+    "board_reentry_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "approved_roster_snapshot": {
+      "milestone_id": "unknown",
+      "mandatory_domains": [],
+      "optional_domains": []
+    },
+    "reintroduce_board_when": [
+      "UNKNOWN_EXPERT_DOMAIN",
+      "ROSTER_MISSING",
+      "EXPERT_DISAGREEMENT",
+      "MILESTONE_GATE_REVIEW"
+    ],
+    "recommended_option": "Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.",
+    "open_risks": [
+      "[loop_cycle_summary] final_result:FAIL: Loop cycle final_result is FAIL.",
+      "[loop_cycle_summary] step:refresh_dossier: FAIL: No step message recorded.",
+      "[auditor_promotion_dossier] c1_24b_close: Manual check required: MANUAL_CHECK",
+      "[auditor_promotion_dossier] c2_min_items: 0 >= 30",
+      "[auditor_promotion_dossier] c3_min_weeks: 0 consecutive weeks >= 2",
+      "[ceo_go_signal] recommended_action: CEO go signal action is HOLD.",
+      "[ceo_go_signal] blocking_reason: C2 not met (0 >= 30).",
+      "[ceo_go_signal] blocking_reason: C3 not met (0 consecutive weeks >= 2)."
+    ],
+    "machine_view": "SURFACE: board_decision_brief\nSTATUS: ACTION_REQUIRED\nDECISION_TOPIC: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?\nDECISION_DEADLINE: Before the next escalation attempt.\nDECISION_CLASS: ONE_WAY\nRISK_TIER: HIGH\nRECOMMENDED_OPTION: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nTARGET_EXPERT: unknown\nSUPPORTING_EXPERTS: unknown\nLINEUP_DECISION_NEEDED: YES\nLINEUP_GAP_DOMAINS: none\nBOARD_REENTRY_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nAPPROVED_ROSTER_MILESTONE_ID: unknown\nREINTRODUCE_BOARD_WHEN: UNKNOWN_EXPERT_DOMAIN,ROSTER_MISSING,EXPERT_DISAGREEMENT,MILESTONE_GATE_REVIEW\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nOPEN_RISKS: [loop_cycle_summary] final_result:FAIL: Loop cycle final_result is FAIL. || [loop_cycle_summary] step:refresh_dossier: FAIL: No step message recorded. || [auditor_promotion_dossier] c1_24b_close: Manual check required: MANUAL_CHECK || [auditor_promotion_dossier] c2_min_items: 0 >= 30 || [auditor_promotion_dossier] c3_min_weeks: 0 consecutive weeks >= 2 || [ceo_go_signal] recommended_action: CEO go signal action is HOLD. || [ceo_go_signal] blocking_reason: C2 not met (0 >= 30). || [ceo_go_signal] blocking_reason: C3 not met (0 consecutive weeks >= 2).",
+    "human_brief": "Status ACTION_REQUIRED. Decision topic: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane? Deadline: Before the next escalation attempt.. Treat this as a ONE_WAY decision at HIGH risk. Recommended option: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure. Lineup decision needed: YES. Open risks: [loop_cycle_summary] final_result:FAIL: Loop cycle final_result is FAIL. | [loop_cycle_summary] step:refresh_dossier: FAIL: No step message recorded. | [auditor_promotion_dossier] c1_24b_close: Manual check required: MANUAL_CHECK | [auditor_promotion_dossier] c2_min_items: 0 >= 30 | [auditor_promotion_dossier] c3_min_weeks: 0 consecutive weeks >= 2 | [ceo_go_signal] recommended_action: CEO go signal action is HOLD. | [ceo_go_signal] blocking_reason: C2 not met (0 >= 30). | [ceo_go_signal] blocking_reason: C3 not met (0 consecutive weeks >= 2).. This board-style brief is advisory only and does not change the existing decision authority model.",
+    "paste_ready_block": "BOARD_DECISION_BRIEF_MODE: ADVISORY_EXEC_MEMORY_PACKET\nBOARD_DECISION_STATUS: ACTION_REQUIRED\nDECISION_TOPIC: What are the top-level tradeoffs, options, and recommended path to address the current blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) while preserving the fail-closed control plane?\nDECISION_DEADLINE: Before the next escalation attempt.\nDECISION_CLASS: ONE_WAY\nRISK_TIER: HIGH\nCEO_LENS: business_upside=Complete the remaining manual signoff path after automated criteria are satisfied. | strategic_risk=High | reversibility=Harder to reverse | timing_priority=Before the next escalation attempt.\nCTO_LENS: architecture_coherence=Prefer minimal change that preserves the fail-closed control plane. | interface_stability=Do not widen interfaces or contracts until current blockers are resolved. | maintenance_impact=Choose the option with the smallest long-term control-plane complexity increase. | platform_debt_impact=Avoid new architecture or policy layers for this decision path.\nCOO_LENS: execution_load=Focused remediation | dependency_coordination=Requires PM coordination across Worker, Auditor, and expert lanes | rollout_readiness=Not rollout-ready | operational_burden=Elevated due to blocker resolution and evidence refresh\nEXPERT_LENS: target_expert=unknown | supporting_experts=unknown | unknowns=[loop_cycle_summary] final_result:FAIL: Loop cycle final_result is FAIL.,[loop_cycle_summary] step:refresh_dossier: FAIL: No step message recorded.,[auditor_promotion_dossier] c1_24b_close: Manual check required: MANUAL_CHECK,[auditor_promotion_dossier] c2_min_items: 0 >= 30,[auditor_promotion_dossier] c3_min_weeks: 0 consecutive weeks >= 2,[ceo_go_signal] recommended_action: CEO go signal action is HOLD.,[ceo_go_signal] blocking_reason: C2 not met (0 >= 30).,[ceo_go_signal] blocking_reason: C3 not met (0 consecutive weeks >= 2).\nLINEUP_DECISION_NEEDED: YES\nLINEUP_GAP_DOMAINS: none\nBOARD_REENTRY_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nAPPROVED_ROSTER_MILESTONE_ID: unknown\nREINTRODUCE_BOARD_WHEN: UNKNOWN_EXPERT_DOMAIN,ROSTER_MISSING,EXPERT_DISAGREEMENT,MILESTONE_GATE_REVIEW\nRECOMMENDED_OPTION: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nOPEN_RISKS: [loop_cycle_summary] final_result:FAIL: Loop cycle final_result is FAIL. || [loop_cycle_summary] step:refresh_dossier: FAIL: No step message recorded. || [auditor_promotion_dossier] c1_24b_close: Manual check required: MANUAL_CHECK || [auditor_promotion_dossier] c2_min_items: 0 >= 30 || [auditor_promotion_dossier] c3_min_weeks: 0 consecutive weeks >= 2 || [ceo_go_signal] recommended_action: CEO go signal action is HOLD. || [ceo_go_signal] blocking_reason: C2 not met (0 >= 30). || [ceo_go_signal] blocking_reason: C3 not met (0 consecutive weeks >= 2).\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nADVISORY_NOTE: Generated from existing exec memory artifacts; board-style lenses are advisory only and do not change decision authority."
+  },
+  "automation_uncertainty_status": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "machine_confidence": "LIMITED",
+    "evidence_status": "INSUFFICIENT",
+    "machine_safe_to_continue": false,
+    "human_help_needed": true,
+    "human_help_lane": "PM_CEO",
+    "expert_help_needed": true,
+    "target_expert": "unknown",
+    "expert_lineup_status": "ROSTER_MISSING",
+    "expert_memory_status": "MISSING",
+    "board_memory_status": "BOARD_LINEUP_REVIEW_REQUIRED",
+    "board_reentry_required": true,
+    "board_reentry_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "memory_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "reason_codes": [
+      "ACTIVE_BLOCKERS",
+      "MANUAL_EVIDENCE_REQUIRED",
+      "HUMAN_REVIEW_RECOMMENDED",
+      "TRADEOFF_RESEARCH_REQUIRED",
+      "EXPERT_INPUT_REQUIRED",
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "reason_details": [
+      "Replanning still shows 8 blocking gaps.",
+      "Manual UX or signoff evidence is still required before machine-only continuation.",
+      "Next-round handoff is not yet clear enough for machine-only continuation.",
+      "PM/CEO tradeoff synthesis is still required before relying on machine-only advice.",
+      "Specialist input is requested from unknown.",
+      "Milestone expert roster file is missing or empty; lineup assignment cannot be verified.",
+      "Board reentry is required to approve lineup changes before escalation-critical expert assignment."
+    ],
+    "decision_class": "ONE_WAY",
+    "risk_tier": "HIGH",
+    "boundary_registry": "docs/automation_boundary_registry.md",
+    "retirement_criteria": [
+      "replanning.status=CLEAR",
+      "next_round_handoff.status=CLEAR",
+      "pm_ceo_research_brief.status=OPTIONAL",
+      "expert_request.status=OPTIONAL",
+      "manual evidence or UX confirmation captured when required"
+    ]
+  },
+  "milestone_expert_roster_status": {
+    "path": "docs/context/milestone_expert_roster_latest.json",
+    "present": false,
+    "status": "ROSTER_MISSING",
+    "milestone_id": "unknown",
+    "mandatory_domains": [],
+    "optional_domains": [],
+    "all_domains": [],
+    "board_reentry_triggers": [
+      "UNKNOWN_EXPERT_DOMAIN",
+      "ROSTER_MISSING",
+      "EXPERT_DISAGREEMENT",
+      "MILESTONE_GATE_REVIEW"
+    ],
+    "unknown_domain_policy": "BOARD_LINEUP_REVIEW_REQUIRED"
+  },
+  "skill_activation": {
+    "status": "failed",
+    "skills": [],
+    "warnings": [],
+    "errors": [
+      "Failed to load E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\.sop_config.yaml"
+    ]
+  },
+  "retrieval_namespaces": {
+    "governance": [
+      {
+        "source": "context\\ceo_go_signal.md",
+        "type": "markdown",
+        "description": "CEO go signal"
+      }
+    ],
+    "operations": [
+      {
+        "source": "docs/context/loop_cycle_summary_latest.json",
+        "type": "json",
+        "description": "Loop cycle summary"
+      }
+    ],
+    "risk": [
+      {
+        "source": "docs/context/auditor_calibration_report.json",
+        "type": "json",
+        "description": "Auditor calibration report"
+      },
+      {
+        "source": "docs/context/auditor_promotion_dossier.json",
+        "type": "json",
+        "description": "Auditor promotion dossier"
+      }
+    ],
+    "roadmap": [
+      {
+        "source": "docs/context/auditor_promotion_dossier.json",
+        "type": "json",
+        "description": "Promotion criteria"
+      }
+    ]
+  },
+  "source_bindings": [
+    "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\loop_cycle_summary_current.json",
+    "docs\\context\\auditor_promotion_dossier.json",
+    "docs\\context\\auditor_calibration_report.json",
+    "docs\\context\\ceo_go_signal.md"
+  ],
+  "semantic_claims": [
+    {
+      "claim_id": "SC001",
+      "text": "Final result: FAIL",
+      "source_path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\loop_cycle_summary_current.json"
+    },
+    {
+      "claim_id": "SC002",
+      "text": "Steps total: 5",
+      "source_path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\loop_cycle_summary_current.json"
+    },
+    {
+      "claim_id": "SC003",
+      "text": "Promotion blockers: c2_min_items, c3_min_weeks",
+      "source_path": "docs\\context\\auditor_promotion_dossier.json"
+    },
+    {
+      "claim_id": "SC004",
+      "text": "Items reviewed: 0",
+      "source_path": "docs\\context\\auditor_calibration_report.json"
+    }
+  ]
+}

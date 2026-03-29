@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-29T07:32:41.908600Z",
+  "output_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\exec_memory_packet_latest_current.json",
+  "output_md": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\exec_memory_packet_latest_current.md",
+  "authoritative_latest_written": true,
+  "degraded_preview_written": false,
+  "critical_failures": [],
+  "critical_inputs_ok": true,
+  "input_status": {
+    "critical": [
+      {
+        "file": "ceo_go_signal.md",
+        "path": "docs\\context\\ceo_go_signal.md",
+        "status": "loaded"
+      }
+    ],
+    "important": [
+      {
+        "file": "auditor_promotion_dossier.json",
+        "path": "docs\\context\\auditor_promotion_dossier.json",
+        "status": "loaded"
+      },
+      {
+        "file": "auditor_calibration_report.json",
+        "path": "docs\\context\\auditor_calibration_report.json",
+        "status": "loaded"
+      }
+    ],
+    "optional": [
+      {
+        "file": "loop_cycle_summary_current.json",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json",
+        "status": "loaded"
+      },
+      {
+        "file": "decision log.md",
+        "path": "docs\\decision log.md",
+        "status": "missing_or_invalid"
+      },
+      {
+        "file": ".sop_config.yaml",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\.sop_config.yaml",
+        "status": "missing_or_invalid"
+      },
+      {
+        "file": "extension_allowlist.yaml",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\extension_allowlist.yaml",
+        "status": "missing_or_invalid"
+      },
+      {
+        "file": "registry.yaml",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\skills\\registry.yaml",
+        "status": "missing_or_invalid"
+      }
+    ]
+  },
+  "exit_code": 0,
+  "reason": "ok"
+}

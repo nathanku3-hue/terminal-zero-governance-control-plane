@@ -11,8 +11,8 @@ Historical quant/data/benchmark commands are intentionally out of this guide. Th
 Before running any loop commands, resolve the entry model against the target working repo for this round. In `quant_current_scope`, do not assume these files exist locally under `docs/context/`; they are current truth surfaces only when `KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
 
 **Root SOP governance:**
-- `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md` — when each kernel capability becomes mandatory
-- `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md` — 11-section checklist for multi-stream execution readiness
+- `../KERNEL_ACTIVATION_MATRIX.md` — when each kernel capability becomes mandatory
+- `../SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md` — 11-section checklist for multi-stream execution readiness
 
 **Current truth surfaces (target working repo, when active and instantiated):**
 - `planner_packet_current.md` — compact entry point (current context, active brief, bridge truth, decision tail, blocked next step, active bottleneck)
@@ -24,8 +24,8 @@ Before running any loop commands, resolve the entry model against the target wor
 - `observability_pack_current.md` — drift detection markers
 
 **Entry order:**
-1. Check `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md`.
-2. Check `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
+1. Check `../KERNEL_ACTIVATION_MATRIX.md`.
+2. Check `../SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
 3. Read `planner_packet_current.md` if it is active and instantiated in the target working repo.
 4. Read `impact_packet_current.md` if it is active and instantiated.
 5. Read `bridge_contract_current.md` if it is active and instantiated.
@@ -37,6 +37,21 @@ Before running any loop commands, resolve the entry model against the target wor
 
 **What changes after execution:**
 - Refresh the active instantiated surfaces you consumed or changed in the target working repo: `planner_packet_current.md`, `impact_packet_current.md`, `bridge_contract_current.md`, `done_checklist_current.md`, `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md`.
+
+## Entry Paths
+
+Two entry paths exist. Use the PRIMARY path. The COMPAT path is a backward-compatibility shim
+for environments where the `sop` CLI is not yet installed; it must not be used as the default
+once `sop` is available.
+
+| Label | Command prefix | When to use |
+|---|---|---|
+| **PRIMARY** | `sop run <subcommand> --repo-root .` | Default for all operators with `sop` installed |
+| **COMPAT** | `python scripts/<script>.py --repo-root .` | Only when `sop` CLI is not yet available |
+
+Install check: `sop run --help` — if this resolves without error, use PRIMARY.
+Full entry path reference with first-run steps, failure routing, and compat path label:
+→ [`docs/context/operator_navigation_map.md`](docs/context/operator_navigation_map.md)
 
 ## Recommended command sequence
 
@@ -76,3 +91,7 @@ Use the supervisor only when you want a one-cycle health check or watch mode on 
 - Run `python scripts/run_loop_cycle.py --help` to review `--skip-phase-end` and `--allow-hold`.
 - Run `python scripts/validate_loop_closure.py --help` to confirm closure exit-code semantics.
 - Run `python scripts/print_takeover_entrypoint.py --help` to confirm overlay output flags.
+
+## Skills Status
+
+After each loop cycle, the run summary includes a `skills_status` field with one of three machine-readable values: `OK` (resolver healthy, skills active), `EMPTY_BY_DESIGN` (resolver healthy, no skills registered — proceed unless skills were expected), or `RESOLVER_UNAVAILABLE` (resolver missing or broken — block and reinstall before continuing). For the full proceed/block ruling, first diagnostic step, recovery steps, and artifact cross-references for each value, see [`docs/context/skill_readiness_matrix.md`](docs/context/skill_readiness_matrix.md).

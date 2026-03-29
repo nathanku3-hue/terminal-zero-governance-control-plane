@@ -294,6 +294,11 @@ class TestOutputParity:
             f"CLI: {cli_result.stdout[:500]}\nScript: {script_result.stdout[:500]}"
         )
 
+    def test_run_output_parity(self):
+        pytest.skip(
+            "Pending: requires healthy-path fixture. "
+            "See tests/test_hardening.py::test_healthy_path_equivalence."
+        )
 
 
 class TestArtifactParityContract:
@@ -461,6 +466,30 @@ class TestSkillResolverContract:
                     f"Field '{key}' mismatch for {s_skill['name']}: "
                     f"scripts={s_skill[key]} src={src_skill[key]}"
                 )
+
+
+class TestByteIdentityContract:
+    """D-183: scripts/ and src/sop/scripts/ copies must be byte-identical."""
+
+    DUAL_COPY_FILES = [
+        "run_loop_cycle.py",
+        "phase_gate.py",
+        "worker_base.py",
+        "worker_role.py",
+        "auditor_role.py",
+        "planner_role.py",
+        "check_schema_version_policy.py",  # F.3 addition
+        "check_fail_open.py",              # Ph5-G addition
+    ]
+
+    def test_dual_copy_byte_identity(self):
+        import filecmp
+        repo_root = Path(__file__).parent.parent
+        for filename in self.DUAL_COPY_FILES:
+            scripts_path = repo_root / "scripts" / filename
+            sop_path = repo_root / "src" / "sop" / "scripts" / filename
+            assert filecmp.cmp(scripts_path, sop_path, shallow=False), \
+                f"{filename}: scripts/ and src/sop/scripts/ copies are not byte-identical"
 
 
 # Mark all tests in this file as parity tests

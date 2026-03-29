@@ -27,9 +27,7 @@ class AuditorRole(Worker):
         return "auditor"
 
     def run(self, context: Any) -> WorkerResult:
-        """Phase 1 stub — orchestration remains in run_loop_cycle.py."""
-        return WorkerResult(
-            role=self.role,
-            status="PASS",
-            exit_code=0,
+        # H-4: contract enforcement only — .run() is never called by run_loop_cycle.py.
+        raise NotImplementedError(
+            "AuditorRole.run() is not implemented — orchestration remains in run_loop_cycle.py"
         )

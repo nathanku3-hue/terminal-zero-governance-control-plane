@@ -140,24 +140,15 @@ class TestABCEnforcement:
 class TestStepOwnership:
     def test_worker_role_run_returns_worker_result(self) -> None:
         w = WorkerRole(repo_root=REPO_ROOT, skills=[])
-        result = w.run(context=None)
-        assert isinstance(result, WorkerResult)
-        assert result.role == "worker"
-        assert result.status == "PASS"
-        assert result.exit_code == 0
+        with pytest.raises(NotImplementedError):
+            w.run(context=None)
 
     def test_auditor_role_run_returns_auditor_result(self) -> None:
         a = AuditorRole(repo_root=REPO_ROOT, skills=[])
-        result = a.run(context=None)
-        assert isinstance(result, WorkerResult)
-        assert result.role == "auditor"
-        assert result.status == "PASS"
-        assert result.exit_code == 0
+        with pytest.raises(NotImplementedError):
+            a.run(context=None)
 
     def test_planner_role_run_returns_planner_result(self) -> None:
         p = PlannerRole(repo_root=REPO_ROOT, skills=[])
-        result = p.run(context=None)
-        assert isinstance(result, WorkerResult)
-        assert result.role == "planner"
-        assert result.status == "PASS"
-        assert result.exit_code == 0
+        with pytest.raises(NotImplementedError):
+            p.run(context=None)

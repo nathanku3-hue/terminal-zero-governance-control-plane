@@ -54,7 +54,7 @@ roles:
       - full repo context
       - unrelated dossiers
     max_context_tokens: 10000
-    # P3.4 (D-191): Specialist delegation — narrow read-only skills routable to this deputy
+    # P3.4 (D-191): Specialist delegation -- narrow read-only skills routable to this deputy
     skill_delegation:
       - repo-map
 
@@ -88,8 +88,8 @@ roles:
     required_artifacts:
       - docs/context/auditor_calibration_report.json
       - docs/context/auditor_promotion_dossier.json
+    optional_artifacts:
       - docs/context/loop_cycle_summary_latest.json
-    optional_artifacts: []
     conditional_artifacts: {}
     excluded_artifacts:
       - advisory artifacts (next_round_handoff, expert_request)
@@ -98,3 +98,5 @@ roles:
     # Phase 6.2: auditor_deputy measured at 6459 tokens (within 8000 target).
     # auditor_fp_ledger.json is cold-tier (MEMORY_TIER_CONTRACT.md) and explicitly excluded.
     # Budget tightened from 10000 to 8000; no surface reduction required.
+    # Phase 6 Stream D: loop_cycle_summary_latest.json moved to optional_artifacts;
+    # it is a hot-tier runtime artifact not present at repo checkout time.

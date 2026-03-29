@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-29T07:32:45Z",
+  "result": "INPUT_OR_INFRA_ERROR",
+  "exit_code": 2,
+  "freshness_hours": 72.0,
+  "paths": {
+    "repo_root": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module",
+    "context_dir": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context",
+    "startup_intake_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\startup_intake_latest.json",
+    "dossier_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_promotion_dossier.json",
+    "calibration_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_calibration_report.json",
+    "go_signal_md": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\ceo_go_signal.md",
+    "startup_card_md": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\init_execution_card_latest.md",
+    "weekly_summary_md": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\ceo_weekly_summary_latest.md",
+    "round_contract_md": "",
+    "go_truth_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_ceo_go_signal_truth.py",
+    "weekly_truth_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_ceo_weekly_summary_truth.py",
+    "memory_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\exec_memory_packet_latest_current.json",
+    "memory_truth_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_exec_memory_truth.py",
+    "loop_summary_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\loop_cycle_summary_latest.json",
+    "round_contract_checks_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_round_contract_checks.py",
+    "domain_falsification_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_domain_falsification_pack.py",
+    "counterexample_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_counterexample_gate.py",
+    "dual_judge_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_dual_judge_gate.py",
+    "refactor_mock_policy_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_refactor_mock_policy.py",
+    "review_checklist_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_review_checklist.py",
+    "interface_contracts_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_interface_contracts.py",
+    "parallel_fanin_script": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_parallel_fanin.py",
+    "parallel_manifest_json": "",
+    "output_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\loop_closure_status_latest.json",
+    "output_md": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\loop_closure_status_latest.md"
+  },
+  "summary": {
+    "pass_count": 9,
+    "fail_count": 4,
+    "error_count": 4,
+    "skip_count": 3,
+    "total_checks": 20
+  },
+  "checks": [
+    {
+      "name": "required_dossier_json",
+      "status": "PASS",
+      "message": "Required artifact found.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_promotion_dossier.json",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "required_calibration_json",
+      "status": "PASS",
+      "message": "Required artifact found.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_calibration_report.json",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "required_go_signal_md",
+      "status": "PASS",
+      "message": "Required artifact found.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\ceo_go_signal.md",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "required_startup_card_md",
+      "status": "FAIL",
+      "message": "Required artifact missing.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\init_execution_card_latest.md",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "required_exec_memory_json",
+      "status": "PASS",
+      "message": "Required artifact found.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\exec_memory_packet_latest_current.json",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "go_signal_action_gate",
+      "status": "FAIL",
+      "message": "Recommended action must be GO (actual=HOLD).",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\ceo_go_signal.md",
+      "command": [],
+      "exit_code": null,
+      "details": "- Recommended Action: HOLD"
+    },
+    {
+      "name": "startup_gate_status",
+      "status": "FAIL",
+      "message": "Required startup_intake_latest.json not found.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\startup_intake_latest.json",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "tdd_contract_gate",
+      "status": "FAIL",
+      "message": "Round contract artifact missing for TDD contract gate.",
+      "path": "",
+      "command": [],
+      "exit_code": null,
+      "details": "searched=E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md, E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_seed_latest.md"
+    },
+    {
+      "name": "domain_falsification_gate",
+      "status": "SKIP",
+      "message": "Round contract missing; domain falsification gate skipped.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "done_when_checks_gate",
+      "status": "ERROR",
+      "message": "DONE_WHEN checks gate had input/infra errors.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_round_contract_checks.py",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_round_contract_checks.py",
+        "--round-contract-md",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md",
+        "--loop-summary-json",
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmptr9p2gtn\\loop_summary_preview.json",
+        "--closure-json",
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmptr9p2gtn\\closure_preview.json"
+      ],
+      "exit_code": 2,
+      "details": "[ERROR] Missing input file: E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+    },
+    {
+      "name": "counterexample_gate",
+      "status": "ERROR",
+      "message": "Counterexample gate had input/infra errors.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_counterexample_gate.py",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_counterexample_gate.py",
+        "--round-contract-md",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+      ],
+      "exit_code": 2,
+      "details": "[ERROR] Missing input file: E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+    },
+    {
+      "name": "dual_judge_gate",
+      "status": "ERROR",
+      "message": "Dual-judge gate had input/infra errors.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_dual_judge_gate.py",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_dual_judge_gate.py",
+        "--round-contract-md",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+      ],
+      "exit_code": 2,
+      "details": "[ERROR] Missing input file: E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+    },
+    {
+      "name": "refactor_mock_policy_gate",
+      "status": "ERROR",
+      "message": "Refactor/mock policy gate had input/infra errors.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_refactor_mock_policy.py",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_refactor_mock_policy.py",
+        "--round-contract-md",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+      ],
+      "exit_code": 2,
+      "details": "[ERROR] Missing input file: E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\round_contract_latest.md"
+    },
+    {
+      "name": "review_checklist_gate",
+      "status": "SKIP",
+      "message": "Review checklist artifact not found; gate skipped.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\pr_review_checklist_latest.md",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "interface_contract_gate",
+      "status": "SKIP",
+      "message": "Interface contract manifest not found; gate skipped.",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\interface_contract_manifest_latest.json",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "parallel_fanin_gate",
+      "status": "PASS",
+      "message": "Parallel fan-in gate passed (no active parallel shards).",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_parallel_fanin.py",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_parallel_fanin.py",
+        "--context-dir",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context"
+      ],
+      "exit_code": 0,
+      "details": "[OK] no active parallel shards"
+    },
+    {
+      "name": "freshness_gate",
+      "status": "PASS",
+      "message": "All checked artifacts are within freshness threshold (72.00h).",
+      "path": "",
+      "command": [],
+      "exit_code": null,
+      "details": ""
+    },
+    {
+      "name": "go_signal_truth_gate",
+      "status": "PASS",
+      "message": "Go-signal truth-check passed.",
+      "path": "",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_ceo_go_signal_truth.py",
+        "--dossier-json",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_promotion_dossier.json",
+        "--calibration-json",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_calibration_report.json",
+        "--go-signal-md",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\ceo_go_signal.md"
+      ],
+      "exit_code": 0,
+      "details": "[OK] CEO go-signal truth-check passed."
+    },
+    {
+      "name": "weekly_summary_truth_gate",
+      "status": "PASS",
+      "message": "Weekly summary truth-check passed.",
+      "path": "",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_ceo_weekly_summary_truth.py",
+        "--dossier-json",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_promotion_dossier.json",
+        "--calibration-json",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\auditor_calibration_report.json",
+        "--weekly-md",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\ceo_weekly_summary_latest.md"
+      ],
+      "exit_code": 0,
+      "details": "[OK] CEO weekly-summary truth-check passed."
+    },
+    {
+      "name": "exec_memory_truth_gate",
+      "status": "PASS",
+      "message": "Exec memory truth-check passed.",
+      "path": "",
+      "command": [
+        "e:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Scripts\\python.exe",
+        "E:\\Code\\SOP\\quant_current_scope\\.venv_smoke\\Lib\\site-packages\\sop\\scripts\\validate_exec_memory_truth.py",
+        "--memory-json",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module\\docs\\context\\exec_memory_packet_latest_current.json",
+        "--repo-root",
+        "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\shadowed_module"
+      ],
+      "exit_code": 0,
+      "details": "[OK] Exec memory packet validation passed"
+    }
+  ]
+}

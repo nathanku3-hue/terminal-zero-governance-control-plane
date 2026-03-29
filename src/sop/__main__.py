@@ -54,24 +54,190 @@ def _get_scripts_dir() -> Path:
     )
 
 
-def _run_script(script_name: str, args: List[str]) -> int:
+# ---------------------------------------------------------------------------
+# H-NEW-1 Stage 1 — Preflight: spec check (importlib.util.find_spec)
+# ---------------------------------------------------------------------------
+
+_CRITICAL_MODULES = [
+    "sop.scripts.phase_gate",
+    "sop.scripts.worker_role",
+    "sop.scripts.auditor_role",
+    "sop.scripts.utils.skill_resolver",
+    "sop.scripts.utils.atomic_io",
+]
+
+
+# Phase 4 Stream I — Retry constants
+MAX_RETRIES = 1  # Phase 4: single retry on RETRYABLE failures only
+
+
+def _should_retry(failure_artifact: dict) -> bool:
+    """I: Return True only for RETRYABLE failures that have not yet been retried."""
+    return (
+        failure_artifact.get("recoverability") == "RETRYABLE"
+        and failure_artifact.get("attempt_id") is None
+    )
+
+
+def _write_preflight_failure(
+    failure_class: str,
+    failed_component: str,
+    reason: str,
+    recoverability: str,
+    repo_root: str = ".",
+    attempt_id: "str | None" = "0",
+) -> None:
+    """Write run_failure_latest.json and emit FATAL envelope to stderr."""
+    try:
+        from sop._failure_reporter import write_run_failure, build_failure_payload
+        import uuid as _uuid
+        import os as _os
+        _run_id = str(_uuid.uuid4())
+        payload = build_failure_payload(
+            failure_class=failure_class,
+            run_id=_run_id,
+            entrypoint="sop run",
+            execution_mode="cli",
+            failed_component=failed_component,
+            reason=reason,
+            recoverability=recoverability,
+            repo_root=repo_root,
+            attempt_id=attempt_id,
+        )
+        _dest = Path(repo_root) / "docs" / "context"
+        write_run_failure(_dest, payload)
+    except Exception:
+        pass
+    # Always emit FATAL envelope regardless of artifact write outcome
+    print(
+        f"FATAL failure_class={failure_class}"
+        f" failed_component={failed_component}"
+        f" recoverability={recoverability}"
+        f" artifact_write_failed=false",
+        file=sys.stderr,
+    )
+
+
+def _run_preflight_spec_check(repo_root: str = ".") -> Optional[str]:
+    """H-NEW-1 Stage 1: verify critical modules are findable via importlib.
+
+    Returns None on success, or an error message string on failure.
+    """
+    import importlib.util
+    missing = []
+    for mod in _CRITICAL_MODULES:
+        spec = importlib.util.find_spec(mod)
+        if spec is None:
+            missing.append(mod)
+    if missing:
+        return f"Critical modules not found: {', '.join(missing)}"
+    return None
+
+
+def _run_provenance_check(repo_root: str = ".") -> Optional[str]:
+    """H-NEW-1 Stage 2: verify critical modules resolve from expected package root.
+
+    Derives the expected root from importlib.util.find_spec("sop").submodule_search_locations
+    at runtime — NOT hardcoded — so it works across editable, wheel, and source installs.
+
+    Returns None on success, or an error message string on failure (ENTRYPOINT_DIVERGENCE).
+    """
+    import importlib.util
+
+    sop_spec = importlib.util.find_spec("sop")
+    if sop_spec is None or not sop_spec.submodule_search_locations:
+        return "sop package not findable — cannot check provenance"
+
+    pkg_root = Path(list(sop_spec.submodule_search_locations)[0])
+
+    diverged: list[str] = []
+    module_origins: dict[str, str] = {}
+    for mod_name in _CRITICAL_MODULES:
+        spec = importlib.util.find_spec(mod_name)
+        if spec is None or spec.origin is None:
+            continue
+        mod_path = Path(spec.origin)
+        module_origins[mod_name] = str(mod_path)
+        try:
+            mod_path.relative_to(pkg_root)
+        except ValueError:
+            diverged.append(f"{mod_name}: {mod_path}")
+
+    if diverged:
+        diverged_list = "; ".join(diverged)
+        return (
+            f"ENTRYPOINT_DIVERGENCE: compatibility-path divergence detected. "
+            f"use sop run instead of python scripts/run_loop_cycle.py. "
+            f"Conflicting paths: {diverged_list} (expected under {pkg_root})"
+        )
+    return None
+
+
+def _get_module_origins() -> dict[str, str]:
+    """Return actual __file__ paths of all resolved critical modules."""
+    import importlib.util
+    origins: dict[str, str] = {}
+    for mod_name in _CRITICAL_MODULES:
+        spec = importlib.util.find_spec(mod_name)
+        if spec is not None and spec.origin is not None:
+            origins[mod_name] = str(spec.origin)
+    return origins
+
+
+def _run_script(script_name: str, args: List[str], repo_root: str = ".") -> int:
     """Run a script from the scripts directory with given args."""
+    # H-NEW-1 Stage 1: preflight spec check before any script execution
+    preflight_error = _run_preflight_spec_check(repo_root=repo_root)
+    if preflight_error is not None:
+        _write_preflight_failure(
+            failure_class="INSTALL_ERROR",
+            failed_component="preflight_spec_check",
+            reason=preflight_error,
+            recoverability="REQUIRES_FIX",
+            repo_root=repo_root,
+        )
+        sys.exit(1)
+
+    # H-NEW-1 Stage 2: provenance check — module origins must resolve under package
+    provenance_error = _run_provenance_check(repo_root=repo_root)
+    if provenance_error is not None:
+        module_origins = _get_module_origins()
+        _write_preflight_failure(
+            failure_class="ENTRYPOINT_DIVERGENCE",
+            failed_component="provenance_check",
+            reason=provenance_error,
+            recoverability="REQUIRES_FIX",
+            repo_root=repo_root,
+        )
+        sys.exit(1)
+
     try:
         scripts_dir = _get_scripts_dir()
     except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 2
+        _write_preflight_failure(
+            failure_class="INSTALL_ERROR",
+            failed_component="scripts_dir",
+            reason=str(e),
+            recoverability="REQUIRES_FIX",
+            repo_root=repo_root,
+        )
+        sys.exit(2)
 
     script_path = scripts_dir / script_name
 
     if not script_path.exists():
-        print(
-            f"Error: Script not found: {script_path}\n"
-            f"  This may indicate a corrupted installation.\n"
-            f"  Try: pip install --force-reinstall terminal-zero-governance",
-            file=sys.stderr,
+        _write_preflight_failure(
+            failure_class="INSTALL_ERROR",
+            failed_component=script_name,
+            reason=(
+                f"Script not found: {script_path}. "
+                "This may indicate a corrupted installation. "
+                "Try: pip install --force-reinstall terminal-zero-governance"
+            ),
+            recoverability="REQUIRES_FIX",
+            repo_root=repo_root,
         )
-        return 2
+        sys.exit(2)
 
     cmd = [sys.executable, str(script_path)] + args
     result = subprocess.run(cmd)
@@ -103,7 +269,7 @@ def cmd_startup(args: argparse.Namespace) -> int:
     if args.summary:
         cli_args.append("--summary")
 
-    return _run_script("startup_codex_helper.py", cli_args)
+    return _run_script("startup_codex_helper.py", cli_args, repo_root=args.repo_root)
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -128,7 +294,20 @@ def cmd_run(args: argparse.Namespace) -> int:
     if getattr(args, "max_context_artifacts", 50) != 50:  # non-default
         cli_args.extend(["--max-context-artifacts", str(args.max_context_artifacts)])
 
-    return _run_script("run_loop_cycle.py", cli_args)
+    # Phase 4 Stream I — single retry on RETRYABLE failures only
+    repo_root_str = str(args.repo_root)
+    exit_code = _run_script("run_loop_cycle.py", cli_args, repo_root=repo_root_str)
+    if exit_code != 0:
+        try:
+            import json as _json
+            _artifact = Path(repo_root_str) / "docs" / "context" / "run_failure_latest.json"
+            if _artifact.exists():
+                _failure = _json.loads(_artifact.read_text(encoding="utf-8"))
+                if _should_retry(_failure):
+                    exit_code = _run_script("run_loop_cycle.py", cli_args, repo_root=repo_root_str)
+        except Exception:
+            pass
+    return exit_code
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
@@ -142,7 +321,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     if args.output_md:
         cli_args.extend(["--output-md", args.output_md])
 
-    return _run_script("validate_loop_closure.py", cli_args)
+    return _run_script("validate_loop_closure.py", cli_args, repo_root=args.repo_root)
 
 
 def cmd_takeover(args: argparse.Namespace) -> int:
@@ -154,7 +333,7 @@ def cmd_takeover(args: argparse.Namespace) -> int:
     if args.workflow_status_md_out:
         cli_args.extend(["--workflow-status-md-out", args.workflow_status_md_out])
 
-    return _run_script("print_takeover_entrypoint.py", cli_args)
+    return _run_script("print_takeover_entrypoint.py", cli_args, repo_root=args.repo_root)
 
 
 def cmd_supervise(args: argparse.Namespace) -> int:
@@ -168,7 +347,7 @@ def cmd_supervise(args: argparse.Namespace) -> int:
     if args.context_dir:
         cli_args.extend(["--context-dir", args.context_dir])
 
-    return _run_script("supervise_loop.py", cli_args)
+    return _run_script("supervise_loop.py", cli_args, repo_root=args.repo_root)
 
 
 def cmd_init(args: argparse.Namespace) -> int:

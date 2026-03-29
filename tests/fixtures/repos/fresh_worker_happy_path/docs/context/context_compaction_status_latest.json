@@ -1,0 +1,240 @@
+{
+  "generated_at_utc": "2026-03-29T07:31:29Z",
+  "should_compact": false,
+  "can_compact": false,
+  "decision_mode": "no_action",
+  "reasons": [],
+  "guardrail_violations": [],
+  "policy_snapshot": {
+    "schema_version": "1.0.0",
+    "source_of_truth": "scripts/utils/compaction_retention.py",
+    "documentation": "docs/compaction_behavior_contract.md",
+    "required_always": [
+      {
+        "surface": "next_round_handoff",
+        "packet_section": "next_round_handoff",
+        "reason": "Primary blocker-to-action handoff must survive compaction."
+      },
+      {
+        "surface": "expert_request",
+        "packet_section": "expert_request",
+        "reason": "Specialist escalation request must survive compaction."
+      },
+      {
+        "surface": "pm_ceo_research_brief",
+        "packet_section": "pm_ceo_research_brief",
+        "reason": "Leadership research brief must survive compaction."
+      },
+      {
+        "surface": "board_decision_brief",
+        "packet_section": "board_decision_brief",
+        "reason": "Board-level decision framing must survive compaction."
+      }
+    ],
+    "required_if_present": [
+      {
+        "surface": "replanning",
+        "packet_section": "replanning",
+        "reason": "Replanning payload is retained when present."
+      },
+      {
+        "surface": "automation_uncertainty_status",
+        "packet_section": "automation_uncertainty_status",
+        "reason": "Automation uncertainty context is retained when present."
+      }
+    ],
+    "cold_manual_fallback": [
+      {
+        "surface": "auditor_fp_ledger",
+        "artifact_path": "docs/context/auditor_fp_ledger.json",
+        "access": "manual_fallback",
+        "reason": "Ledger-level deep dives stay manual-load only."
+      }
+    ]
+  },
+  "retention_plan": {
+    "required_always": [
+      {
+        "surface": "next_round_handoff",
+        "packet_section": "next_round_handoff",
+        "present": true,
+        "retention_rule": "required_always",
+        "status": "retained"
+      },
+      {
+        "surface": "expert_request",
+        "packet_section": "expert_request",
+        "present": true,
+        "retention_rule": "required_always",
+        "status": "retained"
+      },
+      {
+        "surface": "pm_ceo_research_brief",
+        "packet_section": "pm_ceo_research_brief",
+        "present": true,
+        "retention_rule": "required_always",
+        "status": "retained"
+      },
+      {
+        "surface": "board_decision_brief",
+        "packet_section": "board_decision_brief",
+        "present": true,
+        "retention_rule": "required_always",
+        "status": "retained"
+      }
+    ],
+    "required_if_present": [
+      {
+        "surface": "replanning",
+        "packet_section": "replanning",
+        "present": true,
+        "retention_rule": "required_if_present",
+        "status": "retained"
+      },
+      {
+        "surface": "automation_uncertainty_status",
+        "packet_section": "automation_uncertainty_status",
+        "present": true,
+        "retention_rule": "required_if_present",
+        "status": "retained"
+      }
+    ],
+    "cold_manual_fallback": [
+      {
+        "surface": "auditor_fp_ledger",
+        "artifact_path": "docs/context/auditor_fp_ledger.json",
+        "access": "manual_fallback",
+        "retention_rule": "cold_manual_fallback",
+        "default_loaded": false,
+        "status": "manual_only"
+      }
+    ]
+  },
+  "ratios": {
+    "pm_ratio": 0.016333,
+    "ceo_ratio": 0.055
+  },
+  "memory_tier_contract": {
+    "schema_version": "1.0.0",
+    "source_of_truth": "scripts/utils/memory_tiers.py",
+    "documentation": "docs/context/MEMORY_TIER_CONTRACT.md",
+    "families": [
+      {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Current exec-memory packet consumed by later loop stages and compaction checks.",
+        "artifact_paths": [
+          "docs/context/exec_memory_packet_latest.json",
+          "docs/context/exec_memory_packet_latest.md",
+          "docs/context/exec_memory_packet_latest_current.json",
+          "docs/context/exec_memory_packet_latest_current.md"
+        ],
+        "family": "exec_memory_packet"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Latest promotion criteria, FP analysis, and per-rule summary.",
+        "artifact_paths": [
+          "docs/context/auditor_promotion_dossier.json",
+          "docs/context/auditor_promotion_dossier.md"
+        ],
+        "family": "auditor_promotion_dossier"
+      },
+      {
+        "tier": "warm",
+        "access": "default_input",
+        "description": "Latest CEO go-signal and blocking-reason markdown.",
+        "artifact_paths": [
+          "docs/context/ceo_go_signal.md"
+        ],
+        "family": "ceo_go_signal"
+      },
+      {
+        "tier": "hot",
+        "access": "default_input",
+        "description": "Rolling compaction state used by the next trigger evaluation.",
+        "artifact_paths": [
+          "docs/context/context_compaction_state_latest.json"
+        ],
+        "family": "context_compaction_state"
+      },
+      {
+        "tier": "hot",
+        "access": "derived_output",
+        "description": "Latest compaction-trigger verdict for the current loop state.",
+        "artifact_paths": [
+          "docs/context/context_compaction_status_latest.json"
+        ],
+        "family": "context_compaction_status"
+      }
+    ],
+    "cold_manual_fallbacks": [
+      {
+        "tier": "cold",
+        "access": "manual_fallback",
+        "description": "Ledger-level auditor deep-dive evidence reserved for manual fallback review.",
+        "artifact_paths": [
+          "docs/context/auditor_fp_ledger.json"
+        ],
+        "family": "auditor_fp_ledger"
+      }
+    ]
+  },
+  "memory_tier_bindings": {
+    "inputs": [
+      {
+        "family": "exec_memory_packet",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\exec_memory_packet_latest_current.json",
+        "tier": "hot",
+        "access": "derived_output"
+      },
+      {
+        "family": "auditor_promotion_dossier",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\auditor_promotion_dossier.json",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "ceo_go_signal",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\ceo_go_signal.md",
+        "tier": "warm",
+        "access": "default_input"
+      },
+      {
+        "family": "context_compaction_state",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\context_compaction_state_latest.json",
+        "tier": "hot",
+        "access": "default_input"
+      }
+    ],
+    "outputs": [
+      {
+        "family": "context_compaction_state",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\context_compaction_state_latest.json",
+        "tier": "hot",
+        "access": "default_input"
+      },
+      {
+        "family": "context_compaction_status",
+        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\fresh_worker_happy_path\\docs\\context\\context_compaction_status_latest.json",
+        "tier": "hot",
+        "access": "derived_output"
+      }
+    ]
+  },
+  "action_current": "HOLD",
+  "action_previous": null,
+  "criteria_current": {
+    "C0": true,
+    "C1": "MANUAL_CHECK",
+    "C2": false,
+    "C3": false,
+    "C4": true,
+    "C4b": true,
+    "C5": true
+  },
+  "criteria_previous": {},
+  "freshness_hours_since_last": null,
+  "state_updated": true
+}

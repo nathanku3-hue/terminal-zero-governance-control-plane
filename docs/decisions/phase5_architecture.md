@@ -1,6 +1,6 @@
 # ADR-001: Phase 5 Architecture - Kernel/Plugin Boundary
 
-**Status**: Draft
+**Status**: Accepted
 **Date**: 2026-03-11
 **Deciders**: PM, CEO
 **Context**: Phase 5 explores how the existing SOP control-plane kernel could evolve into a broader adaptive agent system.
@@ -447,4 +447,21 @@ Result: Low-risk automation (kernel-approved), high-risk governance
 
 ---
 
-**Status**: Draft future-state proposal awaiting PM/CEO approval
+**Status**: Accepted — 3-run verification evidence appended (see Verification Evidence section).
+
+---
+
+## Verification Evidence
+
+Run 1: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped
+Run 2: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped
+Run 3: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped
+
+All 5 steps passed on each run (sop --help, startup_codex_helper.py --help, run_loop_cycle.py --help, pytest -q, check_fail_open.py, check_schema_version_policy.py). No rerun recovery used.
+
+
+---
+## Verification Evidence
+Run 1: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped
+Run 2: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped
+Run 3: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped

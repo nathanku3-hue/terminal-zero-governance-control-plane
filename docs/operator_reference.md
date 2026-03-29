@@ -19,10 +19,10 @@
 
 ## Current Truth Surfaces
 
-Before startup, loop, closure, or takeover work, resolve the entry model against the target working repo for this round. In `quant_current_scope`, do not assume these files exist locally under `docs/context/`; they are current truth surfaces only when `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
+Before startup, loop, closure, or takeover work, resolve the entry model against the target working repo for this round. In `quant_current_scope`, do not assume these files exist locally under `docs/context/`; they are current truth surfaces only when `KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
 
-- Check `E:\code\SOP\KERNEL_ACTIVATION_MATRIX.md`.
-- Check `E:\code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
+- Check `../KERNEL_ACTIVATION_MATRIX.md`.
+- Check `../SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`.
 - Current truth surfaces, when active and instantiated in the target working repo: `planner_packet_current.md`, `impact_packet_current.md`, `bridge_contract_current.md`, `done_checklist_current.md`, `multi_stream_contract_current.md`, `post_phase_alignment_current.md`, and `observability_pack_current.md`.
 
 ## Entry Order

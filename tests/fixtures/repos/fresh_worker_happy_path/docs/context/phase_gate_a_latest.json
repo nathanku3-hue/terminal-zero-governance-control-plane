@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "evaluated_at_utc": "2026-03-29T07:31:30Z",
+  "trace_id": "20260329T073128Z-dfd5",
+  "from_phase": "exec_memory",
+  "to_phase": "advisory",
+  "gate_conditions": [
+    {
+      "name": "exec_memory_cycle_ready",
+      "result": true,
+      "detail": "runtime.exec_memory_cycle_ready is True"
+    },
+    {
+      "name": "no_schema_violations",
+      "result": true,
+      "detail": "loop_run_trace_latest.json not present (skipped)"
+    },
+    {
+      "name": "no_error_steps",
+      "result": true,
+      "detail": "no ERROR steps"
+    }
+  ],
+  "all_conditions_met": true,
+  "decision": "PROCEED"
+}

@@ -27,7 +27,8 @@
 - [ ] **New Context Packet**: Is `/new` bootstrap summary prepared with `what was done`, `what is next`, `ConfirmationRequired: YES`, and `NextPhaseApproval: PENDING`?
 - [ ] **Context Artifact Refresh**: Did `.venv\Scripts\python scripts/build_context_packet.py` refresh `docs/context/current_context.json` and `docs/context/current_context.md`, and did `.venv\Scripts\python scripts/build_context_packet.py --validate` pass?
 - [ ] **Gemini Handover Refresh**: Did `scripts/build_context_packet.py` also refresh `docs/handover/gemini/phase<NN>_gemini_handover.md` with `top_level_PM.md` + context sources?
-- [ ] **Philosophy Local-First Loop**: Did `.venv\Scripts\python scripts/sync_philosophy_feedback.py --scan-root E:\Code --main-repo <this_repo>` pass, and was main migration blocked on any local worker failure?
+- [ ] **Philosophy Local-First Loop**: Did `.venv\Scripts\python scripts/sync_philosophy_feedback.py --scan-root <scan-root> --main-repo <this_repo>` pass, and was main migration blocked on any local worker failure?
+  <!-- operator: replace <scan-root> with the absolute path to the root directory containing all repos on this machine (e.g. the parent of quant_current_scope); do not commit a machine-specific path -->
 
 ## 5. Document Sorting (GitHub-optimized)
 - [ ] Present changed docs in this order:

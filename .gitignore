@@ -88,3 +88,11 @@ docs/context/archive/
 
 # Decisions directory (working docs — most are committed; only transient drafts excluded)
 # docs/decisions/ files are tracked by default
+
+# Phase 5 Stream N.2: additional confirmed generated non-canonical files
+docs/context/current_context.json
+docs/context/current_context.md
+docs/context/loop_run_steps_*.ndjson
+docs/context/canary_enforce_log.md
+docs/context/ceo_bridge_digest.md
+

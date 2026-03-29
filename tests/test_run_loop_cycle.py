@@ -602,6 +602,7 @@ def test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag(
         "validate_parallel_fanin",
         "validate_loop_closure",
         "validate_round_contract_checks",
+        "observability_pack",
     ]
     status_by_step = {step["name"]: step["status"] for step in payload["steps"]}
     assert status_by_step["phase_end_handover"] == "SKIP"

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "updated_at_utc": "2026-03-29T07:31:29Z",
+  "action_current": "HOLD",
+  "criteria_current": {
+    "C0": true,
+    "C1": "MANUAL_CHECK",
+    "C2": false,
+    "C3": false,
+    "C4": true,
+    "C4b": true,
+    "C5": true
+  }
+}

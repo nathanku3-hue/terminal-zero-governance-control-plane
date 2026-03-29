@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-29T07:32:41.908600Z",
+  "source_exec_memory_json": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\exec_memory_packet_latest.json",
+  "expert_request": {
+    "advisory": true,
+    "status": "ACTION_REQUIRED",
+    "target_expert": "unknown",
+    "requested_domain": "qa",
+    "roster_fit": "ROSTER_MISSING",
+    "board_reentry_required": true,
+    "board_reentry_reason_codes": [
+      "ROSTER_MISSING",
+      "BOARD_LINEUP_REVIEW_REQUIRED"
+    ],
+    "milestone_id": "unknown",
+    "trigger_reason": "execution_blocker_or_validation_gap",
+    "question": "What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?",
+    "why_blocked": "Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.",
+    "decision_depends_on": "Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate",
+    "source_artifacts": [
+      "docs/context/loop_cycle_summary_latest.json",
+      "docs/context/auditor_promotion_dossier.json",
+      "docs/context/ceo_go_signal.md"
+    ],
+    "requested_output_format": "Return: verdict, key findings, top 1-3 risks, recommended next action, and artifact/path references.",
+    "machine_view": "SURFACE: expert_request\nSTATUS: ACTION_REQUIRED\nTARGET_EXPERT: unknown\nREQUESTED_DOMAIN: qa\nROSTER_FIT: ROSTER_MISSING\nBOARD_REENTRY_REQUIRED: YES\nBOARD_REENTRY_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nMILESTONE_ID: unknown\nTRIGGER_REASON: execution_blocker_or_validation_gap\nQUESTION: What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?\nWHY_BLOCKED: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUESTED_OUTPUT_FORMAT: Return: verdict, key findings, top 1-3 risks, recommended next action, and artifact/path references.",
+    "human_brief": "Status ACTION_REQUIRED. Requested domain: qa. Assigned expert: unknown. Roster fit: ROSTER_MISSING. Trigger reason: execution_blocker_or_validation_gap. Question: What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice? Decision depends on Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate. Source artifacts: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md. This request is advisory only and informs Worker/PM judgment without changing decision authority.",
+    "paste_ready_block": "EXPERT_REQUEST_MODE: ADVISORY_EXEC_MEMORY_PACKET\nEXPERT_REQUEST_STATUS: ACTION_REQUIRED\nTARGET_EXPERT: unknown\nREQUESTED_DOMAIN: qa\nROSTER_FIT: ROSTER_MISSING\nBOARD_REENTRY_REQUIRED: YES\nBOARD_REENTRY_REASON_CODES: ROSTER_MISSING,BOARD_LINEUP_REVIEW_REQUIRED\nMILESTONE_ID: unknown\nTRIGGER_REASON: execution_blocker_or_validation_gap\nQUESTION: What is the minimum-correct next move to resolve the active blockers (recommended_action, blocking_reason, final_result:FAIL, step:refresh_dossier) and satisfy the required checks (startup_gate_status, go_signal_action_gate, freshness_gate, done_when_checks_gate, go_signal_truth_gate) without widening scope beyond the current execution slice?\nWHY_BLOCKED: Capture the required manual signoff in the decision log after automated criteria are satisfied, then rerun closure.\nDECISION_DEPENDS_ON: Refresh any stale promotion artifacts, capture the required manual signoff in the decision log, and rerun closure. | required_checks=startup_gate_status,go_signal_action_gate,freshness_gate,done_when_checks_gate,go_signal_truth_gate\nSOURCE_ARTIFACTS: docs/context/loop_cycle_summary_latest.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md\nREQUESTED_OUTPUT_FORMAT: Return: verdict, key findings, top 1-3 risks, recommended next action, and artifact/path references.\nADVISORY_NOTE: Generated from current exec memory artifacts; expert input informs Worker/PM judgment and does not override the authority model."
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "description": "Critical dual-copy file pairs that must remain byte-identical between scripts/ and src/sop/scripts/.",
+  "pairs": [
+    {
+      "scripts": "scripts/run_loop_cycle.py",
+      "src": "src/sop/scripts/run_loop_cycle.py"
+    },
+    {
+      "scripts": "scripts/phase_gate.py",
+      "src": "src/sop/scripts/phase_gate.py"
+    },
+    {
+      "scripts": "scripts/worker_base.py",
+      "src": "src/sop/scripts/worker_base.py"
+    },
+    {
+      "scripts": "scripts/worker_role.py",
+      "src": "src/sop/scripts/worker_role.py"
+    },
+    {
+      "scripts": "scripts/auditor_role.py",
+      "src": "src/sop/scripts/auditor_role.py"
+    },
+    {
+      "scripts": "scripts/planner_role.py",
+      "src": "src/sop/scripts/planner_role.py"
+    },
+    {
+      "scripts": "scripts/check_schema_version_policy.py",
+      "src": "src/sop/scripts/check_schema_version_policy.py"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "description": "Error code registry for sop._failure_reporter. Maps failure_class to a machine-parseable error code.",
+  "version": "1.0",
+  "codes": [
+    {
+      "code": "E001",
+      "failure_class": "INSTALL_ERROR",
+      "summary": "Package installation check failed.",
+      "recoverability": "REQUIRES_FIX"
+    },
+    {
+      "code": "E002",
+      "failure_class": "IMPORT_ERROR",
+      "summary": "A required module could not be imported.",
+      "recoverability": "REQUIRES_FIX"
+    },
+    {
+      "code": "E003",
+      "failure_class": "ENTRYPOINT_DIVERGENCE",
+      "summary": "Entrypoint module resolution diverged from expected path.",
+      "recoverability": "REQUIRES_FIX"
+    },
+    {
+      "code": "E004",
+      "failure_class": "EXECUTION_ERROR",
+      "summary": "An unhandled error occurred during loop cycle execution.",
+      "recoverability": "RETRYABLE"
+    },
+    {
+      "code": "E005",
+      "failure_class": "GATE_BLOCK",
+      "summary": "A phase gate blocked progression.",
+      "recoverability": "REQUIRES_FIX"
+    },
+    {
+      "code": "E006",
+      "failure_class": "CONTRACT_VIOLATION",
+      "summary": "A runtime contract or schema validation was violated.",
+      "recoverability": "REQUIRES_FIX"
+    },
+    {
+      "code": "E007",
+      "failure_class": "OBSERVABILITY_ERROR",
+      "summary": "An observability or artifact-write operation failed.",
+      "recoverability": "RETRYABLE"
+    }
+  ]
+}
