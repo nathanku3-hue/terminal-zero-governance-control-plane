@@ -170,7 +170,7 @@ def write_run_failure(
     try:
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(parents=True, exist_ok=True)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         _emit_fatal(failure_class, failed_component, recoverability, artifact_write_failed=True)
         return False
 
@@ -180,7 +180,7 @@ def write_run_failure(
     try:
         content = json.dumps(payload, indent=2, default=str) + "\n"
         encoded = content.encode("utf-8")
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         _emit_fatal(failure_class, failed_component, recoverability, artifact_write_failed=True)
         return False
 
@@ -201,7 +201,7 @@ def write_run_failure(
         os.replace(tmp_path, str(dest_path))
         tmp_path = None  # mark replaced so finally-block won't delete
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         # Clean up temp file if it still exists
         if tmp_path is not None:
             try:

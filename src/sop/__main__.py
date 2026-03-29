@@ -91,7 +91,6 @@ def _write_preflight_failure(
     try:
         from sop._failure_reporter import write_run_failure, build_failure_payload
         import uuid as _uuid
-        import os as _os
         _run_id = str(_uuid.uuid4())
         payload = build_failure_payload(
             failure_class=failure_class,
@@ -201,7 +200,6 @@ def _run_script(script_name: str, args: List[str], repo_root: str = ".") -> int:
     # H-NEW-1 Stage 2: provenance check — module origins must resolve under package
     provenance_error = _run_provenance_check(repo_root=repo_root)
     if provenance_error is not None:
-        module_origins = _get_module_origins()
         _write_preflight_failure(
             failure_class="ENTRYPOINT_DIVERGENCE",
             failed_component="provenance_check",

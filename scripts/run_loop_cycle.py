@@ -151,7 +151,7 @@ except ModuleNotFoundError:
         from scripts.planner_role import PlannerRole
     except ModuleNotFoundError:
         try:
-            from sop.scripts.worker_base import Worker, WorkerResult, WorkerSkill
+            from sop.scripts.worker_base import Worker, WorkerResult, WorkerSkill  # noqa: F401
             from sop.scripts.worker_role import WorkerRole
             from sop.scripts.auditor_role import AuditorRole
             from sop.scripts.planner_role import PlannerRole
