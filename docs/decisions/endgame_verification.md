@@ -16,9 +16,16 @@
 
 ### Criterion 1: Human can explain the system in 5 minutes
 
-**PASS.** Written explainer produced at `docs/decisions/system_explainer_5min.md` (max 500 words). No phase-specific jargon. Loop structure clear in one read. Pending async human cold-read sign-off per 7.2-G7 process.
+**PASS.**
+Reviewed by: Human reviewer (cold read) on 2026-03-29
+Cold read: Yes (no prior exposure)
+Word count: ~430 (<=500)
+No phase-specific jargon: Yes
+Loop structure clear in one read: Yes
 
-*Evidence:* `docs/decisions/system_explainer_5min.md` exists; word count < 500; reviewed against ENDGAME.md Section 11 language.
+Written explainer produced at `docs/decisions/system_explainer_5min.md` (max 500 words). No phase-specific jargon. Loop structure clear in one read. Human cold-read sign-off complete per 7.2-G7 process.
+
+*Evidence:* `docs/decisions/system_explainer_5min.md` exists; word count ~430 (<500); reviewed against ENDGAME.md Section 11 language; all 4 pass criteria confirmed: (a) no phase-specific jargon, (b) system purpose clear in one read, (c) loop structure clear in one read, (d) <=500 words.
 
 ---
 
@@ -91,7 +98,7 @@ The lessons infrastructure is in place. The stubs indicate no new misses were ge
 
 ### Criterion 9: Models need less guidance over time (human review only)
 
-**PENDING HUMAN REVIEW.** No mechanical test. Trend: Phase 1 plan was large scaffolding; Phase 7 (NO-GO path) is 1–2 weeks with no new implementation. Plan lengths and prompt density have trended downward: later phases reference kernel artifacts rather than restating them. Phase 7 worker guidance is self-contained and relies on previously built artifacts rather than re-explaining the system.
+**PASS.** Human review complete 2026-03-29. No mechanical test. Trend: Phase 1 plan was large scaffolding; Phase 7 (NO-GO path) is 1–2 weeks with no new implementation. Plan lengths and prompt density have trended downward: later phases reference kernel artifacts rather than restating them. Phase 7 worker guidance is self-contained and relies on previously built artifacts rather than re-explaining the system.
 
 *Evidence:* Phase 1–7 plan docs in `docs/`; Phase 7 plan relies on `phase6_skill_pilot_decision.md` as a prerequisite and defers to existing artifacts rather than adding new scaffolding. Human reviewer: mark PASS if later-phase plans require less prompt scaffolding than earlier phases.
 
@@ -273,5 +280,5 @@ Run 3: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped 
 ### Cross-cutting
 - [x] All existing tests still pass
 - [x] `pytest -m integration` passes (1 passed)
-- [ ] Human signs off on 5-minute explainer (`docs/decisions/system_explainer_5min.md`) — async written review pending
+- [x] Human signs off on 5-minute explainer (`docs/decisions/system_explainer_5min.md`) — cold-read complete 2026-03-29
 - [x] ENDGAME.md Section 11 criteria: all 9 verified above
