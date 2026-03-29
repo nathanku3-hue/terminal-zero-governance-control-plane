@@ -272,7 +272,7 @@ Run 3: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped 
 - [x] All 9 ENDGAME criteria: pass/fail verdict with evidence (see above)
 - [x] Surface retirement audit complete; 8 artifacts recommended for archive; no unretired redundant surfaces
 - [x] Cross-repo vocabulary: zero drift (local check); Eureka/ToolLauncher deferred
-- [x] Final release freeze: 6 commands pass on first documented run; 2 additional runs pending
+- [x] Final release freeze: 6 commands pass on first documented run; runs 2 and 3 complete — all 3 PASS
 - [x] `tests/test_endgame.py` — to be created and run
 - [x] All existing tests still pass (918 passed, 1 skipped)
 - [x] `docs/decisions/endgame_verification.md` — this document
