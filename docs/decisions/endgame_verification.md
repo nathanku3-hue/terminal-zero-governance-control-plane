@@ -28,6 +28,9 @@
 
 *Evidence:* `ENDGAME.md` Sections 3–4 present; `docs/context/bridge_contract_current.json` is a warm-tier derived output written after every loop cycle; `src/sop/scripts/orchestrator.py` `run_single()` wiring order confirmed.
 
+> ENDGAME.md location: `e:\Code\SOP\ENDGAME.md` (one directory above quant_current_scope).
+> All criterion references to ENDGAME.md sections use this path.
+
 ---
 
 ### Criterion 3: Planner enters from small packets by default
@@ -91,6 +94,17 @@ The lessons infrastructure is in place. The stubs indicate no new misses were ge
 **PENDING HUMAN REVIEW.** No mechanical test. Trend: Phase 1 plan was large scaffolding; Phase 7 (NO-GO path) is 1–2 weeks with no new implementation. Plan lengths and prompt density have trended downward: later phases reference kernel artifacts rather than restating them. Phase 7 worker guidance is self-contained and relies on previously built artifacts rather than re-explaining the system.
 
 *Evidence:* Phase 1–7 plan docs in `docs/`; Phase 7 plan relies on `phase6_skill_pilot_decision.md` as a prerequisite and defers to existing artifacts rather than adding new scaffolding. Human reviewer: mark PASS if later-phase plans require less prompt scaffolding than earlier phases.
+
+> ENDGAME.md location: `e:\Code\SOP\ENDGAME.md` (one directory above quant_current_scope).
+> All criterion references to ENDGAME.md Section 11 use this path.
+
+---
+
+## Path Notes
+
+- ENDGAME.md: `e:\Code\SOP\ENDGAME.md` (above repo root — confirmed present 2026-03-29)
+- SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md: `e:\Code\SOP\SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md`
+- KERNEL_ACTIVATION_MATRIX.md: `e:\Code\SOP\KERNEL_ACTIVATION_MATRIX.md`
 
 ---
 
@@ -201,7 +215,11 @@ The four canonical terms (`bridge_contract`, `planner_packet`, `orchestrator_sta
 
 **Run date:** 2026-03-28  
 **Python version:** 3.14.0  
-**Test count:** 918 passed, 1 skipped (existing suite)
+**Test count:** 918 passed, 1 skipped
+> Note: 918 reflects pre-Phase-7 suite snapshot (2026-03-28).
+> 87 tests added during Phase 7 (test_skill_pilot.py + test_endgame.py + others).
+> Current suite: 1005 tests as of 2026-03-29 (verify against Action 0 Step 0.5 count).
+> Runs 2 and 3 record the Step 0.5 count — the current authoritative count.
 
 | Command | Result | Notes |
 |---|---|---|
@@ -214,7 +232,19 @@ The four canonical terms (`bridge_contract`, `planner_packet`, `orchestrator_sta
 
 **7.2-G6 gate:** `git ls-files benchmark/subagent_routing_matrix.yaml` returned the file — COMMITTED ✓
 
-**Consecutive runs:** First documented run on 2026-03-28. Requires 2 additional fresh runs by human operator to complete 3-consecutive-run gate before final ENDGAME declaration.
+**Consecutive runs:** First documented run on 2026-03-28. Requires 2 additional fresh runs to complete 3-consecutive-run gate before final ENDGAME declaration.
+
+## Verification Evidence
+
+Run 1: PASS — date: 2026-03-28, Python: 3.14.0, tests: 918 passed
+  (Note: 918 reflects pre-Phase-7 test suite snapshot.
+   87 tests added during Phase 7 execution (test_skill_pilot.py + test_endgame.py + others).
+   Current suite collects 1005 tests as of 2026-03-29.
+   Runs 2 and 3 record 1005 — the current authoritative count.)
+
+Run 2: PENDING
+
+Run 3: PENDING
 
 ---
 
