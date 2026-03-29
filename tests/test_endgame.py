@@ -239,6 +239,15 @@ def test_final_release_commands_all_pass() -> None:
     Command 4 (run_fast_checks) may return HOLD which is exit 0 per plan.
     Command 5 (pytest -q) is not re-run here to avoid recursion.
     """
+    # Ensure supervisor-required artifact exists (may be absent after test isolation cleanup).
+    _loop_summary = CONTEXT_DIR / "loop_cycle_summary_latest.json"
+    _stub = '{"final_result": "NOT_READY", "phase": "phase-8-stub"}\n'
+    _had_content: str | None = None
+    if _loop_summary.exists():
+        _had_content = _loop_summary.read_text(encoding="utf-8")
+    else:
+        _loop_summary.write_text(_stub, encoding="utf-8")
+
     python = sys.executable
 
     commands_and_labels = [
@@ -269,16 +278,23 @@ def test_final_release_commands_all_pass() -> None:
         ),
     ]
 
-    for cmd, label in commands_and_labels:
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=str(REPO_ROOT),
-            timeout=60,
-        )
-        assert proc.returncode == 0, (
-            f"Release command '{label}' exited {proc.returncode}.\n"
-            f"stdout: {proc.stdout[-500:]}\n"
-            f"stderr: {proc.stderr[-500:]}"
-        )
+    try:
+        for cmd, label in commands_and_labels:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=str(REPO_ROOT),
+                timeout=60,
+            )
+            assert proc.returncode == 0, (
+                f"Release command '{label}' exited {proc.returncode}.\n"
+                f"stdout: {proc.stdout[-500:]}\n"
+                f"stderr: {proc.stderr[-500:]}"
+            )
+    finally:
+        # Restore loop_cycle_summary_latest.json to its pre-test state.
+        if _had_content is None:
+            _loop_summary.unlink(missing_ok=True)
+        else:
+            _loop_summary.write_text(_had_content, encoding="utf-8")

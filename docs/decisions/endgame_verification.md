@@ -242,9 +242,9 @@ Run 1: PASS — date: 2026-03-28, Python: 3.14.0, tests: 918 passed
    Current suite collects 1005 tests as of 2026-03-29.
    Runs 2 and 3 record 1005 — the current authoritative count.)
 
-Run 2: PENDING
+Run 2: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped (1005 collected)
 
-Run 3: PENDING
+Run 3: PASS — date: 2026-03-29, Python: 3.14.0, tests: 994 passed, 11 skipped (1005 collected)
 
 ---
 
