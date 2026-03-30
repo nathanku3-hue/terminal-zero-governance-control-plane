@@ -3,6 +3,20 @@
 End-to-end first-run guide for a new operator on a clean machine.
 All commands use the primary `sop` CLI path.
 
+## Current Truth Surfaces (Read Before Running)
+
+Before running any loop commands, resolve the entry model in this order:
+
+1. `../KERNEL_ACTIVATION_MATRIX.md` -- check which kernel capabilities are mandatory right now
+2. `../SPEC_TO_MULTISTREAM_EXECUTION_CHECKLIST.md` -- check which multi-stream surfaces are expected
+3. `docs/context/planner_packet_current.md` -- if active and instantiated in the target working repo
+4. `docs/context/bridge_contract_current.md` -- if active and instantiated
+5. `docs/context/done_checklist_current.md` -- if active and instantiated
+
+Do not assume any of these files exist locally under `docs/context/`; they are current truth surfaces only when `KERNEL_ACTIVATION_MATRIX.md` says the capability is active and the artifact exists in the repo you are operating.
+
+---
+
 ## Prerequisites
 
 - [ ] Python 3.12+ installed: `python --version` must show 3.12.x or higher

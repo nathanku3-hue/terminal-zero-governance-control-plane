@@ -45,7 +45,7 @@ Step 2 — Startup
   Check:    All three artifacts written; no FATAL on stderr
 
 Step 3 — Loop cycle
-  PRIMARY:  sop run loop --repo-root . --skip-phase-end --allow-hold true
+  PRIMARY:  sop run --repo-root . --skip-phase-end --allow-hold true
   COMPAT:   python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true
   Produces: docs/context/loop_cycle_summary_latest.json
             docs/context/exec_memory_packet_latest.json
@@ -64,12 +64,12 @@ Step 1 — Read truth surfaces
   Check:    Active bottleneck named; planner_packet and bridge_contract consistent
 
 Step 2 — Loop cycle
-  PRIMARY:  sop run loop --repo-root . --skip-phase-end --allow-hold true
+  PRIMARY:  sop run --repo-root . --skip-phase-end --allow-hold true
   COMPAT:   python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true
   Check:    Loop summary written; no FATAL on stderr; skills_status is OK or EMPTY_BY_DESIGN
 
 Step 3 — Closure
-  PRIMARY:  sop run closure --repo-root .
+  PRIMARY:  sop validate --repo-root .
   COMPAT:   python scripts/validate_loop_closure.py --repo-root .
   Produces: docs/context/loop_closure_status_latest.json
   Check:    Exit 0 = READY_TO_ESCALATE; Exit 1 = NOT_READY; Exit 2 = infra/input error
@@ -185,11 +185,11 @@ For each entry with status = HOLD:
   Read docs/context/done_checklist_current.md → locate the corresponding done check
   Address the criterion (implement, fix, or document)
   ↓
-Re-run loop with: sop run loop --repo-root . --skip-phase-end --allow-hold true
+Re-run loop with: sop run --repo-root . --skip-phase-end --allow-hold true
   ↓
 Confirm gate_decisions[] shows PASS for previously HOLD gates
   ↓
-Re-run closure: sop run closure --repo-root .
+Re-run closure: sop validate --repo-root .
   ↓
 Expect exit 0 (READY_TO_ESCALATE) when all gates pass
 ```
@@ -212,6 +212,8 @@ Route to the correct action using this table:
 
 Full diagnostic steps and recovery procedures for all three values:
 → `docs/context/skill_readiness_matrix.md`
+
+Available after Stream C Phase B: `docs/context/loop_readiness_latest.json`
 
 ---
 

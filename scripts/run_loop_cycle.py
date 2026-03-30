@@ -2350,7 +2350,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         partial=False,
     )
 
-    # K.2: observability pack drift marker check
+    # K.2: observability pack drift marker check (must be last named step)
     _obs_pack_path = ctx.context_dir / "observability_pack_current.md"
     if _obs_pack_path.exists():
         runtime.steps.append({
@@ -2366,6 +2366,30 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "exit_code": None,
             "message": "observability_pack_current.md not found — drift markers unavailable",
         })
+
+    # Phase 3 Stream C -- emit loop_readiness_latest.json as best-effort side effect
+    # Not appended to runtime.steps so step ordering remains stable.
+    _loop_readiness_script = ctx.repo_root / "scripts" / "check_loop_readiness.py"
+    if not _loop_readiness_script.exists():
+        _loop_readiness_script = ctx.repo_root / "src" / "sop" / "scripts" / "check_loop_readiness.py"
+    if _loop_readiness_script.exists():
+        try:
+            subprocess.run(
+                [
+                    ctx.python_exe,
+                    str(_loop_readiness_script),
+                    "--repo-root",
+                    str(ctx.repo_root),
+                    "--output",
+                    str(ctx.context_dir / "loop_readiness_latest.json"),
+                ],
+                cwd=str(ctx.repo_root),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except Exception:
+            pass  # best-effort; must never abort the loop
 
     return final_exit_code, payload, markdown
 

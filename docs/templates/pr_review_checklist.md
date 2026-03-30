@@ -1,5 +1,8 @@
 # PR Review Checklist
 
+> **Canonical source:** src/sop/templates/pr_review_checklist.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 ## Problem/Intent
 - PROBLEM_INTENT: TODO(describe the user/problem intent this PR solves)
 

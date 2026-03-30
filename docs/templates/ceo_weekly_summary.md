@@ -1,5 +1,8 @@
 # CEO Weekly Summary Template v1.1
 
+> **Canonical source:** src/sop/templates/ceo_weekly_summary.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 ## 1) Executive Snapshot
 
 **Week:** `<YYYY-Www>`  

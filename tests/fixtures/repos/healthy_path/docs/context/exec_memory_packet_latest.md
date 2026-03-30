@@ -1,18 +1,18 @@
 # Exec Memory Packet
 
-**Generated:** 2026-03-29T07:32:41.908600Z
+**Generated:** 2026-03-30T06:33:22.676549Z
 **Schema:** 1.0.0
 
 ## Token Budget
 
 | Context | Budget | Actual | Status |
 |---------|--------|--------|--------|
-| PM | 3000 | 49 | ✅ OK |
-| CEO | 1800 | 99 | ✅ OK |
+| PM | 3000 | 49 | [OK] OK |
+| CEO | 1800 | 99 | [OK] OK |
 
 ## Source Bindings
 
-- E:\Code\SOP\quant_current_scope\tests\fixtures\repos\healthy_path\docs\context\loop_cycle_summary_current.json
+- .\docs\context\loop_cycle_summary_current.json
 - docs\context\auditor_promotion_dossier.json
 - docs\context\auditor_calibration_report.json
 - docs\context\ceo_go_signal.md

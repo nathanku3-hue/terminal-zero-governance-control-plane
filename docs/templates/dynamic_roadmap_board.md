@@ -1,5 +1,8 @@
 # Dynamic Roadmap Board Template v1.0
 
+> **Canonical source:** src/sop/templates/dynamic_roadmap_board.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 ## 1) Board Metadata
 
 **Week:** `<YYYY-Www>`  

@@ -1,5 +1,8 @@
 # Planning Loop Integration Guide
 
+> **Canonical source:** `src/sop/templates/planning_loop_integration_guide.md`
+> This copy in `docs/templates/` is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template
 Authority: advisory-only integration artifact. This file does not authorize execution, promotion, or scope widening by itself.
 Purpose: define how pre-flight planning, worker/auditor execution, and post-phase alignment integrate into one recurring planning loop.

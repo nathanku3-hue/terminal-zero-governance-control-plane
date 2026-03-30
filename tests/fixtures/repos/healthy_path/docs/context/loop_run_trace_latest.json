@@ -1,0 +1,164 @@
+{
+  "schema_version": "1.0",
+  "trace_id": "20260330T063319Z-d74b",
+  "generated_at_utc": "2026-03-30T06:33:29Z",
+  "repo_id": "healthy_path",
+  "duration_seconds": 9.871,
+  "steps": [
+    {
+      "name": "phase_end_handover",
+      "status": "SKIP",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:19Z",
+      "ended_utc": "2026-03-30T06:33:19Z",
+      "duration_seconds": 0.0
+    },
+    {
+      "name": "refresh_weekly_calibration",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:19Z",
+      "ended_utc": "2026-03-30T06:33:20Z",
+      "duration_seconds": 0.404
+    },
+    {
+      "name": "refresh_dossier",
+      "status": "HOLD",
+      "exit_code": 1,
+      "started_utc": "2026-03-30T06:33:20Z",
+      "ended_utc": "2026-03-30T06:33:20Z",
+      "duration_seconds": 0.51
+    },
+    {
+      "name": "generate_ceo_go_signal",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:20Z",
+      "ended_utc": "2026-03-30T06:33:21Z",
+      "duration_seconds": 0.47
+    },
+    {
+      "name": "refresh_ceo_weekly_summary",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:21Z",
+      "ended_utc": "2026-03-30T06:33:21Z",
+      "duration_seconds": 0.593
+    },
+    {
+      "name": "build_exec_memory_packet",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:21Z",
+      "ended_utc": "2026-03-30T06:33:22Z",
+      "duration_seconds": 0.968
+    },
+    {
+      "name": "evaluate_context_compaction_trigger",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:22Z",
+      "ended_utc": "2026-03-30T06:33:23Z",
+      "duration_seconds": 0.485
+    },
+    {
+      "name": "validate_ceo_go_signal_truth",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:23Z",
+      "ended_utc": "2026-03-30T06:33:23Z",
+      "duration_seconds": 0.354
+    },
+    {
+      "name": "validate_ceo_weekly_summary_truth",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:23Z",
+      "ended_utc": "2026-03-30T06:33:24Z",
+      "duration_seconds": 0.316
+    },
+    {
+      "name": "validate_exec_memory_truth",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:24Z",
+      "ended_utc": "2026-03-30T06:33:24Z",
+      "duration_seconds": 0.377
+    },
+    {
+      "name": "validate_counterexample_gate",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:24Z",
+      "ended_utc": "2026-03-30T06:33:24Z",
+      "duration_seconds": 0.239
+    },
+    {
+      "name": "validate_dual_judge_gate",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:24Z",
+      "ended_utc": "2026-03-30T06:33:24Z",
+      "duration_seconds": 0.255
+    },
+    {
+      "name": "validate_refactor_mock_policy",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:24Z",
+      "ended_utc": "2026-03-30T06:33:25Z",
+      "duration_seconds": 0.32
+    },
+    {
+      "name": "validate_review_checklist",
+      "status": "SKIP",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:25Z",
+      "ended_utc": "2026-03-30T06:33:25Z",
+      "duration_seconds": 0.0
+    },
+    {
+      "name": "validate_interface_contracts",
+      "status": "SKIP",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:25Z",
+      "ended_utc": "2026-03-30T06:33:25Z",
+      "duration_seconds": 0.0
+    },
+    {
+      "name": "validate_parallel_fanin",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:25Z",
+      "ended_utc": "2026-03-30T06:33:25Z",
+      "duration_seconds": 0.325
+    },
+    {
+      "name": "validate_loop_closure",
+      "status": "HOLD",
+      "exit_code": 1,
+      "started_utc": "2026-03-30T06:33:25Z",
+      "ended_utc": "2026-03-30T06:33:29Z",
+      "duration_seconds": 3.727
+    },
+    {
+      "name": "validate_round_contract_checks",
+      "status": "PASS",
+      "exit_code": 0,
+      "started_utc": "2026-03-30T06:33:29Z",
+      "ended_utc": "2026-03-30T06:33:29Z",
+      "duration_seconds": 0.257
+    }
+  ],
+  "metrics": {
+    "pass_count": 13,
+    "hold_count": 2,
+    "fail_count": 0,
+    "error_count": 0,
+    "skip_count": 3,
+    "total_steps": 18,
+    "artifact_count": 28
+  },
+  "final_result": "HOLD",
+  "final_exit_code": 0
+}

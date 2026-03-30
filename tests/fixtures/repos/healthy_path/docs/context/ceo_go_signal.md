@@ -1,7 +1,7 @@
 # CEO GO Signal
 
 - Phase: UNKNOWN
-- Generated: 2026-03-29T07:32:41Z
+- Generated: 2026-03-30T06:33:21Z
 - Recommended Action: HOLD
 
 ## Dossier Criteria
@@ -29,6 +29,6 @@
 
 ## Artifact Links
 
-- Dossier JSON: `E:\Code\SOP\quant_current_scope\tests\fixtures\repos\healthy_path\docs\context\auditor_promotion_dossier.json`
-- Calibration JSON: `E:\Code\SOP\quant_current_scope\tests\fixtures\repos\healthy_path\docs\context\auditor_calibration_report.json`
-- Signal Markdown: `E:\Code\SOP\quant_current_scope\tests\fixtures\repos\healthy_path\docs\context\ceo_go_signal.md`
+- Dossier JSON: `.\docs\context\auditor_promotion_dossier.json`
+- Calibration JSON: `.\docs\context\auditor_calibration_report.json`
+- Signal Markdown: `.\docs\context\ceo_go_signal.md`

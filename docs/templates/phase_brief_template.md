@@ -1,5 +1,8 @@
 # Phase Brief Template
 
+> **Canonical source:** src/sop/templates/phase_brief_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 **Phase ID**: [phase-XX]
 **Phase Name**: [Human-readable phase name]
 **Status**: [not_started | in_progress | blocked | complete]

@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-29T11:04:35Z",
-  "result": "NOT_READY",
-  "exit_code": 1,
+  "generated_at_utc": "2026-03-30T09:24:16Z",
+  "result": "READY_TO_ESCALATE",
+  "exit_code": 0,
   "freshness_hours": 72.0,
   "paths": {
     "repo_root": "E:\\Code\\SOP\\quant_current_scope",
@@ -32,8 +32,8 @@
     "output_md": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_closure_status_latest.md"
   },
   "summary": {
-    "pass_count": 16,
-    "fail_count": 1,
+    "pass_count": 17,
+    "fail_count": 0,
     "error_count": 0,
     "skip_count": 3,
     "total_checks": 20
@@ -131,9 +131,9 @@
         "--round-contract-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md",
         "--loop-summary-json",
-        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmp39rjp306\\loop_summary_preview.json",
+        "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_cycle_summary_latest.json",
         "--closure-json",
-        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmp39rjp306\\closure_preview.json"
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmpd9uczo0c\\closure_preview.json"
       ],
       "exit_code": 0,
       "details": "[OK] DONE_WHEN_CHECKS validation passed."
@@ -214,12 +214,12 @@
     },
     {
       "name": "freshness_gate",
-      "status": "FAIL",
-      "message": "2 artifacts exceed freshness threshold (72.00h).",
+      "status": "PASS",
+      "message": "All checked artifacts are within freshness threshold (72.00h).",
       "path": "",
       "command": [],
       "exit_code": null,
-      "details": "required_startup_card_md (E:\\Code\\SOP\\quant_current_scope\\docs\\context\\init_execution_card_latest.md) age=188.35h; startup_intake_json (E:\\Code\\SOP\\quant_current_scope\\docs\\context\\startup_intake_latest.json) age=188.35h"
+      "details": ""
     },
     {
       "name": "go_signal_truth_gate",

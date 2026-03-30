@@ -1,5 +1,8 @@
 # Change Manifest Template
 
+> **Canonical source:** src/sop/templates/change_manifest_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Use this template for big changes before coding.
 
 ## Header

@@ -278,6 +278,314 @@ jobs:
         if: runner.os != 'Windows'
         run: ./.venv/bin/python -m pytest -q
 
+  # Job E-1: Golden Path Proof (Windows + Linux)
+  golden-path:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install package (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Run golden path (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Assertion 2: sop run --repo-root . exits 0
+          .\.venv\Scripts\sop run --repo-root . 2>stderr.txt
+          if ($LASTEXITCODE -ne 0) { Write-Error "FAIL: sop run exited $LASTEXITCODE"; exit 1 }
+
+          # Assertion 3: run_failure_latest.json must NOT exist after healthy run
+          if (Test-Path docs\context\run_failure_latest.json) { Write-Error "FAIL: run_failure_latest.json exists after healthy run"; exit 1 }
+
+          # Assertion 4: No FATAL line on stderr
+          if (Select-String -Path stderr.txt -Pattern "FATAL" -Quiet) { Write-Error "FAIL: FATAL found on stderr"; exit 1 }
+
+          # Assertion 5: loop_cycle_summary_latest.json exists and contains gate_decisions array
+          if (-not (Test-Path docs\context\loop_cycle_summary_latest.json)) { Write-Error "FAIL: loop_cycle_summary_latest.json missing"; exit 1 }
+          $summary = Get-Content docs\context\loop_cycle_summary_latest.json -Raw | ConvertFrom-Json
+          if ($null -eq $summary.gate_decisions) { Write-Error "FAIL: gate_decisions missing from summary"; exit 1 }
+
+          # Assertion 6: skills_status present at top-level key
+          if ($null -eq $summary.skills_status) { Write-Error "FAIL: skills_status missing from summary"; exit 1 }
+
+          Write-Host "golden-path: PASS"
+
+      - name: Run golden path (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          # Assertion 2: sop run --repo-root . exits 0
+          ./.venv/bin/sop run --repo-root . 2>stderr.txt
+          if [ $? -ne 0 ]; then echo "FAIL: sop run exited non-zero"; exit 1; fi
+
+          # Assertion 3: run_failure_latest.json must NOT exist after healthy run
+          if [ -f docs/context/run_failure_latest.json ]; then echo "FAIL: run_failure_latest.json exists after healthy run"; exit 1; fi
+
+          # Assertion 4: No FATAL line on stderr
+          if grep -q "FATAL" stderr.txt; then echo "FAIL: FATAL found on stderr"; exit 1; fi
+
+          # Assertion 5: loop_cycle_summary_latest.json exists and contains gate_decisions array
+          if [ ! -f docs/context/loop_cycle_summary_latest.json ]; then echo "FAIL: loop_cycle_summary_latest.json missing"; exit 1; fi
+          python3 -c "
+import json, sys
+with open('docs/context/loop_cycle_summary_latest.json') as f:
+    s = json.load(f)
+if 'gate_decisions' not in s:
+    print('FAIL: gate_decisions missing from summary'); sys.exit(1)
+if 'skills_status' not in s:
+    print('FAIL: skills_status missing from summary'); sys.exit(1)
+print('gate_decisions and skills_status: PRESENT')
+"
+          echo "golden-path: PASS"
+
+  # Job E-2: Preflight Failure Detection
+  preflight-failure-detection:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install package (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Corrupt sop package to simulate broken install (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $sopPath = .\.venv\Scripts\python -c "import sop; import os; print(os.path.dirname(sop.__file__))"
+          Rename-Item $sopPath "$sopPath.bak"
+          Write-Host "Corrupted sop package path: $sopPath"
+
+      - name: Corrupt sop package to simulate broken install (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          SOP_PATH=$(./.venv/bin/python -c "import sop; import os; print(os.path.dirname(sop.__file__))")
+          mv "$SOP_PATH" "${SOP_PATH}.bak"
+          echo "Corrupted sop package path: $SOP_PATH"
+
+      - name: Assert preflight failure detected (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Assertion 1: sop run must exit non-zero after corrupt install
+          .\.venv\Scripts\sop run --repo-root . 2>stderr.txt
+          if ($LASTEXITCODE -eq 0) { Write-Error "FAIL: sop run exited 0 on broken install (expected non-zero)"; exit 1 }
+
+          # Assertion 2: run_failure_latest.json written with failure_class present
+          if (-not (Test-Path docs\context\run_failure_latest.json)) { Write-Error "FAIL: run_failure_latest.json not written"; exit 1 }
+          $artifact = Get-Content docs\context\run_failure_latest.json -Raw | ConvertFrom-Json
+          if (-not $artifact.failure_class) { Write-Error "FAIL: failure_class missing from artifact"; exit 1 }
+
+          # Assertion 3: FATAL line present on stderr
+          if (-not (Select-String -Path stderr.txt -Pattern "FATAL" -Quiet)) { Write-Error "FAIL: no FATAL on stderr"; exit 1 }
+
+          # Assertion 4: failure_class in artifact matches FATAL stderr value
+          $fatalLine = Select-String -Path stderr.txt -Pattern "FATAL" | Select-Object -First 1
+          if ($fatalLine -notmatch [regex]::Escape($artifact.failure_class)) { Write-Error "FAIL: failure_class in artifact does not match FATAL stderr"; exit 1 }
+
+          Write-Host "preflight-failure-detection: PASS"
+
+      - name: Assert preflight failure detected (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          # Assertion 1: sop run must exit non-zero after corrupt install
+          ./.venv/bin/sop run --repo-root . 2>stderr.txt || true
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then echo "FAIL: sop run exited 0 on broken install (expected non-zero)"; exit 1; fi
+
+          # Assertion 2: run_failure_latest.json written with failure_class present
+          if [ ! -f docs/context/run_failure_latest.json ]; then echo "FAIL: run_failure_latest.json not written"; exit 1; fi
+          python3 -c "
+import json, sys
+with open('docs/context/run_failure_latest.json') as f:
+    a = json.load(f)
+if not a.get('failure_class'):
+    print('FAIL: failure_class missing from artifact'); sys.exit(1)
+print('failure_class:', a['failure_class'])
+"
+
+          # Assertion 3: FATAL line present on stderr
+          if ! grep -q "FATAL" stderr.txt; then echo "FAIL: no FATAL on stderr"; exit 1; fi
+
+          # Assertion 4: failure_class in artifact matches FATAL stderr value
+          FAILURE_CLASS=$(python3 -c "import json; print(json.load(open('docs/context/run_failure_latest.json'))['failure_class'])")
+          if ! grep -q "$FAILURE_CLASS" stderr.txt; then echo "FAIL: failure_class $FAILURE_CLASS not found in FATAL stderr line"; exit 1; fi
+
+          echo "preflight-failure-detection: PASS"
+
+  # Job E-3: Shadowed Module Smoke
+  shadowed-module-smoke:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\python -m pip install -c constraints.txt .
+
+      - name: Install package (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Place fake phase_gate.py shadow in scripts/
+        run: |
+          echo "# Fake phase_gate shadow for CI smoke test" > scripts/phase_gate.py
+
+      - name: Assert shadow detected (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Assertion 1: sop run must exit non-zero when shadow present
+          .\.venv\Scripts\sop run --repo-root . 2>stderr.txt
+          if ($LASTEXITCODE -eq 0) { Write-Error "FAIL: sop run exited 0 with shadow present (expected non-zero)"; exit 1 }
+
+          # Assertion 2: run_failure_latest.json written with correct failure_class
+          if (-not (Test-Path docs\context\run_failure_latest.json)) { Write-Error "FAIL: run_failure_latest.json not written"; exit 1 }
+          $artifact = Get-Content docs\context\run_failure_latest.json -Raw | ConvertFrom-Json
+          if ($artifact.failure_class -ne 'IMPORT_ERROR' -and $artifact.failure_class -ne 'PREFLIGHT_FAILED') {
+            Write-Error "FAIL: unexpected failure_class '$($artifact.failure_class)' (expected IMPORT_ERROR or PREFLIGHT_FAILED)"
+            exit 1
+          }
+
+          Write-Host "shadowed-module-smoke (Windows): PASS"
+
+      - name: Assert shadow detected (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          # Assertion 1: sop run must exit non-zero when shadow present
+          ./.venv/bin/sop run --repo-root . 2>stderr.txt || true
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then echo "FAIL: sop run exited 0 with shadow present (expected non-zero)"; exit 1; fi
+
+          # Assertion 2: run_failure_latest.json written with correct failure_class
+          if [ ! -f docs/context/run_failure_latest.json ]; then echo "FAIL: run_failure_latest.json not written"; exit 1; fi
+          python3 -c "
+import json, sys
+with open('docs/context/run_failure_latest.json') as f:
+    a = json.load(f)
+fc = a.get('failure_class', '')
+if fc not in ('IMPORT_ERROR', 'PREFLIGHT_FAILED'):
+    print(f'FAIL: unexpected failure_class {fc!r} (expected IMPORT_ERROR or PREFLIGHT_FAILED)'); sys.exit(1)
+print('failure_class:', fc)
+"
+
+          echo "shadowed-module-smoke (Linux): PASS"
+
+  # Job E-4: Golden Path macOS (best-effort, non-blocking)
+  golden-path-macos:
+    runs-on: macos-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install package
+        run: |
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints.txt .
+
+      - name: Run golden path
+        run: |
+          # Assertion 2: sop run --repo-root . exits 0
+          ./.venv/bin/sop run --repo-root . 2>stderr.txt
+          if [ $? -ne 0 ]; then echo "FAIL: sop run exited non-zero"; exit 1; fi
+
+          # Assertion 3: run_failure_latest.json must NOT exist after healthy run
+          if [ -f docs/context/run_failure_latest.json ]; then echo "FAIL: run_failure_latest.json exists after healthy run"; exit 1; fi
+
+          # Assertion 4: No FATAL line on stderr
+          if grep -q "FATAL" stderr.txt; then echo "FAIL: FATAL found on stderr"; exit 1; fi
+
+          # Assertion 5: loop_cycle_summary_latest.json exists and contains gate_decisions array
+          if [ ! -f docs/context/loop_cycle_summary_latest.json ]; then echo "FAIL: loop_cycle_summary_latest.json missing"; exit 1; fi
+          python3 -c "
+import json, sys
+with open('docs/context/loop_cycle_summary_latest.json') as f:
+    s = json.load(f)
+if 'gate_decisions' not in s:
+    print('FAIL: gate_decisions missing from summary'); sys.exit(1)
+if 'skills_status' not in s:
+    print('FAIL: skills_status missing from summary'); sys.exit(1)
+print('gate_decisions and skills_status: PRESENT')
+"
+
+          echo "golden-path-macos: PASS"
+
   # Job 5: Wheel Install Smoke (optional, manual trigger)
   wheel-smoke:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_wheel_smoke == true }}

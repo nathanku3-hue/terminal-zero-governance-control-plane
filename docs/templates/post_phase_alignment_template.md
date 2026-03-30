@@ -1,5 +1,8 @@
 # Post-Phase Alignment Template
 
+> **Canonical source:** src/sop/templates/post_phase_alignment_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template
 Authority: advisory-only integration artifact. This file does not authorize execution, promotion, or scope widening by itself.
 Purpose: update the multi-stream map after a major round or phase so the next round starts from current truth instead of stale assumptions.

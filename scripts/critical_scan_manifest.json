@@ -32,6 +32,10 @@
     {
       "scripts": "scripts/check_fail_open.py",
       "src": "src/sop/scripts/check_fail_open.py"
+    },
+    {
+      "scripts": "scripts/check_loop_readiness.py",
+      "src": "src/sop/scripts/check_loop_readiness.py"
     }
   ]
 }

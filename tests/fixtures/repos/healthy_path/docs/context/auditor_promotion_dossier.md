@@ -1,6 +1,6 @@
 # Auditor Calibration Report (DOSSIER)
 
-**Generated:** 2026-03-29T07:32:41.483141+00:00
+**Generated:** 2026-03-30T06:33:20.671086+00:00
 **Runs included:** 0
 **Time range:** N/A to N/A
 
@@ -31,10 +31,10 @@
 
 | Criterion | Met | Value |
 |-----------|-----|-------|
-| c0_infra_health | ✅ | 0 failures |
-| c1_24b_close | ⚠️ | MANUAL_CHECK |
-| c2_min_items | ❌ | 0 >= 30 |
-| c3_min_weeks | ❌ | 0 consecutive weeks >= 2 |
-| c4_fp_rate | ✅ | N/A |
-| c4b_annotation_coverage | ✅ | 100.00% |
-| c5_all_v2 | ✅ | 0 versions: [] |
+| c0_infra_health | [OK] | 0 failures |
+| c1_24b_close | [WARN] | MANUAL_CHECK |
+| c2_min_items | [FAIL] | 0 >= 30 |
+| c3_min_weeks | [FAIL] | 0 consecutive weeks >= 2 |
+| c4_fp_rate | [OK] | N/A |
+| c4b_annotation_coverage | [OK] | 100.00% |
+| c5_all_v2 | [OK] | 0 versions: [] |

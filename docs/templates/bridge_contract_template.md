@@ -1,5 +1,8 @@
 # Bridge Contract Template
 
+> **Canonical source:** src/sop/templates/bridge_contract_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template  
 Authority: advisory-only integration artifact. This file does not authorize execution, promotion, or scope widening by itself.  
 Purpose: bridge technical execution truth back to planner truth and PM/product/system truth.

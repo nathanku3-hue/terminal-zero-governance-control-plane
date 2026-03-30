@@ -1,34 +1,35 @@
 # Post-Phase Alignment
-Generated: 2026-03-29
-Phase: phase-5-release-readiness
+Generated: 2026-03-30
+Phase: phase-6-post-hardening-integration
 
 ## Stream Status Update
 | Stream | Status | Bottleneck | Next Action |
 |--------|--------|------------|-------------|
-| Pre-execution | COMPLETE | None | N/A |
-| Ph5-G (check_fail_open.py dual copy) | COMPLETE | None | Verify TestByteIdentityContract green |
-| L (Current Truth Surfaces) | COMPLETE | None | Verify _read_spec_phase() returns correct value |
-| M (Deterministic Release Gate) | IN PROGRESS | 3 consecutive fresh runs | Execute M.1 runs, promote architecture doc |
-| N (docs/context Hygiene) | IN PROGRESS | README.md classification | Complete classification, update .gitignore, archive |
-| Phase 6 | BLOCKED | Phase 5 close gate not yet met | Wait for L + M + N all green |
+| Phase 2 — Execution Hardening | COMPLETE | None | N/A |
+| Phase 3 — Checklist Matrix | COMPLETE | None | N/A |
+| Phase 4 — Navigation + Boundary | COMPLETE | None | N/A |
+| Phase 5 — Golden Path Proof | COMPLETE | None | N/A |
+| Phase 6 — Post-Hardening Integration | COMPLETE | None | Phase 7 closure gate |
+| Phase 7 — Sprint Closure Gate | IN PROGRESS | Phase 6 just closed | Walk C-1 through C-8, emit ClosurePacket |
 
-**Current critical path**: Stream M (3 consecutive fresh runs).
+**Current critical path**: Phase 7 closure gate.
 
 ## Bottleneck Analysis
-**Active bottleneck**: Stream M.1 — 3 consecutive fresh runs.
-- Each run requires: clean state (remove loop_cycle_summary_latest.json and exec_memory_packet_latest.json), then 5 steps (sop --help, startup_codex_helper.py --help, run_loop_cycle.py --help, pytest -q, check_fail_open.py, check_schema_version_policy.py).
-- No rerun recovery allowed. All 3 runs must pass all 5 steps.
-- Duration estimate: ~3-5 minutes total.
+**Active bottleneck**: None. All six phases complete. Phase 7 is the terminal verification gate.
 
-**No other blockers**: Pre-execution, L, N are complete or near-complete.
-
-**Phase 6 entry condition**: All of L + M + N acceptance gates met. `docs/next_phase_plan.md` must exist and be readable.
+**Phase 6 Track Summary**:
+- Track 1: artifact_refs hash fields (hash/content_kind/hash_strategy) — COMPLETE
+- Track 2: error_code registry + schema version policy CI + decision_basis_count — COMPLETE
+- Track 3: 0 real test failures in test_run_loop_cycle.py — COMPLETE
+- Track 4: skills_status ACTIVE in CI via skill pilot — COMPLETE
+- Track 5: retry loop + attempt_id increment — COMPLETE
+- Track 6: checkpoint resume + evaluation_outcome_source — COMPLETE
 
 ## Multi-Stream Contract Changes Since Last Alignment
-- Multi-stream contract instantiated fresh for Phase 5 (was absent before this phase).
-- Stream L promoted from "absent" to "COMPLETE" in this alignment cycle.
-- Stream M status updated from "not started" to "IN PROGRESS".
-- Stream N status updated from "not started" to "IN PROGRESS".
-- `observability_pack_current.md` was already present (created in Phase 4 Stream K).
-- `check_fail_open.py` dual copy added as Ph5-G deliverable (new interface added to `DUAL_COPY_FILES`).
-- `TestByteIdentityContract` now covers 8 files (was 7 before Ph5-G).
+- All Phase 2-6 streams closed and green.
+- Scoped suite: 117 passed, 1 skipped (by design).
+- test_hardening.py: 81 collected, 0 failures.
+- check_fail_open.py: PASS, no BLOCKERs.
+- loop_readiness_latest.json: routing=skills_active.
+- All operator docs: zero absolute paths.
+- Truth surfaces refreshed for phase-6-post-hardening-integration entry.

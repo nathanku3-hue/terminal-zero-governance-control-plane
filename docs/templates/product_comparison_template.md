@@ -1,5 +1,8 @@
 # Product Comparison Template
 
+> **Canonical source:** src/sop/templates/product_comparison_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template  
 Authority: advisory-only; instantiate into `docs/context/product_comparison_latest.md`.  
 Purpose: compare researched products and make explicit `COPY`, `MODIFY_ON_TOP`, and `REJECT` decisions from both technical and product/operator perspectives before implementation.

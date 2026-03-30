@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-29T07:32:41.908600Z",
+  "generated_at_utc": "2026-03-30T06:33:22.676549Z",
   "inputs": {
-    "loop_summary": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json",
+    "loop_summary": ".\\docs\\context\\loop_cycle_summary_current.json",
     "dossier": "docs\\context\\auditor_promotion_dossier.json",
     "calibration": "docs\\context\\auditor_calibration_report.json",
     "go_signal": "docs\\context\\ceo_go_signal.md",
@@ -35,7 +35,7 @@
     "optional": [
       {
         "file": "loop_cycle_summary_current.json",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json",
+        "path": ".\\docs\\context\\loop_cycle_summary_current.json",
         "status": "loaded"
       },
       {
@@ -45,17 +45,17 @@
       },
       {
         "file": ".sop_config.yaml",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\.sop_config.yaml",
+        "path": ".\\.sop_config.yaml",
         "status": "missing_or_invalid"
       },
       {
         "file": "extension_allowlist.yaml",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\extension_allowlist.yaml",
+        "path": ".\\extension_allowlist.yaml",
         "status": "missing_or_invalid"
       },
       {
         "file": "registry.yaml",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\skills\\registry.yaml",
+        "path": ".\\skills\\registry.yaml",
         "status": "missing_or_invalid"
       }
     ]
@@ -71,7 +71,7 @@
   "memory_tier_contract": {
     "schema_version": "1.0.0",
     "source_of_truth": "scripts/utils/memory_tiers.py",
-    "documentation": "docs/memory_tier_contract.md",
+    "documentation": "docs/context/MEMORY_TIER_CONTRACT.md",
     "families": [
       {
         "tier": "hot",
@@ -293,7 +293,7 @@
     "inputs": [
       {
         "family": "loop_cycle_summary",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json",
+        "path": ".\\docs\\context\\loop_cycle_summary_current.json",
         "tier": "hot",
         "access": "default_input"
       },
@@ -329,19 +329,19 @@
       },
       {
         "family": "project_skill_config",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\.sop_config.yaml",
+        "path": ".\\.sop_config.yaml",
         "tier": "warm",
         "access": "default_input"
       },
       {
         "family": "extension_allowlist",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\extension_allowlist.yaml",
+        "path": ".\\extension_allowlist.yaml",
         "tier": "warm",
         "access": "default_input"
       },
       {
         "family": "skill_registry",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\skills\\registry.yaml",
+        "path": ".\\skills\\registry.yaml",
         "tier": "warm",
         "access": "default_input"
       }
@@ -349,13 +349,13 @@
     "outputs": [
       {
         "family": "exec_memory_packet",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\exec_memory_packet_latest_current.json",
+        "path": ".\\docs\\context\\exec_memory_packet_latest_current.json",
         "tier": "hot",
         "access": "derived_output"
       },
       {
         "family": "exec_memory_build_status",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\exec_memory_packet_build_status_current.json",
+        "path": ".\\docs\\context\\exec_memory_packet_build_status_current.json",
         "tier": "hot",
         "access": "derived_output"
       },
@@ -395,7 +395,7 @@
     "working_summary": "Final result: FAIL\nSteps total: 5\nStep outcomes: PASS=3, HOLD=0, FAIL=1, ERROR=0, SKIP=1\nBlocking steps: refresh_dossier",
     "issue_summary": "Promotion blockers: c2_min_items, c3_min_weeks",
     "daily_pm_summary": "## Working Context\nFinal result: FAIL\nSteps total: 5\nStep outcomes: PASS=3, HOLD=0, FAIL=1, ERROR=0, SKIP=1\nBlocking steps: refresh_dossier\n\n## Issues\nPromotion blockers: c2_min_items, c3_min_weeks\n",
-    "weekly_ceo_summary": "## CEO Go Signal\npath\\docs\\context\\auditor_promotion_dossier.json`\n- Calibration JSON: `E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\auditor_calibration_report.json`\n- Signal Markdown: `E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\ceo_go_signal.md`\n\n\n## Promotion Status\nCriteria met: 4/6\n\n## Auditor Calibration\nItems reviewed: 0"
+    "weekly_ceo_summary": "## CEO Go Signal\npath\\docs\\context\\auditor_promotion_dossier.json`\n- Calibration JSON: `.\\docs\\context\\auditor_calibration_report.json`\n- Signal Markdown: `.\\docs\\context\\ceo_go_signal.md`\n\n\n## Promotion Status\nCriteria met: 4/6\n\n## Auditor Calibration\nItems reviewed: 0"
   },
   "replanning": {
     "status": "ACTION_REQUIRED",
@@ -709,7 +709,7 @@
     "skills": [],
     "warnings": [],
     "errors": [
-      "Failed to load E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\.sop_config.yaml"
+      "Failed to load .\\.sop_config.yaml"
     ]
   },
   "retrieval_namespaces": {
@@ -748,7 +748,7 @@
     ]
   },
   "source_bindings": [
-    "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json",
+    ".\\docs\\context\\loop_cycle_summary_current.json",
     "docs\\context\\auditor_promotion_dossier.json",
     "docs\\context\\auditor_calibration_report.json",
     "docs\\context\\ceo_go_signal.md"
@@ -757,12 +757,12 @@
     {
       "claim_id": "SC001",
       "text": "Final result: FAIL",
-      "source_path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json"
+      "source_path": ".\\docs\\context\\loop_cycle_summary_current.json"
     },
     {
       "claim_id": "SC002",
       "text": "Steps total: 5",
-      "source_path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\loop_cycle_summary_current.json"
+      "source_path": ".\\docs\\context\\loop_cycle_summary_current.json"
     },
     {
       "claim_id": "SC003",

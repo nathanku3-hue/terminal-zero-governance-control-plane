@@ -1,14 +1,14 @@
 # Auditor Calibration Report (WEEKLY)
 
-**Generated:** 2026-03-29T11:04:26.988911+00:00
-**Runs included:** 17
+**Generated:** 2026-03-30T09:24:12.941239+00:00
+**Runs included:** 18
 **Time range:** N/A to N/A
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Items reviewed | 72 |
+| Items reviewed | 78 |
 | CRITICAL | 1 |
 | HIGH | 57 |
 | MEDIUM | 46 |
@@ -45,3 +45,4 @@
 | 2026-W10 | 54 | 1 | 42 | 34 | 0 | 0 |
 | 2026-W11 | 12 | 0 | 10 | 8 | 0 | 0 |
 | 2026-W12 | 6 | 0 | 5 | 4 | 0 | 0 |
+| 2026-W13 | 6 | 0 | 0 | 0 | 0 | 0 |

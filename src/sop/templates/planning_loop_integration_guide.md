@@ -150,6 +150,34 @@ This is the least-drifty design for complex systems.
 7. If standby mode, wait for explicit approval packet
 ```
 
+### Pattern 4: Subagent Review Choreography
+
+This pattern describes the review sequence for bounded execution with subagent delegation. It is an **integration pattern**, not a new gate.
+
+```
+1. Implementer executes bounded scope against round contract
+2. Spec Compliance Review:
+   - Verify implementation matches planner_packet_current.md spec
+   - Verify implementation matches bridge_contract_current.md spec
+   - If FAIL: return to Implementer with spec drift notes
+3. Code Quality Review:
+   - Check test coverage, lint, typecheck status
+   - If FAIL: return to Implementer with quality issues (spec compliance remains valid)
+4. If both reviews pass:
+   - Continue to next bounded piece, OR
+   - Close round if done_checklist_current.md criteria met
+```
+
+**Invariants**:
+
+| Invariant | Enforcement |
+|-----------|-------------|
+| No new authority | This pattern does not override PM/CEO approval gates |
+| No runtime hooks | Choreography is advisory, not automated enforcement |
+| Re-review required | Failed reviews must return to Implementer before proceeding |
+
+This choreography is advisory-only. It does not create a new gate or authority path.
+
 ## Artifact Refresh Rules
 
 ### Planner Packet

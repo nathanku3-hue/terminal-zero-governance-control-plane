@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "evaluated_at_utc": "2026-03-30T06:33:29Z",
+  "trace_id": "20260330T063319Z-d74b",
+  "from_phase": "exec_memory",
+  "to_phase": "advisory",
+  "gate_conditions": [
+    {
+      "name": "exec_memory_cycle_ready",
+      "result": true,
+      "detail": "runtime.exec_memory_cycle_ready is True"
+    },
+    {
+      "name": "no_schema_violations",
+      "result": true,
+      "detail": "loop_run_trace_latest.json final_result=FAIL"
+    },
+    {
+      "name": "no_error_steps",
+      "result": true,
+      "detail": "no ERROR steps"
+    }
+  ],
+  "all_conditions_met": true,
+  "decision": "PROCEED"
+}

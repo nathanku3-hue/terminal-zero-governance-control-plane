@@ -480,6 +480,7 @@ class TestByteIdentityContract:
         "planner_role.py",
         "check_schema_version_policy.py",  # F.3 addition
         "check_fail_open.py",              # Ph5-G addition
+        "check_loop_readiness.py",         # Ph3-C addition
     ]
 
     def test_dual_copy_byte_identity(self):

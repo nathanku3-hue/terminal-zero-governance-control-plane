@@ -1,5 +1,8 @@
 # Domain Falsification Pack (Template)
 
+> **Canonical source:** src/sop/templates/domain_falsification_pack.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Use this only for high-semantic-risk claims before coding.
 
 ## Header

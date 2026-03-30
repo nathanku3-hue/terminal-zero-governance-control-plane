@@ -1,5 +1,8 @@
 # Thesis Pull Template
 
+> **Canonical source:** src/sop/templates/thesis_pull_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template  
 Authority: advisory-only; instantiate into `docs/context/thesis_pull_latest.md`.  
 Purpose: pull one possible philosophy or heuristic refinement from another repo only when live operating evidence exists there.

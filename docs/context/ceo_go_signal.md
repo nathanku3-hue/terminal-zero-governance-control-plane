@@ -1,7 +1,7 @@
 # CEO GO Signal
 
 - Phase: Phase 24
-- Generated: 2026-03-29T11:04:28Z
+- Generated: 2026-03-30T09:24:13Z
 - Recommended Action: GO
 
 ## Dossier Criteria
@@ -10,7 +10,7 @@
 |---|---|---|
 | C0 | PASS | 0 failures |
 | C1 | PASS | APPROVED |
-| C2 | PASS | 72 >= 30 |
+| C2 | PASS | 78 >= 30 |
 | C3 | PASS | 2 consecutive weeks >= 2 |
 | C4 | PASS | 0.00% |
 | C4b | PASS | 100.00% |

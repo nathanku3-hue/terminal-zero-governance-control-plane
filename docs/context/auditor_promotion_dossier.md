@@ -1,14 +1,14 @@
 # Auditor Calibration Report (DOSSIER)
 
-**Generated:** 2026-03-29T11:04:27.865411+00:00
-**Runs included:** 17
+**Generated:** 2026-03-30T09:24:13.247893+00:00
+**Runs included:** 18
 **Time range:** N/A to N/A
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Items reviewed | 72 |
+| Items reviewed | 78 |
 | CRITICAL | 1 |
 | HIGH | 57 |
 | MEDIUM | 46 |
@@ -45,6 +45,7 @@
 | 2026-W10 | 54 | 1 | 42 | 34 | 0 | 0 |
 | 2026-W11 | 12 | 0 | 10 | 8 | 0 | 0 |
 | 2026-W12 | 6 | 0 | 5 | 4 | 0 | 0 |
+| 2026-W13 | 6 | 0 | 0 | 0 | 0 | 0 |
 
 ## Promotion Dossier
 
@@ -52,7 +53,7 @@
 |-----------|-----|-------|
 | c0_infra_health | [OK] | 0 failures |
 | c1_24b_close | [OK] | APPROVED |
-| c2_min_items | [OK] | 72 >= 30 |
+| c2_min_items | [OK] | 78 >= 30 |
 | c3_min_weeks | [OK] | 2 consecutive weeks >= 2 |
 | c4_fp_rate | [OK] | 0.00% |
 | c4b_annotation_coverage | [OK] | 100.00% |

@@ -1,5 +1,5 @@
 # CEO Bridge Digest
-Generated: 2026-03-27T07:55:50.333281Z
+Generated: 2026-03-29T16:34:56.199627Z
 Digest Version: 2.0.0
 
 ## I. First Principles Engineering Summary
@@ -116,7 +116,7 @@ Digest Version: 2.0.0
 - codex_auditor_calibration_v1 / PM-24C-006: Implemented auditor calibration system with 7 rules (AUD-R000 through AUD-R009), FP ledger schema, and promotion dossier. Fixed 9 critical gaps in calibration script (status schema, BOM encoding, consecutive weeks logic, items counting, timestamp validation, ledger validation, output paths). First shadow cycle complete with 3 C/H findings (100% annotated as TP). Dossier currently blocks on C2 (1/30 items) and C3 (0/2 weeks) as expected on Day 1 of shadow window.
 
 ## IX. Auditor Review Findings
-**Mode:** enforce | **Verdict:** PASS | **Total findings:** 0
+**Mode:** shadow | **Verdict:** PASS | **Total findings:** 0
 
 No findings.
 

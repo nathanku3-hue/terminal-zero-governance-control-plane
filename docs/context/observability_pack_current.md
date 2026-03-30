@@ -1,29 +1,26 @@
 # Observability Pack
-Generated: 2026-03-29
+Generated: 2026-03-30
 Activation: Per KERNEL_ACTIVATION_MATRIX.md — Quant repo ✅ Active
 
 ## High-Risk Attempts
-<!-- List attempts that touched critical paths or caused REQUIRES_FIX failures -->
-<!-- Format: date | failure_class | error_code | outcome -->
+<!-- No high-risk attempts recorded in Phase 6 -->
 
 ## Stuck Sessions
-<!-- List sessions that ran >3 cycles without progress -->
-<!-- Format: date | session description | resolution -->
+<!-- No stuck sessions in Phase 6 -->
 
 ## Skill Under-Triggering
-<!-- List skills that resolved to EMPTY_BY_DESIGN unexpectedly -->
-<!-- Format: date | skill | expected | actual -->
+<!-- No unexpected EMPTY_BY_DESIGN in Phase 6 -->
 
 ## Budget Pressure
-<!-- Note runs where context window or token budget approached limits -->
+<!-- No budget pressure events in Phase 6 -->
 
 ## Compaction/Hallucination Pressure
-<!-- Note sessions where compaction triggered or hallucination suspected -->
+<!-- No compaction or hallucination events in Phase 6 -->
 
 ## Drift Markers (machine-checkable)
-- [ ] No FATAL envelope on last 3 runs
-- [ ] `skills_status` = OK on last run
-- [ ] `final_result` in [PASS, READY_TO_ESCALATE] on last run
-- [ ] `check_fail_open.py` baseline green
-- [ ] No new BLOCKERs in last scan
-- [ ] `TestByteIdentityContract` green
+- [x] No FATAL envelope on last 3 runs
+- [x] `skills_status` = OK on last run (loop_readiness_latest.json: routing=skills_active)
+- [x] `final_result` in [PASS, READY_TO_ESCALATE] on last run
+- [x] `check_fail_open.py` baseline green (PASS, no BLOCKERs)
+- [x] No new BLOCKERs in last scan
+- [x] `TestByteIdentityContract` green (29 passed, 1 skipped in test_cli_script_parity.py)

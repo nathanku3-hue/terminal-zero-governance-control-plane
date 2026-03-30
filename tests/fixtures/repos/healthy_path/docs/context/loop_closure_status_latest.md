@@ -1,8 +1,8 @@
 # Loop Closure Validation
 
-- GeneratedAtUTC: 2026-03-29T07:32:42Z
-- Result: INPUT_OR_INFRA_ERROR
-- ExitCode: 2
+- GeneratedAtUTC: 2026-03-30T06:33:26Z
+- Result: NOT_READY
+- ExitCode: 1
 - FreshnessHours: 72.00
 
 | Check | Status | Message |
@@ -14,12 +14,12 @@
 | required_exec_memory_json | PASS | Required artifact found. |
 | go_signal_action_gate | FAIL | Recommended action must be GO (actual=HOLD). |
 | startup_gate_status | FAIL | Required startup_intake_latest.json not found. |
-| tdd_contract_gate | FAIL | Round contract artifact missing for TDD contract gate. |
-| domain_falsification_gate | SKIP | Round contract missing; domain falsification gate skipped. |
-| done_when_checks_gate | ERROR | DONE_WHEN checks gate had input/infra errors. |
-| counterexample_gate | ERROR | Counterexample gate had input/infra errors. |
-| dual_judge_gate | ERROR | Dual-judge gate had input/infra errors. |
-| refactor_mock_policy_gate | ERROR | Refactor/mock policy gate had input/infra errors. |
+| tdd_contract_gate | FAIL | TDD contract gate failed. |
+| domain_falsification_gate | SKIP | DOMAIN_FALSIFICATION_REQUIRED is NO (or omitted); domain falsification gate skipped for non-semantic round. |
+| done_when_checks_gate | PASS | DONE_WHEN checks gate passed. |
+| counterexample_gate | PASS | Counterexample gate passed. |
+| dual_judge_gate | PASS | Dual-judge gate passed. |
+| refactor_mock_policy_gate | PASS | Refactor/mock policy gate passed. |
 | review_checklist_gate | SKIP | Review checklist artifact not found; gate skipped. |
 | interface_contract_gate | SKIP | Interface contract manifest not found; gate skipped. |
 | parallel_fanin_gate | PASS | Parallel fan-in gate passed (no active parallel shards). |
@@ -30,7 +30,7 @@
 
 ## Summary
 
-- Pass: 9
+- Pass: 13
 - Fail: 4
-- Error: 4
+- Error: 0
 - Skip: 3

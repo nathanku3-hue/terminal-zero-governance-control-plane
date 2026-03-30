@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "trace_id": "20260330T063319Z-d74b",
+  "from_phase": "advisory",
+  "to_phase": "summary",
+  "triggered_at_utc": "2026-03-30T06:33:29Z"
+}

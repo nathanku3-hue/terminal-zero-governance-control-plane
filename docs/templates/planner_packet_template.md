@@ -1,5 +1,8 @@
 # Planner Packet Template
 
+> **Canonical source:** src/sop/templates/planner_packet_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template
 Authority: advisory-only integration artifact. This file does not authorize execution, promotion, or scope widening by itself.
 Purpose: provide the planner with a compact, fresh world model without requiring full-repo rereads.

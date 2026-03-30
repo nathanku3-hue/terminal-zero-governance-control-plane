@@ -1,5 +1,8 @@
 # Done Checklist Template
 
+> **Canonical source:** src/sop/templates/done_checklist_template.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Status: Template
 Authority: advisory-only integration artifact. This file does not authorize execution, promotion, or scope widening by itself.
 Purpose: define machine-checkable done criteria for a phase, round, or feature.

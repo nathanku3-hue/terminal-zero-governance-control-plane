@@ -1,13 +1,25 @@
 # Round Contract Seed
 
-- GENERATED_AT_UTC: 2026-03-15T12:27:15Z
+- GENERATED_AT_UTC: 2026-03-30T09:19:36Z
 
 ## Prefilled Fields
 
-- ORIGINAL_INTENT: Phase 24C promotion refresh + C1 signoff prep
-- DELIVERABLE_THIS_SCOPE: Refresh promotion artifacts, clean round-contract TODOs, draft C1 signoff entry, rerun closure
-- NON_GOALS: No enforce rollout, no PM/CEO approval capture, no cross-repo readiness unless explicitly requested
-- DONE_WHEN: Promotion artifacts refreshed, TODOs resolved, C1 signoff entry drafted as PENDING, closure rerun with refreshed outputs
+- ORIGINAL_INTENT: Phase 2 execution hardening - Stream B critical path
+- PRODUCT_STAGE_NOW: Phase 2 execution hardening in flight; Stream A+B parallel; Streams C+D independent
+- PRODUCT_STAGE_INTENT: Complete Stream B to unblock Stream E (Golden Path Proof)
+- PRODUCT_STAGE_OUT_OF_SCOPE: Stream E; Phase 3+; hash stability; schema version policy CI
+- PRODUCT_PROBLEM_THIS_ROUND: Fail-open paths (PhaseGate=None stubs, silent imports) not yet hardened
+- WHY_NOW: Stream B is critical path; blocks Stream E and 8/10 maturity target
+- IF_WE_SKIP_THIS: System remains fail-open; Stream E cannot be unblocked; production readiness stays at 2.5/5
+- DELIVERABLE_THIS_SCOPE: Complete Stream B hardening tasks H-1 through H-6 and H-NEW-1 through H-NEW-4; all 21 active tests pass
+- NON_GOALS: Do not start Stream E before Stream A and B complete; no hash fields in Phase 2; no scripts/ first
+- DONE_WHEN: All 21 active tests pass; run_failure_latest.json on every hard failure; gate_decisions visible on every run
+- PLANNED_SURFACE_NAME: N/A
+- PLANNED_SURFACE_TYPE: core
+- REPLACES_OR_MERGES_WITH: N/A
+- RETIRE_TRIGGER: N/A
+- MVP_NEXT_STAGE_GATE: All 21 Stream B tests pass; check_fail_open baseline committed
+- NEXT_SIMPLIFICATION_STEP: Phase 3: hash stability; Phase 4: Docker+JSON logs
 - POSITIONING_LOCK: lean
 - TASK_GRANULARITY_LIMIT: 1
 - DECISION_CLASS: TWO_WAY
@@ -32,18 +44,18 @@
 - UNKNOWN_EXPERT_DOMAIN_POLICY: ESCALATE_TO_BOARD
 - BOARD_REENTRY_REQUIRED: TODO(YES|NO)
 - BOARD_REENTRY_REASON: TODO(or N/A)
-- DONE_WHEN_CHECKS: startup_gate_status,go_signal_action_gate,freshness_gate,go_signal_truth_gate
-- COUNTEREXAMPLE_TEST_COMMAND: N/A
-- COUNTEREXAMPLE_TEST_RESULT: N/A
-- REFACTOR_BUDGET_MINUTES: 15
-- REFACTOR_SPEND_MINUTES: 10
+- DONE_WHEN_CHECKS: startup_gate_status,go_signal_action_gate,freshness_gate
+- COUNTEREXAMPLE_TEST_COMMAND: pytest tests/test_hardening.py tests/test_smoke_e.py -q
+- COUNTEREXAMPLE_TEST_RESULT: 98 passed
+- REFACTOR_BUDGET_MINUTES: 30
+- REFACTOR_SPEND_MINUTES: 0
 - REFACTOR_BUDGET_EXCEEDED_REASON: N/A
 - MOCK_POLICY_MODE: NOT_APPLICABLE
 - MOCKED_DEPENDENCIES: N/A
 - INTEGRATION_COVERAGE_FOR_MOCKS: N/A
-- OWNED_FILES: docs/context/round_contract_latest.md,docs/decision log.md,docs/context/auditor_calibration_report.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md,docs/context/loop_closure_status_latest.json
-- INTERFACE_INPUTS: docs/context/phase_end_logs/*,docs/context/auditor_fp_ledger.json,docs/context/current_context.json
-- INTERFACE_OUTPUTS: docs/context/auditor_calibration_report.json,docs/context/auditor_promotion_dossier.json,docs/context/ceo_go_signal.md,docs/context/loop_closure_status_latest.json
+- OWNED_FILES: sop/_failure_reporter.py,sop/scripts/phase_gate.py,sop/scripts/worker_role.py,sop/scripts/auditor_role.py,tests/test_hardening.py,tests/test_smoke_e.py
+- INTERFACE_INPUTS: docs/context/round_contract_latest.md,docs/context/loop_cycle_summary_latest.json
+- INTERFACE_OUTPUTS: docs/context/run_failure_latest.json,docs/context/loop_cycle_summary_latest.json
 - PARALLEL_SHARD_ID: TODO(optional; use none if single-worker)
 
 ## TDD Contract (Proof at Closure)

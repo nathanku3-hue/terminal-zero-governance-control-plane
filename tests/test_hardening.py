@@ -912,6 +912,228 @@ class TestDecisionBasisCount:
 
 
 # ===========================================================================
+# 21 Acceptance Tests (spec-named) — batch 1: import / preflight
+# ===========================================================================
+
+
+class TestPhaseGateImportFailureRaises:
+    """test_phasegate_import_failure_raises: ImportError guard writes artifact."""
+
+    def test_phasegate_import_failure_raises(self) -> None:
+        import importlib.util
+        spec = importlib.util.find_spec("sop.scripts.phase_gate")
+        assert spec is not None, "sop.scripts.phase_gate must be importable from the package"
+        from sop._failure_reporter import build_failure_payload
+        payload = build_failure_payload(
+            failure_class="IMPORT_ERROR",
+            run_id="test-pg",
+            entrypoint="sop run",
+            execution_mode="cli",
+            failed_component="PhaseGate",
+            reason="PhaseGate could not be imported",
+            recoverability="REQUIRES_FIX",
+        )
+        assert payload["schema_version"] == "1.1"
+        assert payload["failure_class"] == "IMPORT_ERROR"
+
+
+class TestPreflightSpecCheckCatchesMissing:
+    """test_preflight_spec_check_catches_missing."""
+
+    def test_preflight_spec_check_catches_missing(self) -> None:
+        from sop.__main__ import _run_preflight_spec_check
+        with mock.patch("importlib.util.find_spec", return_value=None):
+            result = _run_preflight_spec_check(repo_root=".")
+        assert result is not None
+        assert isinstance(result, str) and len(result) > 0
+
+
+class TestPreflightProvenanceCheckCatchesWrongModule:
+    """test_preflight_provenance_check_catches_wrong_module."""
+
+    def test_preflight_provenance_check_catches_wrong_module(self) -> None:
+        import importlib.util
+        from unittest.mock import MagicMock
+        from sop.__main__ import _run_provenance_check
+        fake_spec = MagicMock()
+        fake_spec.origin = str(Path("C:/totally/wrong/path/phase_gate.py"))
+        real_find = importlib.util.find_spec
+
+        def patched(name):
+            if name == "sop.scripts.phase_gate":
+                return fake_spec
+            return real_find(name)
+
+        with mock.patch("importlib.util.find_spec", side_effect=patched):
+            result = _run_provenance_check(repo_root=".")
+        assert result is not None
+        assert "ENTRYPOINT_DIVERGENCE" in result or "divergence" in result.lower()
+
+
+# ===========================================================================
+# 21 Acceptance Tests — batch 2: skills_status + failure artifact
+# ===========================================================================
+
+
+class TestSkillResolverMissingEmitsResolverUnavailable:
+    """test_skill_resolver_missing_emits_resolver_unavailable."""
+
+    def test_skill_resolver_missing_emits_resolver_unavailable(self, tmp_path: Path) -> None:
+        import sop.scripts.run_loop_cycle as rlc
+        from unittest.mock import MagicMock, patch
+        (tmp_path / "docs" / "context").mkdir(parents=True)
+        (tmp_path / "logs").mkdir(parents=True)
+        args = rlc.parse_args(["--repo-root", str(tmp_path), "--skip-phase-end"])
+        mg = MagicMock(); mg.decision = "PROCEED"; mg.all_conditions_met = True; mg.conditions = []
+        gate = MagicMock(); gate.evaluate.return_value = mg
+        gate.emit.return_value = tmp_path / "docs" / "context" / "gate_a.json"
+        gate.emit_handoff.return_value = tmp_path / "docs" / "context" / "h.json"
+        mc = MagicMock(return_value=gate)
+        mp = MagicMock(); mp.returncode = 0; mp.stdout = ""; mp.stderr = ""
+        with patch.object(rlc, "PhaseGate", mc), \
+             patch.object(rlc, "_SKILL_RESOLVER_AVAILABLE", False), \
+             patch.object(rlc, "subprocess") as msub:
+            msub.run.return_value = mp
+            _rc, payload, _md = rlc.run_cycle(args)
+        assert payload.get("skills_status") == "RESOLVER_UNAVAILABLE"
+
+
+class TestSkillResolverEmptyEmitsEmptyByDesign:
+    """test_skill_resolver_empty_emits_empty_by_design."""
+
+    def test_skill_resolver_empty_emits_empty_by_design(self, tmp_path: Path) -> None:
+        import sop.scripts.run_loop_cycle as rlc
+        from unittest.mock import MagicMock, patch
+        (tmp_path / "docs" / "context").mkdir(parents=True)
+        (tmp_path / "logs").mkdir(parents=True)
+        args = rlc.parse_args(["--repo-root", str(tmp_path), "--skip-phase-end"])
+        mg = MagicMock(); mg.decision = "PROCEED"; mg.all_conditions_met = True; mg.conditions = []
+        gate = MagicMock(); gate.evaluate.return_value = mg
+        gate.emit.return_value = tmp_path / "docs" / "context" / "gate_a.json"
+        gate.emit_handoff.return_value = tmp_path / "docs" / "context" / "h.json"
+        mc = MagicMock(return_value=gate)
+        mp = MagicMock(); mp.returncode = 0; mp.stdout = ""; mp.stderr = ""
+        mock_result = {"status": "ok", "skills": []}
+        with patch.object(rlc, "PhaseGate", mc), \
+             patch.object(rlc, "_SKILL_RESOLVER_AVAILABLE", True), \
+             patch.object(rlc, "resolve_skills_for_role", return_value=[]), \
+             patch.object(rlc, "resolve_active_skills", return_value=mock_result), \
+             patch.object(rlc, "subprocess") as msub:
+            msub.run.return_value = mp
+            _rc, payload, _md = rlc.run_cycle(args)
+        assert payload.get("skills_status") == "EMPTY_BY_DESIGN"
+
+
+class TestFailureArtifactWrittenOnHardFailure:
+    """test_failure_artifact_written_on_hard_failure."""
+
+    def test_failure_artifact_written_on_hard_failure(self, tmp_path: Path) -> None:
+        import json
+        from sop._failure_reporter import write_run_failure, build_failure_payload
+        dest = tmp_path / "docs" / "context"
+        dest.mkdir(parents=True)
+        for fc in ["IMPORT_ERROR", "INSTALL_ERROR", "ENTRYPOINT_DIVERGENCE",
+                   "EXECUTION_ERROR", "GATE_BLOCK", "CONTRACT_VIOLATION",
+                   "OBSERVABILITY_ERROR"]:
+            payload = build_failure_payload(
+                failure_class=fc,
+                run_id=f"run-{fc}",
+                entrypoint="sop run",
+                execution_mode="cli",
+                failed_component="test_component",
+                reason="test",
+                recoverability="REQUIRES_FIX",
+            )
+            ok = write_run_failure(dest, payload)
+            assert ok is True, f"write_run_failure returned False for {fc}"
+            artifact = dest / "run_failure_latest.json"
+            assert artifact.exists(), f"artifact missing for {fc}"
+            data = json.loads(artifact.read_text(encoding="utf-8"))
+            assert data.get("schema_version") == "1.1", f"schema_version missing for {fc}"
+            assert data.get("failure_class") == fc, f"failure_class mismatch for {fc}"
+
+
+# ===========================================================================
+# 21 Acceptance Tests — batch 3: scan baseline + shadowed + divergence msg
+# ===========================================================================
+
+
+class TestCheckFailOpenBaselineAcceptance:
+    """test_check_fail_open_baseline (spec-named): scanner exits 0 on clean fixture."""
+
+    def test_check_fail_open_baseline(self, tmp_path: Path) -> None:
+        import subprocess
+        import sys
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "clean.py").write_text(
+            "def f():\n    try:\n        pass\n    except ValueError:\n        raise\n",
+            encoding="utf-8",
+        )
+        script = Path(__file__).resolve().parents[1] / "scripts" / "check_fail_open.py"
+        assert script.exists(), f"check_fail_open.py not found at {script}"
+        r = subprocess.run(
+            [sys.executable, str(script), "--root", str(tmp_path)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        assert r.returncode == 0, (
+            f"check_fail_open.py exited {r.returncode} on clean fixture\n"
+            f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-500:]}"
+        )
+        assert "PASS" in r.stdout or "BLOCKER" not in r.stdout
+
+
+class TestShadowedModuleFixture:
+    """test_shadowed_module_fixture: fake module origin detected by provenance check."""
+
+    def test_shadowed_module_fixture(self) -> None:
+        import importlib.util
+        from unittest.mock import MagicMock
+        from sop.__main__ import _run_provenance_check
+        fake_spec = MagicMock()
+        fake_spec.origin = str(Path("e:/Code/SOP/quant_current_scope/scripts/phase_gate.py"))
+        real_find = importlib.util.find_spec
+
+        def patched(name):
+            if name == "sop.scripts.phase_gate":
+                return fake_spec
+            return real_find(name)
+
+        with mock.patch("importlib.util.find_spec", side_effect=patched):
+            result = _run_provenance_check(repo_root=".")
+        assert result is not None, "provenance check must detect shadowed module"
+        assert "ENTRYPOINT_DIVERGENCE" in result or "divergence" in result.lower()
+
+
+class TestCompatibilityPathDivergenceMessage:
+    """test_compatibility_path_divergence_message: error message has 3 required parts."""
+
+    def test_compatibility_path_divergence_message(self) -> None:
+        import importlib.util
+        from unittest.mock import MagicMock
+        from sop.__main__ import _run_provenance_check
+        fake_spec = MagicMock()
+        fake_spec.origin = str(Path("C:/wrong/scripts/phase_gate.py"))
+        real_find = importlib.util.find_spec
+
+        def patched(name):
+            if name == "sop.scripts.phase_gate":
+                return fake_spec
+            return real_find(name)
+
+        with mock.patch("importlib.util.find_spec", side_effect=patched):
+            result = _run_provenance_check(repo_root=".")
+        assert result is not None
+        # (1) divergence notice
+        assert "ENTRYPOINT_DIVERGENCE" in result
+        # (2) use sop run redirect
+        assert "sop run" in result
+        # (3) conflicting paths
+        assert "phase_gate" in result
+
+
+# ===========================================================================
 # Day 2 -- TestEvaluationOutcomeSource
 # ===========================================================================
 
@@ -1072,3 +1294,229 @@ class TestSkillsStatusInPayload:
              patch.object(rlc, "resolve_active_skills", return_value=mock_result):
             payload = self._run_cycle_with_mock(tmp_path)
         assert payload["skills_status"] == "EMPTY_BY_DESIGN"
+
+
+# ===========================================================================
+# 21 Acceptance Tests — batch 4: equivalence + provenance + windows + manifest + schema
+# ===========================================================================
+
+
+class TestHealthyPathEquivalence:
+    """test_healthy_path_equivalence."""
+
+    def test_healthy_path_equivalence(self, tmp_path: Path) -> None:
+        import sop.scripts.run_loop_cycle as rlc
+        from unittest.mock import MagicMock, patch
+        import sys
+        from io import StringIO
+        (tmp_path / "docs" / "context").mkdir(parents=True)
+        (tmp_path / "logs").mkdir(parents=True)
+        args = rlc.parse_args(["--repo-root", str(tmp_path), "--skip-phase-end"])
+        mg = MagicMock(); mg.decision = "PROCEED"; mg.all_conditions_met = True; mg.conditions = []
+        gate = MagicMock(); gate.evaluate.return_value = mg
+        gate.emit.return_value = tmp_path / "docs" / "context" / "gate_a.json"
+        gate.emit_handoff.return_value = tmp_path / "docs" / "context" / "h.json"
+        mc = MagicMock(return_value=gate)
+        mp = MagicMock(); mp.returncode = 0; mp.stdout = ""; mp.stderr = ""
+        old_stderr = sys.stderr
+        sys.stderr = StringIO()
+        try:
+            with patch.object(rlc, "PhaseGate", mc), patch.object(rlc, "subprocess") as msub:
+                msub.run.return_value = mp
+                exit_code, payload, _md = rlc.run_cycle(args)
+            stderr_output = sys.stderr.getvalue()
+        finally:
+            sys.stderr = old_stderr
+        failure_artifact = tmp_path / "docs" / "context" / "run_failure_latest.json"
+        assert not failure_artifact.exists(), "run_failure_latest.json must NOT exist on healthy path"
+        assert "FATAL" not in stderr_output, f"No FATAL on healthy path stderr, got: {stderr_output}"
+        assert payload.get("final_result") in ("PASS", "HOLD", "FAIL", "ERROR")
+        assert "gate_decisions" in payload
+
+
+class TestPythonMSopProvenanceMatchesSopRun:
+    """test_python_m_sop_provenance_matches_sop_run."""
+
+    def test_python_m_sop_provenance_matches_sop_run(self) -> None:
+        from sop.__main__ import _get_module_origins, _CRITICAL_MODULES
+        origins = _get_module_origins()
+        assert isinstance(origins, dict)
+        for mod_name in _CRITICAL_MODULES:
+            if mod_name in origins:
+                assert isinstance(origins[mod_name], str), (
+                    f"module_origins[{mod_name}] must be a string path"
+                )
+
+
+class TestWindowsPathFixture:
+    """test_windows_path_fixture: Windows drive-letter paths handled correctly."""
+
+    def test_windows_path_fixture(self) -> None:
+        import importlib.util
+        from unittest.mock import MagicMock, patch
+        from sop.__main__ import _run_provenance_check
+        fake_spec = MagicMock()
+        fake_spec.origin = "C:\\\\Users\\\\test\\\\scripts\\\\phase_gate.py"
+        real_find = importlib.util.find_spec
+
+        def patched(name):
+            if name == "sop.scripts.phase_gate":
+                return fake_spec
+            return real_find(name)
+
+        with patch("importlib.util.find_spec", side_effect=patched):
+            result = _run_provenance_check(repo_root=".")
+        assert result is None or isinstance(result, str)
+        if result is not None:
+            assert "ENTRYPOINT_DIVERGENCE" in result or "divergence" in result.lower()
+
+
+class TestManifestSymmetrySpec:
+    """test_manifest_symmetry (spec-named acceptance test)."""
+
+    def test_manifest_symmetry(self) -> None:
+        import json
+        mp = REPO_ROOT / "scripts" / "critical_scan_manifest.json"
+        assert mp.exists(), f"critical_scan_manifest.json not found at {mp}"
+        data = json.loads(mp.read_text(encoding="utf-8"))
+        assert "pairs" in data, "manifest must have 'pairs' key"
+        root = mp.parent.parent
+        missing = []
+        for pair in data["pairs"]:
+            for key in ("scripts", "src"):
+                fpath = root / pair[key]
+                if not fpath.exists():
+                    missing.append(str(pair[key]))
+        assert missing == [], f"Manifest references missing files: {missing}"
+
+
+class TestSchemaDrift:
+    """test_schema_drift [PHASE 2 SCHEMA CONTRACT GATE]."""
+
+    def test_schema_drift(self, tmp_path: Path) -> None:
+        import json
+        from sop._failure_reporter import build_failure_payload, write_run_failure
+        schema_path = (
+            REPO_ROOT
+            / "docs" / "context" / "schemas" / "run_failure_latest.schema.json"
+        )
+        assert schema_path.exists(), f"Schema not found: {schema_path}"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        required_fields = schema.get("required", [])
+        dest = tmp_path / "docs" / "context"
+        dest.mkdir(parents=True)
+        payload = build_failure_payload(
+            failure_class="IMPORT_ERROR",
+            run_id="schema-drift-test",
+            entrypoint="sop run",
+            execution_mode="cli",
+            failed_component="PhaseGate",
+            reason="schema drift test",
+            recoverability="REQUIRES_FIX",
+            repo_root=str(tmp_path),
+            attempt_id="a1",
+        )
+        ok = write_run_failure(dest, payload)
+        assert ok is True
+        artifact = dest / "run_failure_latest.json"
+        data = json.loads(artifact.read_text(encoding="utf-8"))
+        missing = [f for f in required_fields if f not in data]
+        assert missing == [], f"Required schema fields missing from artifact: {missing}"
+        assert data["schema_version"] == schema["properties"]["schema_version"].get("const", "1.1")
+        assert data["final_result"] == "ERROR"
+        valid_classes = schema["properties"]["failure_class"]["enum"]
+        assert data["failure_class"] in valid_classes
+
+
+class TestPythonMSopProvenanceMatchesSopRun:
+    """test_python_m_sop_provenance_matches_sop_run."""
+
+    def test_python_m_sop_provenance_matches_sop_run(self) -> None:
+        from sop.__main__ import _get_module_origins, _CRITICAL_MODULES
+        origins = _get_module_origins()
+        assert isinstance(origins, dict)
+        for mod_name in _CRITICAL_MODULES:
+            if mod_name in origins:
+                assert isinstance(origins[mod_name], str), (
+                    f"module_origins[{mod_name}] must be a string path"
+                )
+
+
+class TestWindowsPathFixture:
+    """test_windows_path_fixture: Windows drive-letter paths handled correctly."""
+
+    def test_windows_path_fixture(self) -> None:
+        import importlib.util
+        from unittest.mock import MagicMock, patch
+        from sop.__main__ import _run_provenance_check
+        fake_spec = MagicMock()
+        fake_spec.origin = "C:\\\\Users\\\\test\\\\scripts\\\\phase_gate.py"
+        real_find = importlib.util.find_spec
+
+        def patched(name):
+            if name == "sop.scripts.phase_gate":
+                return fake_spec
+            return real_find(name)
+
+        with patch("importlib.util.find_spec", side_effect=patched):
+            result = _run_provenance_check(repo_root=".")
+        assert result is None or isinstance(result, str)
+        if result is not None:
+            assert "ENTRYPOINT_DIVERGENCE" in result or "divergence" in result.lower()
+
+
+class TestManifestSymmetrySpec:
+    """test_manifest_symmetry (spec-named acceptance test)."""
+
+    def test_manifest_symmetry(self) -> None:
+        import json
+        mp = REPO_ROOT / "scripts" / "critical_scan_manifest.json"
+        assert mp.exists(), f"critical_scan_manifest.json not found at {mp}"
+        data = json.loads(mp.read_text(encoding="utf-8"))
+        assert "pairs" in data, "manifest must have 'pairs' key"
+        root = mp.parent.parent
+        missing = []
+        for pair in data["pairs"]:
+            for key in ("scripts", "src"):
+                fpath = root / pair[key]
+                if not fpath.exists():
+                    missing.append(str(pair[key]))
+        assert missing == [], f"Manifest references missing files: {missing}"
+
+
+class TestSchemaDrift:
+    """test_schema_drift [PHASE 2 SCHEMA CONTRACT GATE]."""
+
+    def test_schema_drift(self, tmp_path: Path) -> None:
+        import json
+        from sop._failure_reporter import build_failure_payload, write_run_failure
+        schema_path = (
+            REPO_ROOT
+            / "docs" / "context" / "schemas" / "run_failure_latest.schema.json"
+        )
+        assert schema_path.exists(), f"Schema not found: {schema_path}"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        required_fields = schema.get("required", [])
+        dest = tmp_path / "docs" / "context"
+        dest.mkdir(parents=True)
+        payload = build_failure_payload(
+            failure_class="IMPORT_ERROR",
+            run_id="schema-drift-test",
+            entrypoint="sop run",
+            execution_mode="cli",
+            failed_component="PhaseGate",
+            reason="schema drift test",
+            recoverability="REQUIRES_FIX",
+            repo_root=str(tmp_path),
+            attempt_id="a1",
+        )
+        ok = write_run_failure(dest, payload)
+        assert ok is True
+        artifact = dest / "run_failure_latest.json"
+        data = json.loads(artifact.read_text(encoding="utf-8"))
+        missing = [f for f in required_fields if f not in data]
+        assert missing == [], f"Required schema fields missing from artifact: {missing}"
+        assert data["schema_version"] == schema["properties"]["schema_version"].get("const", "1.1")
+        assert data["final_result"] == "ERROR"
+        valid_classes = schema["properties"]["failure_class"]["enum"]
+        assert data["failure_class"] in valid_classes

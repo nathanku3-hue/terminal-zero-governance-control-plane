@@ -1,5 +1,8 @@
 # Optimality Review Brief (Template)
 
+> **Canonical source:** src/sop/templates/optimality_review_brief.md
+> This copy in docs/templates/ is a workspace mirror. Do not edit here — edit the canonical source instead.
+
 Use this for high-impact semantic tradeoff decisions. Keep it short.
 
 ## Header

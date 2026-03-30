@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-03-29T07:32:42Z",
+  "generated_at_utc": "2026-03-30T06:33:23Z",
   "should_compact": false,
   "can_compact": false,
   "decision_mode": "no_action",
@@ -117,7 +117,7 @@
   "memory_tier_contract": {
     "schema_version": "1.0.0",
     "source_of_truth": "scripts/utils/memory_tiers.py",
-    "documentation": "docs/memory_tier_contract.md",
+    "documentation": "docs/context/MEMORY_TIER_CONTRACT.md",
     "families": [
       {
         "tier": "hot",
@@ -185,25 +185,25 @@
     "inputs": [
       {
         "family": "exec_memory_packet",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\exec_memory_packet_latest_current.json",
+        "path": ".\\docs\\context\\exec_memory_packet_latest_current.json",
         "tier": "hot",
         "access": "derived_output"
       },
       {
         "family": "auditor_promotion_dossier",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\auditor_promotion_dossier.json",
+        "path": ".\\docs\\context\\auditor_promotion_dossier.json",
         "tier": "warm",
         "access": "default_input"
       },
       {
         "family": "ceo_go_signal",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\ceo_go_signal.md",
+        "path": ".\\docs\\context\\ceo_go_signal.md",
         "tier": "warm",
         "access": "default_input"
       },
       {
         "family": "context_compaction_state",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\context_compaction_state_latest.json",
+        "path": ".\\docs\\context\\context_compaction_state_latest.json",
         "tier": "hot",
         "access": "default_input"
       }
@@ -211,20 +211,20 @@
     "outputs": [
       {
         "family": "context_compaction_state",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\context_compaction_state_latest.json",
+        "path": ".\\docs\\context\\context_compaction_state_latest.json",
         "tier": "hot",
         "access": "default_input"
       },
       {
         "family": "context_compaction_status",
-        "path": "E:\\Code\\SOP\\quant_current_scope\\tests\\fixtures\\repos\\healthy_path\\docs\\context\\context_compaction_status_latest.json",
+        "path": ".\\docs\\context\\context_compaction_status_latest.json",
         "tier": "hot",
         "access": "derived_output"
       }
     ]
   },
   "action_current": "HOLD",
-  "action_previous": null,
+  "action_previous": "HOLD",
   "criteria_current": {
     "C0": true,
     "C1": "MANUAL_CHECK",
@@ -234,7 +234,15 @@
     "C4b": true,
     "C5": true
   },
-  "criteria_previous": {},
+  "criteria_previous": {
+    "C0": true,
+    "C1": "MANUAL_CHECK",
+    "C2": false,
+    "C3": false,
+    "C4": true,
+    "C4b": true,
+    "C5": true
+  },
   "freshness_hours_since_last": null,
   "state_updated": true
 }

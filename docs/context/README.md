@@ -129,3 +129,28 @@ All `auditor_findings_YYYYMMDD_HHMMSS.json` files — Generated/canonical (times
 - Zero unclassified files: CONFIRMED
 - All files above have explicit classification and action.
 - Generated/non-canonical patterns added to `.gitignore` per N.2.
+
+---
+
+## Template Canonical Sources
+
+Added: Phase 4 Stream A (2026-03-30). Additive -- does not modify the N.1 classification table above.
+
+Each template has exactly one canonical source and one owner. All consumers must reference the file at its canonical path. Do not duplicate template content outside its canonical location.
+
+| Template File | Canonical Path | Owner / Notes |
+|---|---|---|
+| `worker_reply_packet.json.template` | `docs/context/schemas/worker_reply_packet.json.template` | Worker output contract -- produced by worker role, consumed by auditor and closure scripts |
+| `auditor_fp_ledger.json.template` | `docs/context/schemas/auditor_fp_ledger.json.template` | Auditor false-positive ledger -- owned by auditor protocol; updated per audit cycle |
+| `auditor_findings.json.template` | `docs/context/schemas/auditor_findings.json.template` | Auditor findings output -- owned by auditor protocol; one file per audit run |
+| `pm_to_code_traceability.yaml.template` | `docs/context/schemas/pm_to_code_traceability.yaml.template` | PM-to-code traceability map -- owned by PM/planner stream; links PM decisions to implementation artifacts |
+| `dispatch_ack.json.template` | `docs/context/schemas/dispatch_ack.json.template` | Dispatch acknowledgement -- owned by orchestrator; written on task dispatch |
+| `dispatch_manifest.json.template` | `docs/context/schemas/dispatch_manifest.json.template` | Dispatch manifest -- owned by orchestrator; declares tasks dispatched in a round |
+| `worker_status.json.template` | `docs/context/schemas/worker_status.json.template` | Worker status snapshot -- owned by worker role; reflects current worker execution state |
+| `e2e_evidence_index.md.template` | `docs/context/templates/e2e_evidence_index.md.template` | End-to-end evidence index -- owned by evidence/closure stream; one index per phase |
+
+**Rules:**
+- All paths above are repo-root relative. No absolute paths, no drive letters, no `~`.
+- To instantiate a template, copy it to the appropriate `docs/context/` target path and populate fields.
+- Do not modify a template file to store instance data -- templates are read-only canonical sources.
+- If a new template is added to `docs/context/schemas/` or `docs/context/templates/`, update this table in the same commit.
