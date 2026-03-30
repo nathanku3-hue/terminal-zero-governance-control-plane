@@ -1,0 +1,221 @@
+openapi: "3.1.0"
+info:
+  title: Terminal Zero Governance API
+  version: "0.2.0"
+  description: |
+    Formal API surface for the Terminal Zero governance control plane.
+    All endpoints map to GovernanceClient methods in sop._client.
+
+paths:
+  /run:
+    post:
+      summary: Run one bounded loop cycle
+      description: |
+        Execute one deterministic loop cycle: refresh artifacts, run truth
+        checks, run closure validation, and emit loop cycle summary artifacts.
+        Maps to GovernanceClient.run().
+      operationId: runCycle
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skip_phase_end:
+                  type: boolean
+                  default: true
+                  description: Skip phase-end processing.
+                allow_hold:
+                  type: boolean
+                  default: true
+                  description: Allow HOLD gate decisions.
+      responses:
+        "200":
+          description: Loop cycle completed. Check final_result for outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoopCycleSummary"
+        "500":
+          description: Internal error — loop cycle raised an unhandled exception.
+
+  /status:
+    get:
+      summary: Return most recent loop cycle summary
+      description: |
+        Read docs/context/loop_cycle_summary_latest.json and return its
+        contents. Returns 404 when no prior run exists.
+        Maps to GovernanceClient.status().
+      operationId: getStatus
+      responses:
+        "200":
+          description: Most recent loop cycle summary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoopCycleSummary"
+        "404":
+          description: No prior loop cycle summary found.
+
+  /audit:
+    get:
+      summary: Query the governance audit log
+      description: |
+        Return structured audit log entries from
+        docs/context/audit_log.ndjson.
+        Maps to GovernanceClient.audit().
+      operationId: queryAuditLog
+      parameters:
+        - name: tail
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: Return only the last N entries.
+        - name: filter_outcome
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ALLOW, BLOCK, HOLD, PASS, FAIL, ERROR, WARN, SKIP]
+          description: Filter entries by decision value (case-insensitive).
+      responses:
+        "200":
+          description: Audit log entries (may be empty array).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEntry"
+
+  /policy/validate:
+    post:
+      summary: Validate a policy rule file
+      description: |
+        Validate the schema of a JSON policy rule file.
+        Maps to GovernanceClient.policy_validate().
+      operationId: policyValidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rule_file
+              properties:
+                rule_file:
+                  type: string
+                  description: Path to the JSON policy rule file to validate.
+      responses:
+        "200":
+          description: Policy rules are valid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  rule_count:
+                    type: integer
+        "400":
+          description: Policy rule file is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Policy engine (Phase 2) not available.
+
+components:
+  schemas:
+    LoopCycleSummary:
+      type: object
+      required:
+        - schema_version
+        - generated_at_utc
+        - final_result
+        - final_exit_code
+      properties:
+        schema_version:
+          type: string
+          example: "1.0.0"
+        generated_at_utc:
+          type: string
+          format: date-time
+        final_result:
+          type: string
+          enum: [PASS, HOLD, FAIL, ERROR]
+        final_exit_code:
+          type: integer
+          enum: [0, 1, 2]
+        step_summary:
+          type: object
+          properties:
+            pass_count:
+              type: integer
+            hold_count:
+              type: integer
+            fail_count:
+              type: integer
+            error_count:
+              type: integer
+            skip_count:
+              type: integer
+            total_steps:
+              type: integer
+        steps:
+          type: array
+          items:
+            type: object
+        gate_decisions:
+          type: array
+          items:
+            type: object
+        skills_status:
+          type: string
+          enum: [OK, EMPTY_BY_DESIGN, RESOLVER_UNAVAILABLE]
+
+    AuditEntry:
+      type: object
+      required:
+        - schema_version
+        - timestamp_utc
+        - decision
+        - actor
+        - gate
+        - trace_id
+      properties:
+        schema_version:
+          type: string
+          example: "1.0"
+        timestamp_utc:
+          type: string
+          format: date-time
+        decision:
+          type: string
+          enum: [ALLOW, BLOCK, HOLD, PASS, FAIL, ERROR, WARN, SKIP]
+        actor:
+          type: string
+        outcome:
+          type: string
+        gate:
+          type: string
+        trace_id:
+          type: string
+        artifact_refs:
+          type: object
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        detail:
+          type: string

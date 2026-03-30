@@ -96,3 +96,6 @@ docs/context/loop_run_steps_*.ndjson
 docs/context/canary_enforce_log.md
 docs/context/ceo_bridge_digest.md
 
+
+# Phase 6 benchmark results (generated/non-canonical)
+docs/benchmarks.md

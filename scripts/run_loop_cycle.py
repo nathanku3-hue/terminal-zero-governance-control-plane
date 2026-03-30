@@ -53,6 +53,43 @@ DOSSIER_HOLD_MARKER = "DOSSIER CRITERIA NOT MET"
 APPROVED_CONTEXT_RELATIVE = Path("docs/context")
 
 # ---------------------------------------------------------------------------
+# Phase 1 -- Audit log import (best-effort; never blocks execution)
+# ---------------------------------------------------------------------------
+try:
+    from sop._audit_log import build_audit_entry, emit_audit_log, write_audit_metrics  # type: ignore[assignment]
+    _AUDIT_LOG_AVAILABLE = True
+except ModuleNotFoundError:
+    _AUDIT_LOG_AVAILABLE = False
+    def build_audit_entry(**_kw):  # type: ignore[misc]
+        return {}
+    def emit_audit_log(_dest, _entry):  # type: ignore[misc]
+        return False
+    def write_audit_metrics(_dest, _trace_id, **_kw):  # type: ignore[misc]
+        return False
+
+# ---------------------------------------------------------------------------
+# Phase 2 -- Policy engine import (best-effort; never blocks execution)
+# ---------------------------------------------------------------------------
+try:
+    from sop._policy_engine import evaluate_policy, load_policy_rules, PolicyResult  # type: ignore[assignment]
+    _POLICY_ENGINE_AVAILABLE = True
+except ModuleNotFoundError:
+    _POLICY_ENGINE_AVAILABLE = False
+    def evaluate_policy(_action, _rules):  # type: ignore[misc]
+        from dataclasses import dataclass as _dc
+        @_dc
+        class _PR:
+            decision: str = "ALLOW"
+            rule_id: str = "default"
+            reason: str = "policy engine unavailable"
+            shadow: bool = False
+        return _PR()
+    def load_policy_rules(_rule_file):  # type: ignore[misc]
+        return []
+    PolicyResult = None  # type: ignore[assignment,misc]
+
+
+# ---------------------------------------------------------------------------
 # H-NEW-2 — Failure reporter: must be imported before any hard-import block
 # so that _write_hard_failure is defined when PhaseGate / Role imports fail.
 # ---------------------------------------------------------------------------
@@ -1001,6 +1038,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     # Phase 5.3: artifact lifecycle flags
     parser.add_argument("--prune", action="store_true", default=False, help="Archive superseded/orphaned artifacts from docs/context/ (dry-run without this flag).")
     parser.add_argument("--max-context-artifacts", type=int, default=50, dest="max_context_artifacts", help="Warn when docs/context/ exceeds this many artifacts (default: 50).")
+    # Phase 2 Policy Engine: shadow mode (default True = observe only, no blocking)
+    parser.add_argument("--policy-shadow-mode", type=_parse_bool, default=True, dest="policy_shadow_mode", help="Policy engine shadow mode (default: true). When true, BLOCK decisions are logged but do not block execution.")
+    parser.add_argument("--policy-rule-file", type=Path, default=None, dest="policy_rule_file", help="Path to a JSON policy rule file. If None, no policy rules are loaded.")
     return parser.parse_args(argv)
 
 
@@ -1252,6 +1292,19 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         _step_result = _run_command(step_name=step_name, command=command, cwd=ctx.repo_root)
         runtime.steps.append(_step_result)
         _append_step_ndjson(_ndjson_path, runtime.trace_id, _step_result)
+        # Phase 1 -- emit audit log entry for every governance step
+        emit_audit_log(
+            ctx.context_dir,
+            build_audit_entry(
+                decision=_step_result.get('status', 'UNKNOWN'),
+                actor=f'step:{step_name}',
+                outcome=_step_result.get('message', '') or _step_result.get('status', ''),
+                gate='step_execution',
+                trace_id=runtime.trace_id,
+                artifact_refs={},
+                extra={'exit_code': _step_result.get('exit_code'), 'duration_seconds': _step_result.get('duration_seconds', 0.0)},
+            ),
+        )
 
     def _step_by_name(step_name: str) -> dict[str, Any] | None:
         return next((step for step in runtime.steps if step.get("name") == step_name), None)
@@ -1943,6 +1996,55 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         "evaluated_at_utc": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
         "artifact_refs": _build_artifact_refs(_GATE_ARTIFACT_PATHS),  # F.1 addition
     })
+    # Phase 1 -- emit audit log entry for Gate A decision
+    emit_audit_log(
+        ctx.context_dir,
+        build_audit_entry(
+            decision=_gate_a_result.decision,
+            actor='gate_a',
+            outcome=f'gate_a decision={_gate_a_result.decision}',
+            gate='exec_memory->advisory',
+            trace_id=runtime.trace_id,
+            artifact_refs=_build_artifact_refs(_GATE_ARTIFACT_PATHS),
+        ),
+    )
+    # Phase 2 -- Policy engine evaluation at Gate A
+    _policy_rules_a: list = []
+    _policy_rule_file = getattr(args, 'policy_rule_file', None)
+    if _POLICY_ENGINE_AVAILABLE and _policy_rule_file is not None:
+        try:
+            _policy_rules_a = load_policy_rules(_policy_rule_file)
+        except Exception:
+            _policy_rules_a = []
+    _policy_action_a = {
+        "gate": "exec_memory->advisory",
+        "decision": _gate_a_result.decision,
+        "trace_id": runtime.trace_id,
+        "actor": "gate_a",
+    }
+    _policy_result_a = evaluate_policy(_policy_action_a, _policy_rules_a)
+    _policy_shadow_mode = getattr(args, 'policy_shadow_mode', True)
+    # Inject policy_decision into the gate_a _gate_decisions entry
+    if _gate_decisions:
+        _gate_decisions[-1]["policy_decision"] = _policy_result_a.decision
+        _gate_decisions[-1]["policy_rule_id"] = _policy_result_a.rule_id
+    # Emit policy audit log entry (separate from gate entry — actor prefixed)
+    if _policy_result_a.decision not in ("ALLOW",):
+        emit_audit_log(
+            ctx.context_dir,
+            build_audit_entry(
+                decision=_policy_result_a.decision,
+                actor='policy:gate_a',
+                outcome=_policy_result_a.reason,
+                gate='exec_memory->advisory',
+                trace_id=runtime.trace_id,
+                artifact_refs={},
+                extra={"rule_id": _policy_result_a.rule_id, "shadow": _policy_result_a.shadow},
+            ),
+        )
+    # Enforce mode: BLOCK + shadow=False -> force gate to HOLD before checkpoint
+    if _policy_result_a.decision == "BLOCK" and not _policy_shadow_mode:
+        _gate_a_hold = True
     try:
         _gate_a.emit(
             _gate_a_result,
@@ -1951,7 +2053,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         )
     except Exception as e:
         runtime.steps.append({"name": "gate_a_emit", "status": "WARN", "exit_code": None, "message": str(e)})
-    if _gate_a_result.decision == "HOLD":
+    if _gate_a_result.decision == "HOLD" or _gate_a_hold:
         _gate_a_hold = True
         _write_checkpoint(
             path=_checkpoint_path,
@@ -2019,6 +2121,54 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "evaluated_at_utc": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
             "artifact_refs": _build_artifact_refs(_GATE_ARTIFACT_PATHS),  # F.1 addition
         })
+        # Phase 1 -- emit audit log entry for Gate B decision
+        emit_audit_log(
+            ctx.context_dir,
+            build_audit_entry(
+                decision=_gate_b_result.decision,
+                actor='gate_b',
+                outcome=f'gate_b decision={_gate_b_result.decision}',
+                gate='advisory->summary',
+                trace_id=runtime.trace_id,
+                artifact_refs=_build_artifact_refs(_GATE_ARTIFACT_PATHS),
+            ),
+        )
+        # Phase 2 -- Policy engine evaluation at Gate B
+        _policy_rules_b: list = []
+        if _POLICY_ENGINE_AVAILABLE and _policy_rule_file is not None:
+            try:
+                _policy_rules_b = load_policy_rules(_policy_rule_file)
+            except Exception:
+                _policy_rules_b = []
+        _policy_action_b = {
+            "gate": "advisory->summary",
+            "decision": _gate_b_result.decision,
+            "trace_id": runtime.trace_id,
+            "actor": "gate_b",
+        }
+        _policy_result_b = evaluate_policy(_policy_action_b, _policy_rules_b)
+        # Inject policy_decision into the gate_b _gate_decisions entry
+        if _gate_decisions:
+            _gate_decisions[-1]["policy_decision"] = _policy_result_b.decision
+            _gate_decisions[-1]["policy_rule_id"] = _policy_result_b.rule_id
+        # Emit policy audit log entry for non-ALLOW outcomes
+        if _policy_result_b.decision not in ("ALLOW",):
+            emit_audit_log(
+                ctx.context_dir,
+                build_audit_entry(
+                    decision=_policy_result_b.decision,
+                    actor='policy:gate_b',
+                    outcome=_policy_result_b.reason,
+                    gate='advisory->summary',
+                    trace_id=runtime.trace_id,
+                    artifact_refs={},
+                    extra={"rule_id": _policy_result_b.rule_id, "shadow": _policy_result_b.shadow},
+                ),
+            )
+        # Enforce mode: BLOCK + shadow=False -> force gate to HOLD before checkpoint
+        _gate_b_policy_force_hold = (
+            _policy_result_b.decision == "BLOCK" and not _policy_shadow_mode
+        )
         try:
             _gate_b.emit(
                 _gate_b_result,
@@ -2027,7 +2177,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             )
         except Exception as e:
             runtime.steps.append({"name": "gate_b_emit", "status": "WARN", "exit_code": None, "message": str(e)})
-        if _gate_b_result.decision == "PROCEED":
+        if _gate_b_result.decision == "PROCEED" and not _gate_b_policy_force_hold:
             try:
                 _gate_b.emit_handoff(
                     runtime.trace_id,
@@ -2035,7 +2185,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 )
             except Exception as e:
                 runtime.steps.append({"name": "gate_b_handoff_emit", "status": "WARN", "exit_code": None, "message": str(e)})
-        elif _gate_b_result.decision == "HOLD":
+        elif _gate_b_result.decision == "HOLD" or _gate_b_policy_force_hold:
             _gate_b_hold = True  # H-3
             _write_checkpoint(
                 path=_checkpoint_path,
@@ -2146,6 +2296,9 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "message": str(e),
             "reason": str(e),
         })  # Trace write failure must never abort the loop
+    # Phase 1 -- write audit metrics summary after every run
+    write_audit_metrics(ctx.context_dir, runtime.trace_id)
+
     # Rolling NDJSON compaction
     try:
         _compact_ndjson_rolling(ctx.context_dir / "loop_run_steps_latest.ndjson", max_records=500)

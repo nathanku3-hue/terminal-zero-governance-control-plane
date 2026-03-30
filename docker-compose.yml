@@ -1,0 +1,28 @@
+# Terminal Zero Governance — local Docker Compose runner
+# Mounts the FULL repo root as /workspace so sop run can resolve
+# scripts/, .sop_config.yaml, docs/context/, etc.
+# See docs/deploy/ for cloud (EKS/AKS/GKE) deployment guides.
+
+version: "3.9"
+
+services:
+  governance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: terminal-zero-governance:local
+    # Override CMD to run one bounded loop cycle
+    command: ["sop", "run", "--repo-root", "/workspace", "--skip-phase-end"]
+    volumes:
+      # Full repo root — required so scripts/, .sop_config.yaml, docs/context/
+      # and all other repo paths are accessible at /workspace.
+      # DO NOT narrow this to ./docs only — sop run resolves scripts/ and config
+      # relative to repo_root and will emit ERROR: Missing script for every step.
+      - .:/workspace
+    working_dir: /workspace
+    # Healthcheck mirrors the Dockerfile HEALTHCHECK instruction
+    healthcheck:
+      test: ["CMD", "sop", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

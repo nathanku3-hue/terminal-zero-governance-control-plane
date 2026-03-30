@@ -64,3 +64,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) principles.
 ### Added
 
 - (Future releases will list changes here)
+
+## [0.2.0] - 2026-03-30
+
+### Added
+
+- `GovernanceClient` Python SDK class in `sop._client` — high-level API wrapping `run_cycle`, audit log, and policy validation
+- `from sop import GovernanceClient` public import in `sop.__init__`
+- `GovernanceClient.run(skip_phase_end, allow_hold)` — delegates to `parse_args()` with constructed argv; robust to future `parse_args()` additions
+- `GovernanceClient.status()` — reads `docs/context/loop_cycle_summary_latest.json`; returns `None` when absent; never auto-runs a cycle
+- `GovernanceClient.audit(tail, filter_outcome)` — wraps `sop._audit_log.query_audit_log`; derives `dest_dir` from `repo_root`
+- `GovernanceClient.policy_validate(rule_file)` — wraps `sop._policy_engine.load_policy_rules`; raises `RuntimeError` with clear message when Phase 2 absent
+- `docs/api/openapi.yaml` — OpenAPI 3.1 spec covering `/run`, `/status`, `/audit`, `/policy/validate`
+- `docs/examples/sdk_usage_example.py` — runnable example with `if __name__ == "__main__":` guard and CWD note
+- `tests/test_sdk_client.py` — 4 acceptance tests (run, audit, status, openapi spec validation)
+
+### Changed
+
+- `sop.__version__` bumped from `0.1.0` to `0.2.0`
+- `pyproject.toml` version bumped to `0.2.0`
+
+### Notes
+
+- Phase 2 (`_policy_engine`) is not required for `run()`, `status()`, or `audit()`; `policy_validate()` uses best-effort import fallback and raises `RuntimeError` when Phase 2 is absent
+- `_client.py` follows the same best-effort import pattern as `run_loop_cycle.py` for all optional dependencies

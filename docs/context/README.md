@@ -63,6 +63,8 @@ Stream N.1 — Zero unclassified files target.
 | `loop_cycle_summary_latest.md` | Generated/canonical (`*_latest.md`) | Keep committed |
 | `loop_run_steps_latest.ndjson` | Generated/non-canonical | Gitignore |
 | `loop_run_steps_rolling.ndjson` | Generated/non-canonical | Gitignore |
+| `audit_log.ndjson` | Generated/non-canonical | Gitignore (append-only audit trail; regenerated each run) |
+| `audit_metrics_latest.json` | Generated/non-canonical | Gitignore (aggregate decision counts; regenerated each run) |
 | `loop_run_trace_latest.json` | Generated/canonical (`*_latest.json`) | Keep committed |
 | `MEMORY_TIER_CONTRACT.md` | Canonical | Keep committed |
 | `milestone_optimality_review_latest.md` | Archive (out-of-policy mirror) | Moved to docs/archive/ |
@@ -78,6 +80,7 @@ Stream N.1 — Zero unclassified files target.
 | `phase5c_approval.md` | Generated/canonical | Keep committed |
 | `phase_gate_a_latest.json` | Generated/canonical (`*_latest.json`) | Keep committed |
 | `phase_gate_b_latest.json` | Generated/canonical (`*_latest.json`) | Keep committed |
+| `policy_rules_default.json` | Canonical/authored | Keep committed (human-edited policy rules; do not delete) |
 | `phase_handoff_latest.json` | Generated/canonical (`*_latest.json`) | Keep committed |
 | `philosophy_migration_log.json` | Generated/canonical | Keep committed |
 | `philosophy_migration_report.md` | Generated/canonical | Keep committed |

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: terminal-zero-governance
+description: Terminal Zero Governance Control Plane — Kubernetes Job deployment
+type: application
+version: 0.1.0
+appVersion: "0.2.0"
+keywords:
+  - governance
+  - ai-engineering
+  - terminal-zero
+maintainers:
+  - name: Terminal Zero Maintainers

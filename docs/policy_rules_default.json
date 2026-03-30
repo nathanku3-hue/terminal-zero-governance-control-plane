@@ -1,0 +1,30 @@
+{
+  "_comment": "Default policy rules for Terminal Zero governance control plane (Phase 2).",
+  "schema_version": "1.0",
+  "rules": [
+    {
+      "rule_id": "allow-gate-proceed",
+      "description": "Allow all gate PROCEED decisions unconditionally.",
+      "decision": "ALLOW",
+      "scope": "gate",
+      "shadow": false,
+      "match": {
+        "field": "decision",
+        "operator": "eq",
+        "value": "PROCEED"
+      }
+    },
+    {
+      "rule_id": "shadow-block-gate-hold",
+      "description": "Shadow-observe (log only, no enforcement) gate HOLD decisions. Phase 2: shadow=true prevents any run from being blocked by this rule.",
+      "decision": "BLOCK",
+      "scope": "gate",
+      "shadow": true,
+      "match": {
+        "field": "decision",
+        "operator": "eq",
+        "value": "HOLD"
+      }
+    }
+  ]
+}

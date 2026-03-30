@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-30T09:24:12.426957+00:00",
+  "generated_at_utc": "2026-03-30T16:17:55.841922+00:00",
   "repo_root": "E:\\Code\\SOP\\quant_current_scope",
   "context_dir": "E:\\Code\\SOP\\quant_current_scope\\docs\\context",
   "scripts_dir": "E:\\Code\\SOP\\quant_current_scope\\scripts",
@@ -21,8 +21,8 @@
       "status": "SKIP",
       "exit_code": 0,
       "command": [],
-      "started_utc": "2026-03-30T09:24:12Z",
-      "ended_utc": "2026-03-30T09:24:12Z",
+      "started_utc": "2026-03-30T16:17:55Z",
+      "ended_utc": "2026-03-30T16:17:55Z",
       "duration_seconds": 0.0,
       "stdout": "",
       "stderr": "",
@@ -48,9 +48,9 @@
         "--mode",
         "weekly"
       ],
-      "started_utc": "2026-03-30T09:24:12Z",
-      "ended_utc": "2026-03-30T09:24:12Z",
-      "duration_seconds": 0.441,
+      "started_utc": "2026-03-30T16:17:55Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.13,
       "stdout": "",
       "stderr": "",
       "message": ""
@@ -75,9 +75,9 @@
         "--mode",
         "dossier"
       ],
-      "started_utc": "2026-03-30T09:24:12Z",
-      "ended_utc": "2026-03-30T09:24:13Z",
-      "duration_seconds": 0.302,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.129,
       "stdout": "",
       "stderr": "",
       "message": ""
@@ -96,9 +96,9 @@
         "--output",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\ceo_go_signal.md"
       ],
-      "started_utc": "2026-03-30T09:24:13Z",
-      "ended_utc": "2026-03-30T09:24:13Z",
-      "duration_seconds": 0.245,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.116,
       "stdout": "",
       "stderr": "",
       "message": ""
@@ -119,9 +119,9 @@
         "--output",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\ceo_weekly_summary_latest.md"
       ],
-      "started_utc": "2026-03-30T09:24:13Z",
-      "ended_utc": "2026-03-30T09:24:13Z",
-      "duration_seconds": 0.232,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.101,
       "stdout": "",
       "stderr": "",
       "message": ""
@@ -146,9 +146,9 @@
         "--ceo-budget-tokens",
         "1800"
       ],
-      "started_utc": "2026-03-30T09:24:13Z",
-      "ended_utc": "2026-03-30T09:24:14Z",
-      "duration_seconds": 0.354,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.164,
       "stdout": "",
       "stderr": "",
       "message": ""
@@ -179,9 +179,9 @@
         "--max-age-hours",
         "24.0"
       ],
-      "started_utc": "2026-03-30T09:24:14Z",
-      "ended_utc": "2026-03-30T09:24:14Z",
-      "duration_seconds": 0.269,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.107,
       "stdout": "",
       "stderr": "",
       "message": ""
@@ -200,9 +200,9 @@
         "--go-signal-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\ceo_go_signal.md"
       ],
-      "started_utc": "2026-03-30T09:24:14Z",
-      "ended_utc": "2026-03-30T09:24:14Z",
-      "duration_seconds": 0.213,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.101,
       "stdout": "[OK] CEO go-signal truth-check passed.\n",
       "stderr": "",
       "message": ""
@@ -221,9 +221,9 @@
         "--weekly-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\ceo_weekly_summary_latest.md"
       ],
-      "started_utc": "2026-03-30T09:24:14Z",
-      "ended_utc": "2026-03-30T09:24:14Z",
-      "duration_seconds": 0.224,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.106,
       "stdout": "[OK] CEO weekly-summary truth-check passed.\n",
       "stderr": "",
       "message": ""
@@ -240,9 +240,9 @@
         "--repo-root",
         "E:\\Code\\SOP\\quant_current_scope"
       ],
-      "started_utc": "2026-03-30T09:24:14Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
-      "duration_seconds": 0.219,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:56Z",
+      "duration_seconds": 0.097,
       "stdout": "[OK] Exec memory packet validation passed\n",
       "stderr": "",
       "message": ""
@@ -257,9 +257,9 @@
         "--round-contract-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md"
       ],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
-      "duration_seconds": 0.177,
+      "started_utc": "2026-03-30T16:17:56Z",
+      "ended_utc": "2026-03-30T16:17:57Z",
+      "duration_seconds": 0.088,
       "stdout": "[OK] Counterexample gate passed.\n",
       "stderr": "",
       "message": ""
@@ -274,9 +274,9 @@
         "--round-contract-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md"
       ],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
-      "duration_seconds": 0.183,
+      "started_utc": "2026-03-30T16:17:57Z",
+      "ended_utc": "2026-03-30T16:17:57Z",
+      "duration_seconds": 0.091,
       "stdout": "[OK] Dual-judge not required for LOW/MEDIUM TWO_WAY round.\n",
       "stderr": "",
       "message": ""
@@ -291,9 +291,9 @@
         "--round-contract-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md"
       ],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
-      "duration_seconds": 0.184,
+      "started_utc": "2026-03-30T16:17:57Z",
+      "ended_utc": "2026-03-30T16:17:57Z",
+      "duration_seconds": 0.09,
       "stdout": "[OK] Refactor/mock policy gate passed.\n",
       "stderr": "",
       "message": ""
@@ -303,8 +303,8 @@
       "status": "SKIP",
       "exit_code": 0,
       "command": [],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
+      "started_utc": "2026-03-30T16:17:57Z",
+      "ended_utc": "2026-03-30T16:17:57Z",
       "duration_seconds": 0.0,
       "stdout": "",
       "stderr": "",
@@ -315,8 +315,8 @@
       "status": "SKIP",
       "exit_code": 0,
       "command": [],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
+      "started_utc": "2026-03-30T16:17:57Z",
+      "ended_utc": "2026-03-30T16:17:57Z",
       "duration_seconds": 0.0,
       "stdout": "",
       "stderr": "",
@@ -332,9 +332,9 @@
         "--context-dir",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context"
       ],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:15Z",
-      "duration_seconds": 0.211,
+      "started_utc": "2026-03-30T16:17:57Z",
+      "ended_utc": "2026-03-30T16:17:57Z",
+      "duration_seconds": 0.107,
       "stdout": "[OK] no active parallel shards\n",
       "stderr": "",
       "message": ""
@@ -379,9 +379,9 @@
         "--output-md",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_closure_status_latest.md"
       ],
-      "started_utc": "2026-03-30T09:24:15Z",
-      "ended_utc": "2026-03-30T09:24:17Z",
-      "duration_seconds": 1.852,
+      "started_utc": "2026-03-30T16:17:57Z",
+      "ended_utc": "2026-03-30T16:17:58Z",
+      "duration_seconds": 0.933,
       "stdout": "READY_TO_ESCALATE\n",
       "stderr": "",
       "message": ""
@@ -400,9 +400,9 @@
         "--closure-json",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_closure_status_latest.json"
       ],
-      "started_utc": "2026-03-30T09:24:17Z",
-      "ended_utc": "2026-03-30T09:24:17Z",
-      "duration_seconds": 0.245,
+      "started_utc": "2026-03-30T16:17:58Z",
+      "ended_utc": "2026-03-30T16:17:58Z",
+      "duration_seconds": 0.115,
       "stdout": "[OK] DONE_WHEN_CHECKS validation passed.\n",
       "stderr": "",
       "message": ""
@@ -455,7 +455,7 @@
     "status": "available",
     "step_status": "PASS",
     "source_json": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\context_compaction_status_latest.json",
-    "generated_at_utc": "2026-03-30T09:24:14Z",
+    "generated_at_utc": "2026-03-30T16:17:56Z",
     "should_compact": false,
     "can_compact": false,
     "decision_mode": "no_action",
@@ -507,30 +507,34 @@
       "decision": "PROCEED",
       "gate_executed": true,
       "gate_impl": "phase_gate.PhaseGate",
-      "evaluated_at_utc": "2026-03-30T09:24:17.952651+00:00",
+      "evaluated_at_utc": "2026-03-30T16:17:58.387599+00:00",
       "artifact_refs": {
         "loop_run_trace_latest.json": {
-          "mtime_utc": "2026-03-30T09:15:57.986207+00:00",
-          "hash": "22174c287911204337ff188c69412f5f1ec2eda5ade4d1dd993474e48f2edf90",
+          "mtime_utc": "2026-03-30T16:17:54.147174+00:00",
+          "hash": "e48a3c876c14f201292df406546ee76f7b5e4dfe0d697def69865271d0ae21c2",
           "content_kind": "json",
           "hash_strategy": "sha256"
         }
-      }
+      },
+      "policy_decision": "ALLOW",
+      "policy_rule_id": "default"
     },
     {
       "name": "gate_b",
       "decision": "PROCEED",
       "gate_executed": true,
       "gate_impl": "phase_gate.PhaseGate",
-      "evaluated_at_utc": "2026-03-30T09:24:18.024422+00:00",
+      "evaluated_at_utc": "2026-03-30T16:17:58.424563+00:00",
       "artifact_refs": {
         "loop_run_trace_latest.json": {
-          "mtime_utc": "2026-03-30T09:15:57.986207+00:00",
-          "hash": "22174c287911204337ff188c69412f5f1ec2eda5ade4d1dd993474e48f2edf90",
+          "mtime_utc": "2026-03-30T16:17:54.147174+00:00",
+          "hash": "e48a3c876c14f201292df406546ee76f7b5e4dfe0d697def69865271d0ae21c2",
           "content_kind": "json",
           "hash_strategy": "sha256"
         }
-      }
+      },
+      "policy_decision": "ALLOW",
+      "policy_rule_id": "default"
     }
   ]
 }

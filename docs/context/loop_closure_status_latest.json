@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-30T09:24:16Z",
+  "generated_at_utc": "2026-03-30T16:17:58Z",
   "result": "READY_TO_ESCALATE",
   "exit_code": 0,
   "freshness_hours": 72.0,
@@ -16,7 +16,7 @@
     "round_contract_md": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\round_contract_latest.md",
     "go_truth_script": "E:\\Code\\SOP\\quant_current_scope\\scripts\\validate_ceo_go_signal_truth.py",
     "weekly_truth_script": "E:\\Code\\SOP\\quant_current_scope\\scripts\\validate_ceo_weekly_summary_truth.py",
-    "memory_json": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\exec_memory_packet_latest_current.json",
+    "memory_json": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\exec_memory_packet_latest.json",
     "memory_truth_script": "E:\\Code\\SOP\\quant_current_scope\\scripts\\validate_exec_memory_truth.py",
     "loop_summary_json": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_cycle_summary_latest.json",
     "round_contract_checks_script": "E:\\Code\\SOP\\quant_current_scope\\scripts\\validate_round_contract_checks.py",
@@ -79,7 +79,7 @@
       "name": "required_exec_memory_json",
       "status": "PASS",
       "message": "Required artifact found.",
-      "path": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\exec_memory_packet_latest_current.json",
+      "path": "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\exec_memory_packet_latest.json",
       "command": [],
       "exit_code": null,
       "details": ""
@@ -133,7 +133,7 @@
         "--loop-summary-json",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_cycle_summary_latest.json",
         "--closure-json",
-        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmpd9uczo0c\\closure_preview.json"
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmpcywgp3yt\\closure_preview.json"
       ],
       "exit_code": 0,
       "details": "[OK] DONE_WHEN_CHECKS validation passed."
@@ -266,7 +266,7 @@
         "C:\\Python314\\python.exe",
         "E:\\Code\\SOP\\quant_current_scope\\scripts\\validate_exec_memory_truth.py",
         "--memory-json",
-        "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\exec_memory_packet_latest_current.json",
+        "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\exec_memory_packet_latest.json",
         "--repo-root",
         "E:\\Code\\SOP\\quant_current_scope"
       ],

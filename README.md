@@ -11,6 +11,23 @@ Its job is simple:
 This is not a hosted agent platform or consumer app.
 It is a repo-native governance system for running AI-assisted engineering work with explicit boundaries, closure, and handoff.
 
+## Quick Start
+
+```bash
+pip install terminal-zero-governance
+sop init my-project
+sop run --repo-root my-project --skip-phase-end
+```
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md) — zero to working loop in under 10 minutes
+- [Architecture](docs/architecture.md) — system design, component diagram, data flows
+- [API Reference](docs/api-reference.md) — CLI flags, schemas, exit codes, Python SDK
+- [Examples](docs/examples/) — CI/CD pipeline governance and more
+
+## In Depth
+
 ## Release Status
 
 - Current release: targeting **1.0**

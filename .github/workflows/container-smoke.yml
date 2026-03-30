@@ -1,0 +1,53 @@
+# Container smoke CI — Phase 4 delivery gate
+# Builds the Docker image from quant_current_scope/ and runs:
+#   docker run --rm terminal-zero-governance sop healthcheck
+# Exit 0 = acceptance gate passed.
+#
+# IMPORTANT: all build/run steps use working-directory: quant_current_scope
+# because the Dockerfile lives there, NOT at the repo root (e:\Code\SOP\).
+
+name: Container Smoke
+
+on:
+  push:
+    paths:
+      - 'quant_current_scope/Dockerfile'
+      - 'quant_current_scope/src/**'
+      - 'quant_current_scope/scripts/**'
+      - 'quant_current_scope/pyproject.toml'
+      - 'quant_current_scope/.github/workflows/container-smoke.yml'
+  pull_request:
+    paths:
+      - 'quant_current_scope/Dockerfile'
+      - 'quant_current_scope/src/**'
+      - 'quant_current_scope/scripts/**'
+      - 'quant_current_scope/pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  container-smoke:
+    name: Container Smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # All subsequent steps run inside quant_current_scope/ where the
+      # Dockerfile lives. Using working-directory here instead of a global
+      # default so the checkout step can still run from the repo root.
+      - name: Build Docker image
+        working-directory: quant_current_scope
+        run: docker build -t terminal-zero-governance .
+
+      - name: Smoke test — sop healthcheck exits 0
+        working-directory: quant_current_scope
+        run: docker run --rm terminal-zero-governance sop healthcheck
+
+      - name: Smoke test — sop version exits 0
+        working-directory: quant_current_scope
+        run: docker run --rm terminal-zero-governance sop version

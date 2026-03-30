@@ -1,0 +1,46 @@
+# Default values for terminal-zero-governance Helm chart.
+# Override these in your values file or with --set on helm install.
+
+image:
+  repository: terminal-zero-governance
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# The PVC that contains the governed repository at /workspace
+workspace:
+  pvcName: governance-workspace
+
+# Job-level settings
+job:
+  # backoffLimit: 0 means no automatic retries at the Job level;
+  # the sop CLI handles RETRYABLE failures internally.
+  backoffLimit: 0
+  # activeDeadlineSeconds: set to 0 to disable, or a positive int (e.g. 3600)
+  activeDeadlineSeconds: 0
+
+# sop run arguments forwarded as container command
+sopArgs:
+  - "run"
+  - "--repo-root"
+  - "/workspace"
+  - "--skip-phase-end"
+
+# Resource requests/limits for the governance container
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Optional image pull secrets
+imagePullSecrets: []
+
+# Pod-level annotations
+podAnnotations: {}
+
+# Node selector, tolerations, affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}

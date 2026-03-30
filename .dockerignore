@@ -1,0 +1,32 @@
+# Exclude build/test artefacts and large runtime-output directories
+# from the Docker build context to keep images lean and avoid leaking secrets.
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Runtime output — not build input
+docs/context/
+
+# Test fixtures (large and not needed at build time)
+tests/fixtures/
+
+# Git metadata
+.git/
+.gitignore
+
+# Editor / IDE
+.cursor/
+*.swp
+*.swo
+
+# Temporary helper scripts at repo root
+_*.py
+
+# CI / local artefacts
+*.log
+*.txt.raw

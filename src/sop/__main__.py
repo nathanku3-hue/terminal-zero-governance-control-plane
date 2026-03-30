@@ -291,6 +291,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         cli_args.append("--prune")
     if getattr(args, "max_context_artifacts", 50) != 50:  # non-default
         cli_args.extend(["--max-context-artifacts", str(args.max_context_artifacts)])
+    # Phase 2 Policy Engine flags
+    if not getattr(args, "policy_shadow_mode", True):  # non-default (shadow=False = enforce)
+        cli_args.extend(["--policy-shadow-mode", "false"])
+    if getattr(args, "policy_rule_file", None) is not None:
+        cli_args.extend(["--policy-rule-file", str(args.policy_rule_file)])
 
     # Phase 4 Stream I — single retry on RETRYABLE failures only
     repo_root_str = str(args.repo_root)
@@ -354,6 +359,76 @@ def cmd_init(args: argparse.Namespace) -> int:
     return do_init(args)
 
 
+def cmd_audit(args: argparse.Namespace) -> int:
+    """Query the governance audit log."""
+    import json as _json
+    from pathlib import Path as _Path
+    try:
+        from sop._audit_log import query_audit_log
+    except ModuleNotFoundError:
+        print("ERROR: sop._audit_log not available", file=__import__("sys").stderr)
+        return 1
+    repo_root = _Path(getattr(args, "repo_root", "."))
+    context_dir = repo_root / "docs" / "context"
+    tail = getattr(args, "tail", None)
+    filter_val = getattr(args, "filter", None)
+    # Accept both "outcome=BLOCK" and bare "BLOCK" formats
+    filter_decision: str | None = None
+    if filter_val:
+        if "=" in filter_val:
+            filter_decision = filter_val.split("=", 1)[1].strip()
+        else:
+            filter_decision = filter_val.strip()
+    entries = query_audit_log(context_dir, tail=tail, filter_outcome=filter_decision)
+    if not entries:
+        print("No audit log entries found.")
+        return 0
+    for entry in entries:
+        print(_json.dumps(entry, separators=(",", ": ")))
+    return 0
+
+
+def cmd_policy_validate(args: argparse.Namespace) -> int:
+    """Validate a policy rule file schema."""
+    try:
+        from sop._policy_engine import load_policy_rules, PolicyLoadError
+    except ModuleNotFoundError:
+        print("ERROR: sop._policy_engine not available", file=__import__("sys").stderr)
+        return 1
+    rule_file = args.rule_file
+    try:
+        rules = load_policy_rules(rule_file)
+    except PolicyLoadError as exc:
+        print(f"INVALID: {exc}", file=__import__("sys").stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"ERROR: {exc}", file=__import__("sys").stderr)
+        return 1
+    print(f"OK: {len(rules)} rule(s) valid in {rule_file}")
+    return 0
+
+
+def cmd_healthcheck(args: argparse.Namespace) -> int:
+    """Run preflight spec check and exit 0 on success, 1 on failure.
+
+    Takes no required arguments — safe to call as CMD inside a container
+    where the package is installed system-wide and CWD is /workspace.
+    """
+    error = _run_preflight_spec_check(repo_root=".")
+    if error is not None:
+        print(
+            f"FATAL failure_class=INSTALL_ERROR"
+            f" failed_component=preflight_spec_check"
+            f" recoverability=REQUIRES_FIX"
+            f" artifact_write_failed=true",
+            file=sys.stderr,
+        )
+        print(f"healthcheck FAILED: {error}", file=sys.stderr)
+        return 1
+    print("healthcheck OK: all critical modules found")
+    return 0
+
+
 def cmd_version(args: argparse.Namespace) -> int:
     """Print version."""
     from . import __version__
@@ -415,6 +490,9 @@ For subcommand help: sop <command> --help
     # Phase 5.3: artifact lifecycle flags
     p_run.add_argument("--prune", action="store_true", default=False, help="Archive superseded/orphaned artifacts from docs/context/.")
     p_run.add_argument("--max-context-artifacts", type=int, default=50, dest="max_context_artifacts", help="Warn when docs/context/ exceeds this many files (default: 50).")
+    # Phase 2 Policy Engine
+    p_run.add_argument("--policy-shadow-mode", type=lambda x: x.lower() not in ("false", "0", "no"), default=True, dest="policy_shadow_mode", help="Policy engine shadow mode (default: true). When true, BLOCK decisions are logged but do not block execution.")
+    p_run.add_argument("--policy-rule-file", default=None, dest="policy_rule_file", help="Path to a JSON policy rule file. If None, no policy rules are loaded.")
     p_run.set_defaults(func=cmd_run)
 
     # validate
@@ -461,6 +539,53 @@ For subcommand help: sop <command> --help
     p_init.add_argument("target_dir", help="Target directory to create")
     p_init.add_argument("--minimal", action="store_true", help="Create minimal structure")
     p_init.set_defaults(func=cmd_init)
+
+    # audit
+    p_audit = subparsers.add_parser(
+        "audit",
+        help="Query the governance audit log",
+        description="Print structured audit log entries from docs/context/audit_log.ndjson.",
+    )
+    _add_repo_root_arg(p_audit, required=False)
+    p_audit.add_argument("--tail", type=int, default=None, help="Show last N entries (default: all)")
+    p_audit.add_argument("--filter", dest="filter", default=None, metavar="DECISION",
+        help="Filter by decision value, e.g. BLOCK or outcome=BLOCK")
+    p_audit.set_defaults(func=cmd_audit)
+
+    # policy
+    p_policy = subparsers.add_parser(
+        "policy",
+        help="Policy engine commands",
+        description="Commands for the Terminal Zero policy engine.",
+    )
+    p_policy_sub = p_policy.add_subparsers(dest="policy_command", help="Policy subcommands")
+    # policy validate
+    p_policy_validate = p_policy_sub.add_parser(
+        "validate",
+        help="Validate a policy rule file",
+        description="Validate the schema of a JSON policy rule file. Exit 0=valid, 1=invalid.",
+    )
+    p_policy_validate.add_argument(
+        "--rule-file",
+        required=True,
+        dest="rule_file",
+        help="Path to the JSON policy rule file to validate.",
+    )
+    p_policy_validate.set_defaults(func=cmd_policy_validate)
+    # Phase 3: sop policy evaluate — deferred
+    p_policy.set_defaults(func=lambda a: (p_policy.print_help(), 0)[1])
+
+    # healthcheck
+    p_healthcheck = subparsers.add_parser(
+        "healthcheck",
+        help="Verify installation health (preflight spec check)",
+        description=(
+            "Run a preflight check that all critical modules are importable. "
+            "Takes no required arguments. Exits 0 on success, 1 on failure. "
+            "Used as the Docker HEALTHCHECK CMD and container smoke-test gate."
+        ),
+    )
+    p_healthcheck.set_defaults(func=cmd_healthcheck)
 
     # version
     p_version = subparsers.add_parser(

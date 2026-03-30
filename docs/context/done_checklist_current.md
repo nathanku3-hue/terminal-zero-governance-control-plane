@@ -1,38 +1,84 @@
-# Done Checklist — Phase 6 Post-Hardening Integration
-Generated: 2026-03-30
-Phase: phase-6-post-hardening-integration
+# Done Checklist — External Readiness 6-Phase Sprint
+Generated: 2026-03-31
+Phase: external-readiness-sprint-2026-03-31
 
-## Phase 6 Acceptance Gates
-- [x] Track 1: artifact_refs entries contain hash, content_kind, hash_strategy; mtime_utc still present
-- [x] Track 2: error_code_registry.json committed (E001-E007, all failure_class values mapped)
-- [x] Track 2: decision_basis_count present in every gate_decisions[] entry (tests pass)
-- [x] Track 2: schema version policy CI check green (10 schemas checked, all declare schema_version)
-- [x] Track 3: 0 real test failures — test_run_loop_cycle_skip_phase_end_success_and_overdue_ledger_flag passes
-- [x] Track 3: scoped suite 0 skips on test_hardening.py (81 collected, 81 pass)
-- [x] Track 4: skills_status ACTIVE achievable in CI via skill pilot (.sop_config.yaml active_skills present)
-- [x] Track 4: loop_readiness_latest.json shows routing: skills_active when skill active
-- [x] Track 5: attempt_id increments on retry (TestRetryLoop 3/3 pass)
-- [x] Track 6: evaluation_outcome_source correctly set (TestEvaluationOutcomeSource 8/8 pass)
-- [x] Scoped suite green: pytest tests/test_hardening.py tests/test_checklist_matrix.py tests/test_cli_script_parity.py -q — 117 passed, 1 skipped (test_run_output_parity by design)
-- [x] No new regressions introduced by Phase 6 tracks
-- [x] check_fail_open.py still passes; no new BLOCKERs
+## C-1: Phase 1 — Audit Log
+- [x] test_audit_log_emitted_on_governance_decision passes
+- [x] test_metrics_export_schema_valid passes
+- [x] sop audit CLI subcommand present in __main__.py
+- [x] emit_audit_log wired at 3 call sites in run_loop_cycle.py (step, gate_a, gate_b)
+- [x] write_audit_metrics called after every run
+- [x] audit_log.ndjson written after sop run
+- [x] audit_metrics_latest.json written after sop run
 
-## Phase 7 Sprint Closure Gate
-- [x] Phase 7 plan created: docs/plans/phase_7_sprint_closure.plan.md
-- [x] All phases 2-6 complete
-- [x] C-1: scoped test suite 0 failures, 1 expected skip (by design)
-- [x] C-2: failure artifact contract verified (run_failure_latest.json on hard failures; error_code_registry E001-E007)
-- [x] C-3: CI jobs present in release-validation.yml (cli-smoke, backward-compat, test-suite, release-gate, golden-path, preflight-failure-detection, shadowed-module-smoke) and fast-checks.yml
-- [x] C-4: artifact integrity (hash/content_kind/hash_strategy, decision_basis_count, attempt_id, evaluation_outcome_source all tested and passing)
-- [x] C-5: navigation + boundary clean (zero absolute paths in operator docs; Template Canonical Sources in README.md; KERNEL_ACTIVATION_MATRIX.md as onboarding step 1; sop run/sop validate commands valid)
-- [x] C-6: skills_status ACTIVE; loop_readiness_latest.json routing=skills_active; check_loop_readiness.py dual copy confirmed
-- [x] C-7: scan baseline symmetric; no new BLOCKERs; fail_open_allowlist.json committed
-- [x] C-8: all truth surfaces current; no duplicate sections; all phase gates checked
-- [x] ClosurePacket emitted and validated: Verdict=PASS
-- [x] docs/context/closure_packet_sprint_6phase.md written
+## C-2: Phase 2 — Policy Engine
+- [x] src/sop/_policy_engine.py exists with PolicyResult, load_policy_rules, evaluate_policy
+- [x] docs/policy_rules_default.json exists with valid rule schema (ALLOW + shadow BLOCK)
+- [x] sop policy validate subcommand present in __main__.py
+- [x] --policy-shadow-mode flag wired in run_loop_cycle.py parse_args() and sop run subparser
+- [x] test_policy_engine_blocks_on_violation passes
+- [x] test_shadow_mode_does_not_block passes
+- [x] test_policy_violation_appears_in_audit_log passes
+- [x] test_policy_validate_cli_valid_rules passes
 
-## Phases 2-5 Gates (carried forward as complete)
-- [x] Phase 2: all 21 active tests pass; check_fail_open.py baseline committed; scan manifest symmetric
-- [x] Phase 3: Phase A + Phase B complete; loop_readiness_latest.json live; checklist tests pass
-- [x] Phase 4: Stream A zero absolute paths; templates documented; onboarding checklist fixed; Stream D gap audit passed
-- [x] Phase 5: golden-path CI green on Windows + Linux; preflight-failure-detection + shadowed-module-smoke green
+## C-3: Phase 3 — API/SDK
+- [x] src/sop/_client.py exists with GovernanceClient (run, audit, status, policy_validate)
+- [x] from sop import GovernanceClient works (editable install confirmed)
+- [x] docs/api/openapi.yaml exists with /run, /audit, /policy/validate, /status paths
+- [x] pyproject.toml version bumped to 0.2.0
+- [x] src/sop/__init__.py __version__ = "0.2.0"
+- [x] CHANGELOG.md has 0.2.0 entry
+- [x] test_governance_client_run_returns_summary_dict passes
+- [x] test_governance_client_audit_returns_list passes
+- [x] test_governance_client_status_returns_dict passes
+- [x] test_openapi_spec_validates passes
+
+## C-4: Phase 4 — Containers
+- [x] Dockerfile exists: multi-stage, non-root user sop, python:3.12-slim pinned in both stages
+- [x] Dockerfile: pip install --prefix=/install . (full package, not deps-only)
+- [x] .dockerignore exists
+- [x] docker-compose.yml exists with .:/workspace mount (not ./docs only)
+- [x] charts/terminal-zero-governance/Chart.yaml exists with name, version, appVersion
+- [x] charts/terminal-zero-governance/templates/job.yaml has restartPolicy: Never
+- [x] charts/terminal-zero-governance/values.yaml exists
+- [x] sop healthcheck subcommand present, exits 0 on clean install, no required args
+- [x] .github/workflows/container-smoke.yml exists with working-directory: quant_current_scope
+- [x] test_dockerfile_exists_and_has_non_root_user passes
+- [x] test_helm_chart_yaml_valid passes
+
+## C-5: Phase 5 — Documentation
+- [x] docs/getting-started.md exists: pip install, sop init, sop run, sop audit, sop validate (5-step, no sop startup)
+- [x] docs/architecture.md exists: ASCII diagram marker, audit_log, gate, run_loop_cycle
+- [x] docs/api-reference.md exists
+- [x] docs/examples/cicd-pipeline-governance.md exists
+- [x] docs/context/README.md extended with Phase 1/2/3 artifacts in classification table
+- [x] README.md has single Quickstart section near top, Documentation section with links
+- [x] test_getting_started_covers_key_steps passes
+- [x] test_architecture_md_has_component_overview passes
+- [x] test_context_readme_separates_generated_vs_canonical passes
+
+## C-6: Phase 6 — Integration Tests & Benchmarks
+- [x] tests/test_governance_scenarios.py exists with 3 scenario tests
+- [x] test_governance_scenario_agent_blocked passes (SHADOW_BLOCK in audit log)
+- [x] test_governance_scenario_audit_trail_complete passes (executed steps <= audit entries)
+- [x] test_governance_scenario_retry_loop_increments_attempt_id passes (trace_id differs across runs)
+- [x] tests/test_policy_engine_benchmarks.py exists with 3 benchmark tests (win32-skip)
+- [x] test_policy_evaluation_latency_p50_p95_p99 collected (skipped on Windows by design)
+- [x] test_failure_detection_rate collected (skipped on Windows by design)
+- [x] test_benchmark_regression_guard collected (skipped on Windows by design)
+- [x] docs/benchmarks.md added to .gitignore
+- [x] .github/workflows/integration-benchmarks.yml exists (Linux only, uploads artifact)
+
+## C-7: Full Suite Regression
+- [x] 99 tests across Phase 1-6 acceptance gate files: 0 failures
+- [x] 87 tests (Phase 1-2): passed
+- [x] 9 tests (Phase 3-5): passed
+- [x] 3 tests (Phase 6 scenarios): passed
+- [x] No regressions introduced by external readiness sprint
+
+## C-8: Truth Surfaces Current
+- [x] planner_packet_current.md updated for external-readiness-sprint-2026-03-31
+- [x] done_checklist_current.md updated (this file)
+- [x] bridge_contract_current.md updated
+- [x] observability_pack_current.md updated — no active drift markers
+- [x] closure_packet_external_readiness_sprint.md written

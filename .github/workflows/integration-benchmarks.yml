@@ -1,0 +1,43 @@
+name: Integration Tests & Benchmarks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integration-benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install development dependencies
+        working-directory: quant_current_scope
+        run: |
+          ../.venv/bin/python -m pip install --upgrade pip
+          ../.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
+
+      - name: Run integration and benchmark tests
+        working-directory: quant_current_scope
+        run: |
+          ../.venv/bin/python -m pytest \
+            tests/test_governance_scenarios.py \
+            tests/test_policy_engine_benchmarks.py \
+            -v --tb=short
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks
+          path: quant_current_scope/docs/benchmarks.md
+          if-no-files-found: ignore
