@@ -56,6 +56,15 @@ Full entry path reference with first-run steps, failure routing, and compat path
 ## Recommended command sequence
 
 ```powershell
+# PRIMARY path (sop CLI installed)
+sop startup --repo-root .
+sop run --repo-root . --skip-phase-end --allow-hold true
+sop validate --repo-root .
+sop takeover --repo-root .
+```
+
+```powershell
+# COMPAT path (only when sop CLI is not yet installed)
 .venv\Scripts\python scripts/startup_codex_helper.py --repo-root .
 .venv\Scripts\python scripts/run_loop_cycle.py --repo-root . --skip-phase-end --allow-hold true
 .venv\Scripts\python scripts/validate_loop_closure.py --repo-root .

@@ -1,0 +1,4 @@
+{
+  "description": "Allowlist of bare except: pass patterns exempt from BLOCKER tier. Each entry must include a justification.",
+  "allowlist": []
+}

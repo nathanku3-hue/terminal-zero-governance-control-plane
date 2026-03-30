@@ -104,15 +104,15 @@ def _write_preflight_failure(
             attempt_id=attempt_id,
         )
         _dest = Path(repo_root) / "docs" / "context"
-        write_run_failure(_dest, payload)
+        write_ok = write_run_failure(_dest, payload)
     except Exception:
-        pass
+        write_ok = False
     # Always emit FATAL envelope regardless of artifact write outcome
     print(
         f"FATAL failure_class={failure_class}"
         f" failed_component={failed_component}"
         f" recoverability={recoverability}"
-        f" artifact_write_failed=false",
+        f" artifact_write_failed={str(not write_ok).lower()}",
         file=sys.stderr,
     )
 

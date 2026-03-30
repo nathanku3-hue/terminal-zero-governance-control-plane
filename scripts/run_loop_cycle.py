@@ -1225,6 +1225,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 key: str(path)
                 for key, path in repo_root_convenience.items()
             },
+            "skills_status": getattr(runtime, "skills_status", "RESOLVER_UNAVAILABLE"),
             "final_result": final_result,
             "final_exit_code": final_exit_code,
         }

@@ -28,6 +28,10 @@
     {
       "scripts": "scripts/check_schema_version_policy.py",
       "src": "src/sop/scripts/check_schema_version_policy.py"
+    },
+    {
+      "scripts": "scripts/check_fail_open.py",
+      "src": "src/sop/scripts/check_fail_open.py"
     }
   ]
 }
