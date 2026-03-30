@@ -237,13 +237,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if blockers:
         print(
-            f"CHECK_FAIL_OPEN: FAIL — " + ", ".join(summary_parts) + " finding(s)",
+            "CHECK_FAIL_OPEN: FAIL — " + ", ".join(summary_parts) + " finding(s)",
             file=sys.stderr,
         )
         return 1
     else:
         print(
-            f"CHECK_FAIL_OPEN: PASS — " + ", ".join(summary_parts) + " finding(s) (no BLOCKER)",
+            "CHECK_FAIL_OPEN: PASS — " + ", ".join(summary_parts) + " finding(s) (no BLOCKER)",
         )
         return 0
 
