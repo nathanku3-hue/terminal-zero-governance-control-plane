@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "roles": [
+    {
+      "role_id": "admin",
+      "permissions": ["policy.validate"],
+      "scope": "global"
+    }
+  ]
+}

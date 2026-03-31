@@ -12,6 +12,8 @@ Zero to a working governance loop in under 10 minutes.
 
 ## Step 1 — Install
 
+### Option A: Python package
+
 ```bash
 pip install terminal-zero-governance
 ```
@@ -21,6 +23,21 @@ Verify the install:
 ```bash
 sop --help
 sop version
+```
+
+### Option B: Container image
+
+```bash
+docker pull ghcr.io/<org>/terminal-zero-governance:latest
+docker run --rm ghcr.io/<org>/terminal-zero-governance:latest sop healthcheck
+docker run --rm ghcr.io/<org>/terminal-zero-governance:latest sop version
+```
+
+Run against a local repo from container:
+
+```bash
+docker run --rm -v "$PWD:/workspace" ghcr.io/<org>/terminal-zero-governance:latest \
+  sop run --repo-root /workspace --skip-phase-end
 ```
 
 ---
@@ -91,6 +108,26 @@ agent.
 | Audit log | `docs/context/audit_log.ndjson` | Append-only decision trail |
 | Closure status | `docs/context/loop_closure_status_latest.json` | Readiness verdict |
 | Memory packet | `docs/context/exec_memory_packet_latest.json` | State for next round |
+
+---
+
+## Tutorials
+
+Operator onboarding tutorials:
+
+- [Container quickstart](docs/tutorials/quickstart-container.md)
+- [Helm quickstart](docs/tutorials/quickstart-helm.md)
+- [Troubleshooting](docs/tutorials/troubleshooting.md)
+
+---
+
+## Examples
+
+These examples show external adoption patterns teams use to embed Terminal Zero governance into real delivery and rollout workflows.
+
+- [CI/CD pipeline governance](docs/examples/cicd-pipeline-governance.md)
+- [Kubernetes admission governance](docs/examples/kubernetes-admission-governance.md)
+- [Multi-service rollout governance](docs/examples/multi-service-rollout-governance.md)
 
 ---
 

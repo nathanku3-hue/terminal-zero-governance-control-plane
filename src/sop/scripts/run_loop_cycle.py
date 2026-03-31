@@ -88,6 +88,24 @@ except ModuleNotFoundError:
         return []
     PolicyResult = None  # type: ignore[assignment,misc]
 
+# ---------------------------------------------------------------------------
+# Phase 5 -- Plugin API v1 import (best-effort; never blocks execution)
+# ---------------------------------------------------------------------------
+try:
+    from sop import __version__ as _SOP_VERSION
+    from sop._plugins import discover_plugins, run_plugin_chain
+    _PLUGIN_ENGINE_AVAILABLE = True
+except ModuleNotFoundError:
+    _PLUGIN_ENGINE_AVAILABLE = False
+    _SOP_VERSION = "0.0.0"
+    def discover_plugins(_plugin_dir, _sop_version):  # type: ignore[misc]
+        return []
+    def run_plugin_chain(*, candidates, action, context):  # type: ignore[misc]
+        class _Result:
+            blocked = False
+            events = []
+        return _Result()
+
 
 # ---------------------------------------------------------------------------
 # H-NEW-2 — Failure reporter: must be imported before any hard-import block
@@ -669,6 +687,71 @@ def _parse_bool(value: str) -> bool:
     raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
 
 
+def _run_plugins_for_gate(
+    *,
+    args: argparse.Namespace,
+    gate_name: str,
+    gate_label: str,
+    gate_decision: str,
+    repo_root: Path,
+    trace_id: str,
+    policy_shadow_mode: bool,
+    context_dir: Path,
+) -> tuple[bool, list[dict[str, Any]]]:
+    if not _PLUGIN_ENGINE_AVAILABLE:
+        return False, []
+
+    plugin_dir_value = getattr(args, "plugin_dir", None)
+    plugin_dir = Path(plugin_dir_value) if plugin_dir_value else (repo_root / ".sop" / "plugins")
+
+    discovered = discover_plugins(plugin_dir=plugin_dir, sop_version=_SOP_VERSION)
+    if not discovered:
+        return False, []
+
+    chain = run_plugin_chain(
+        candidates=discovered,
+        action={"gate": gate_label, "decision": gate_decision, "actor": gate_name},
+        context={
+            "repo_root": str(repo_root),
+            "trace_id": trace_id,
+            "gate": gate_label,
+            "policy_shadow_mode": bool(policy_shadow_mode),
+        },
+    )
+
+    plugin_gate_events: list[dict[str, Any]] = []
+    for event in chain.events:
+        plugin_gate_events.append(
+            {
+                "plugin_name": event.plugin_name,
+                "plugin_version": event.plugin_version,
+                "plugin_status": event.plugin_status,
+                "decision": event.decision,
+                "reason": event.reason,
+                "metadata": event.metadata,
+            }
+        )
+        emit_audit_log(
+            context_dir,
+            build_audit_entry(
+                decision=event.decision,
+                actor=f"plugin:{event.plugin_name}",
+                outcome=event.reason,
+                gate=gate_label,
+                trace_id=trace_id,
+                artifact_refs={},
+                extra={
+                    "plugin_name": event.plugin_name,
+                    "plugin_version": event.plugin_version,
+                    "plugin_status": event.plugin_status,
+                    "metadata": event.metadata,
+                },
+            ),
+        )
+
+    return chain.blocked, plugin_gate_events
+
+
 def _build_hold_summary_payload(
     *,
     gate_a_hold: bool,
@@ -1041,6 +1124,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     # Phase 2 Policy Engine: shadow mode (default True = observe only, no blocking)
     parser.add_argument("--policy-shadow-mode", type=_parse_bool, default=True, dest="policy_shadow_mode", help="Policy engine shadow mode (default: true). When true, BLOCK decisions are logged but do not block execution.")
     parser.add_argument("--policy-rule-file", type=Path, default=None, dest="policy_rule_file", help="Path to a JSON policy rule file. If None, no policy rules are loaded.")
+    parser.add_argument("--plugin-dir", type=Path, default=None, dest="plugin_dir", help="Plugin directory for sop run only (default: <repo_root>/.sop/plugins/).")
     return parser.parse_args(argv)
 
 
@@ -2024,10 +2108,21 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
     }
     _policy_result_a = evaluate_policy(_policy_action_a, _policy_rules_a)
     _policy_shadow_mode = getattr(args, 'policy_shadow_mode', True)
+    _plugin_block_a, _plugin_events_a = _run_plugins_for_gate(
+        args=args,
+        gate_name="gate_a",
+        gate_label="exec_memory->advisory",
+        gate_decision=_gate_a_result.decision,
+        repo_root=ctx.repo_root,
+        trace_id=runtime.trace_id,
+        policy_shadow_mode=_policy_shadow_mode,
+        context_dir=ctx.context_dir,
+    )
     # Inject policy_decision into the gate_a _gate_decisions entry
     if _gate_decisions:
         _gate_decisions[-1]["policy_decision"] = _policy_result_a.decision
         _gate_decisions[-1]["policy_rule_id"] = _policy_result_a.rule_id
+        _gate_decisions[-1]["plugin_events"] = _plugin_events_a
     # Emit policy audit log entry (separate from gate entry — actor prefixed)
     if _policy_result_a.decision not in ("ALLOW",):
         emit_audit_log(
@@ -2044,6 +2139,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         )
     # Enforce mode: BLOCK + shadow=False -> force gate to HOLD before checkpoint
     if _policy_result_a.decision == "BLOCK" and not _policy_shadow_mode:
+        _gate_a_hold = True
+    if _plugin_block_a:
         _gate_a_hold = True
     try:
         _gate_a.emit(
@@ -2147,10 +2244,21 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             "actor": "gate_b",
         }
         _policy_result_b = evaluate_policy(_policy_action_b, _policy_rules_b)
+        _plugin_block_b, _plugin_events_b = _run_plugins_for_gate(
+            args=args,
+            gate_name="gate_b",
+            gate_label="advisory->summary",
+            gate_decision=_gate_b_result.decision,
+            repo_root=ctx.repo_root,
+            trace_id=runtime.trace_id,
+            policy_shadow_mode=_policy_shadow_mode,
+            context_dir=ctx.context_dir,
+        )
         # Inject policy_decision into the gate_b _gate_decisions entry
         if _gate_decisions:
             _gate_decisions[-1]["policy_decision"] = _policy_result_b.decision
             _gate_decisions[-1]["policy_rule_id"] = _policy_result_b.rule_id
+            _gate_decisions[-1]["plugin_events"] = _plugin_events_b
         # Emit policy audit log entry for non-ALLOW outcomes
         if _policy_result_b.decision not in ("ALLOW",):
             emit_audit_log(
@@ -2169,6 +2277,8 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
         _gate_b_policy_force_hold = (
             _policy_result_b.decision == "BLOCK" and not _policy_shadow_mode
         )
+        if _plugin_block_b:
+            _gate_b_policy_force_hold = True
         try:
             _gate_b.emit(
                 _gate_b_result,

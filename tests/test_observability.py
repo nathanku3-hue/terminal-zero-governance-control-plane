@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -234,3 +235,198 @@ class TestMetricsMatchSteps:
             f"counted {actual_pass} PASS steps in trace.steps"
         )
         assert metrics["total_steps"] == len(steps)
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 (Final Locked) — Observability v1 (CLI exporter)
+# ---------------------------------------------------------------------------
+
+def test_metrics_endpoint_produces_prometheus_format(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    audit_dir = repo_root / "docs" / "context"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "audit_log.ndjson").write_text("", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "sop",
+            "metrics",
+            "--repo-root",
+            str(repo_root),
+            "--format",
+            "prometheus",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+
+    assert result.returncode == 0
+    assert "# HELP policy_decisions_total" in result.stdout
+    assert "# TYPE policy_decisions_total counter" in result.stdout
+    assert "# HELP gate_evaluation_duration_seconds" in result.stdout
+    assert "# TYPE gate_evaluation_duration_seconds gauge" in result.stdout
+    assert "# HELP failure_count_total" in result.stdout
+    assert "# TYPE failure_count_total counter" in result.stdout
+
+
+def test_structured_log_schema_version_present(tmp_path: Path) -> None:
+    args = _minimal_args(tmp_path)
+    _run_cycle_for_test(args)
+
+    audit_path = _context_dir(args) / "audit_log.ndjson"
+    assert audit_path.exists(), "audit_log.ndjson must exist after run"
+
+    entries = [
+        json.loads(line)
+        for line in audit_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert entries, "audit_log.ndjson must contain at least one entry"
+    for entry in entries:
+        assert "schema_version" in entry
+        assert entry["schema_version"] == "1.0"
+
+
+def test_failure_count_total_increments_on_failure(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    audit_dir = repo_root / "docs" / "context"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "audit_log.ndjson").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "timestamp_utc": "2026-03-31T00:00:00Z",
+                        "decision": "PASS",
+                        "actor": "step:a",
+                        "outcome": "ok",
+                        "gate": "step_execution",
+                        "trace_id": "trace-a",
+                        "artifact_refs": {},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "timestamp_utc": "2026-03-31T00:00:01Z",
+                        "decision": "FAIL",
+                        "actor": "step:b",
+                        "outcome": "failed",
+                        "gate": "step_execution",
+                        "trace_id": "trace-b",
+                        "artifact_refs": {},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "timestamp_utc": "2026-03-31T00:00:02Z",
+                        "decision": "ERROR",
+                        "actor": "step:c",
+                        "outcome": "error",
+                        "gate": "step_execution",
+                        "trace_id": "trace-c",
+                        "artifact_refs": {},
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "sop",
+            "metrics",
+            "--repo-root",
+            str(repo_root),
+            "--format",
+            "prometheus",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+
+    assert result.returncode == 0
+    assert "failure_count_total 2" in result.stdout
+
+
+def test_gate_duration_metric_emitted(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    audit_dir = repo_root / "docs" / "context"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "audit_log.ndjson").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "timestamp_utc": "2026-03-31T00:00:00Z",
+                        "decision": "PASS",
+                        "actor": "gate_a",
+                        "outcome": "ok",
+                        "gate": "exec_memory->advisory",
+                        "trace_id": "trace-1",
+                        "artifact_refs": {},
+                        "duration_seconds": 1.25,
+                    }
+                ),
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "timestamp_utc": "2026-03-31T00:00:01Z",
+                        "decision": "PASS",
+                        "actor": "gate_a",
+                        "outcome": "ok",
+                        "gate": "exec_memory->advisory",
+                        "trace_id": "trace-2",
+                        "artifact_refs": {},
+                        "duration_seconds": 0.75,
+                    }
+                ),
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "timestamp_utc": "2026-03-31T00:00:02Z",
+                        "decision": "PASS",
+                        "actor": "gate_b",
+                        "outcome": "ok",
+                        "gate": "advisory->summary",
+                        "trace_id": "trace-3",
+                        "artifact_refs": {},
+                        "duration_seconds": "not-a-number",
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "sop",
+            "metrics",
+            "--repo-root",
+            str(repo_root),
+            "--format",
+            "prometheus",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+
+    assert result.returncode == 0
+    assert 'gate_evaluation_duration_seconds{gate="exec_memory->advisory"} 2.0' in result.stdout
+    assert 'gate_evaluation_duration_seconds{gate="advisory->summary"}' not in result.stdout

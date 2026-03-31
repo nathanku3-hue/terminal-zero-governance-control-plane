@@ -10,16 +10,16 @@ This guide covers running the governance control plane as a Kubernetes Job on Az
 - Docker image pushed to Azure Container Registry (ACR)
 - A PersistentVolumeClaim (PVC) named `governance-workspace` containing your governed repository
 
-## 1. Build and Push the Image
+## 1. Use Published Image (recommended)
 
 ```bash
-# From quant_current_scope/
-docker build -t terminal-zero-governance:0.2.0 .
+# Pull official image from GHCR
+docker pull ghcr.io/<org>/terminal-zero-governance:latest
 
-# Push to ACR
+# Optional: mirror into ACR
 ACR_NAME=myacr  # replace with your ACR name
 az acr login --name $ACR_NAME
-docker tag terminal-zero-governance:0.2.0 ${ACR_NAME}.azurecr.io/terminal-zero-governance:0.2.0
+docker tag ghcr.io/<org>/terminal-zero-governance:latest ${ACR_NAME}.azurecr.io/terminal-zero-governance:0.2.0
 docker push ${ACR_NAME}.azurecr.io/terminal-zero-governance:0.2.0
 ```
 

@@ -1,0 +1,2 @@
+{"schema_version":"1.0","timestamp_utc":"2026-03-31T00:00:00Z","decision":"WARN","actor":"plugin:example_warn_plugin","outcome":"non-fatal plugin warning","gate":"plugin_chain","trace_id":"phase8-pluginwarn-001","artifact_refs":{}}
+{"schema_version":"1.0","timestamp_utc":"2026-03-31T00:00:00Z","decision":"PASS","actor":"step:validate_loop_closure","outcome":"completed","gate":"step_execution","trace_id":"phase8-pluginwarn-001","artifact_refs":{}}

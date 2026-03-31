@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import json
 import subprocess
 import sys
 from importlib import resources
@@ -253,6 +254,102 @@ def _add_repo_root_arg(parser: argparse.ArgumentParser, required: bool = True) -
     )
 
 
+def _escape_prometheus_label(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
+
+
+def _load_audit_entries_for_metrics(audit_log_path: Path) -> list[dict]:
+    if not audit_log_path.exists():
+        return []
+    entries: list[dict] = []
+    with audit_log_path.open("r", encoding="utf-8") as handle:
+        for raw_line in handle:
+            line = raw_line.strip()
+            if not line:
+                continue
+            try:
+                parsed = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                entries.append(parsed)
+    return entries
+
+
+def _render_prometheus_metrics(entries: list[dict]) -> str:
+    policy_counts: dict[tuple[str, str], int] = {}
+    gate_duration_totals: dict[str, float] = {}
+    failure_count_total = 0
+
+    for entry in entries:
+        decision = str(entry.get("decision", "")).strip() or "UNKNOWN"
+        actor = str(entry.get("actor", "")).strip() or "UNKNOWN"
+        policy_key = (decision, actor)
+        policy_counts[policy_key] = policy_counts.get(policy_key, 0) + 1
+
+        if decision in {"FAIL", "ERROR"}:
+            failure_count_total += 1
+
+        gate = str(entry.get("gate", "")).strip()
+        duration = entry.get("duration_seconds")
+        if gate and isinstance(duration, (int, float)):
+            gate_duration_totals[gate] = gate_duration_totals.get(gate, 0.0) + float(duration)
+
+    lines: list[str] = [
+        "# HELP policy_decisions_total Total audit policy decisions by decision and actor.",
+        "# TYPE policy_decisions_total counter",
+    ]
+    for (decision, actor), count in sorted(policy_counts.items()):
+        lines.append(
+            "policy_decisions_total{decision=\""
+            + _escape_prometheus_label(decision)
+            + "\",actor=\""
+            + _escape_prometheus_label(actor)
+            + "\"} "
+            + str(count)
+        )
+
+    lines.extend(
+        [
+            "# HELP gate_evaluation_duration_seconds Aggregate gate duration in seconds by gate.",
+            "# TYPE gate_evaluation_duration_seconds gauge",
+        ]
+    )
+    for gate, total in sorted(gate_duration_totals.items()):
+        lines.append(
+            "gate_evaluation_duration_seconds{gate=\""
+            + _escape_prometheus_label(gate)
+            + "\"} "
+            + str(total)
+        )
+
+    lines.extend(
+        [
+            "# HELP failure_count_total Total count of FAIL/ERROR audit decisions.",
+            "# TYPE failure_count_total counter",
+            f"failure_count_total {failure_count_total}",
+        ]
+    )
+
+    return "\n".join(lines) + "\n"
+
+
+def cmd_metrics(args: argparse.Namespace) -> int:
+    """Export observability metrics to stdout."""
+    repo_root = Path(args.repo_root)
+    audit_log_path = repo_root / "docs" / "context" / "audit_log.ndjson"
+
+    try:
+        entries = _load_audit_entries_for_metrics(audit_log_path)
+    except (OSError, PermissionError) as exc:
+        print(f"ERROR: unable to read audit log: {exc}", file=sys.stderr)
+        return 1
+
+    output = _render_prometheus_metrics(entries)
+    sys.stdout.write(output)
+    return 0
+
+
 def cmd_startup(args: argparse.Namespace) -> int:
     """Run startup interrogation."""
     cli_args = ["--repo-root", args.repo_root]
@@ -296,6 +393,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         cli_args.extend(["--policy-shadow-mode", "false"])
     if getattr(args, "policy_rule_file", None) is not None:
         cli_args.extend(["--policy-rule-file", str(args.policy_rule_file)])
+    if getattr(args, "plugin_dir", None) is not None:
+        cli_args.extend(["--plugin-dir", str(args.plugin_dir)])
 
     # Phase 4 Stream I — single retry on RETRYABLE failures only
     repo_root_str = str(args.repo_root)
@@ -408,6 +507,26 @@ def cmd_policy_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_policy_rbac_validate(args: argparse.Namespace) -> int:
+    """Validate an RBAC role config file schema."""
+    try:
+        from sop._policy_engine import load_role_config, PolicyLoadError
+    except ModuleNotFoundError:
+        print("ERROR: sop._policy_engine not available", file=__import__("sys").stderr)
+        return 1
+    role_file = args.role_file
+    try:
+        roles = load_role_config(role_file)
+    except PolicyLoadError as exc:
+        print(f"INVALID: {exc}", file=__import__("sys").stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"ERROR: {exc}", file=__import__("sys").stderr)
+        return 1
+    print(f"OK: {len(roles)} role(s) valid in {role_file}")
+    return 0
+
+
 def cmd_healthcheck(args: argparse.Namespace) -> int:
     """Run preflight spec check and exit 0 on success, 1 on failure.
 
@@ -429,11 +548,32 @@ def cmd_healthcheck(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ops_nightly_audit(args: argparse.Namespace) -> int:
+    """Run nightly compliance audit."""
+    cli_args = ["--repo-root", args.repo_root, "--format", args.format]
+    return _run_script("nightly_audit.py", cli_args, repo_root=args.repo_root)
+
+
 def cmd_version(args: argparse.Namespace) -> int:
     """Print version."""
     from . import __version__
     print(f"sop {__version__}")
     return 0
+
+
+def cmd_phase8_ga_readiness(args: argparse.Namespace) -> int:
+    """Generate Phase 8 GA readiness artifacts."""
+    cli_args = [
+        "--repo-root",
+        args.repo_root,
+        "--burnin-report",
+        args.burnin_report,
+        "--slo-baseline",
+        args.slo_baseline,
+        "--ga-signoff",
+        args.ga_signoff,
+    ]
+    return _run_script("phase8_ga_readiness.py", cli_args, repo_root=args.repo_root)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -493,6 +633,7 @@ For subcommand help: sop <command> --help
     # Phase 2 Policy Engine
     p_run.add_argument("--policy-shadow-mode", type=lambda x: x.lower() not in ("false", "0", "no"), default=True, dest="policy_shadow_mode", help="Policy engine shadow mode (default: true). When true, BLOCK decisions are logged but do not block execution.")
     p_run.add_argument("--policy-rule-file", default=None, dest="policy_rule_file", help="Path to a JSON policy rule file. If None, no policy rules are loaded.")
+    p_run.add_argument("--plugin-dir", default=None, dest="plugin_dir", help="Plugin directory for sop run only (default: <repo_root>/.sop/plugins/).")
     p_run.set_defaults(func=cmd_run)
 
     # validate
@@ -552,6 +693,44 @@ For subcommand help: sop <command> --help
         help="Filter by decision value, e.g. BLOCK or outcome=BLOCK")
     p_audit.set_defaults(func=cmd_audit)
 
+    # metrics
+    p_metrics = subparsers.add_parser(
+        "metrics",
+        help="Export observability metrics",
+        description="Export Prometheus text metrics derived from docs/context/audit_log.ndjson.",
+    )
+    _add_repo_root_arg(p_metrics)
+    p_metrics.add_argument(
+        "--format",
+        required=True,
+        choices=["prometheus"],
+        help="Output format (v1 supports: prometheus)",
+    )
+    p_metrics.set_defaults(func=cmd_metrics)
+
+    # ops
+    p_ops = subparsers.add_parser(
+        "ops",
+        help="Operational compliance commands",
+        description="Operations commands for compliance and audit workflows.",
+    )
+    p_ops_sub = p_ops.add_subparsers(dest="ops_command", help="Ops subcommands")
+
+    p_ops_nightly = p_ops_sub.add_parser(
+        "nightly-audit",
+        help="Run nightly compliance audit",
+        description="Evaluate pinned compliance controls and produce compliance snapshot artifacts.",
+    )
+    _add_repo_root_arg(p_ops_nightly)
+    p_ops_nightly.add_argument(
+        "--format",
+        required=True,
+        choices=["json"],
+        help="Output format (v1 supports: json)",
+    )
+    p_ops_nightly.set_defaults(func=cmd_ops_nightly_audit)
+    p_ops.set_defaults(func=lambda a: (p_ops.print_help(), 0)[1])
+
     # policy
     p_policy = subparsers.add_parser(
         "policy",
@@ -572,6 +751,26 @@ For subcommand help: sop <command> --help
         help="Path to the JSON policy rule file to validate.",
     )
     p_policy_validate.set_defaults(func=cmd_policy_validate)
+
+    # policy rbac validate
+    p_policy_rbac = p_policy_sub.add_parser(
+        "rbac",
+        help="RBAC role configuration commands",
+        description="Commands for RBAC role-file validation.",
+    )
+    p_policy_rbac_sub = p_policy_rbac.add_subparsers(dest="policy_rbac_command", help="RBAC subcommands")
+    p_policy_rbac_validate = p_policy_rbac_sub.add_parser(
+        "validate",
+        help="Validate an RBAC role file",
+        description="Validate the schema of a JSON RBAC role file. Exit 0=valid, 1=invalid.",
+    )
+    p_policy_rbac_validate.add_argument(
+        "--role-file",
+        required=True,
+        dest="role_file",
+        help="Path to the JSON RBAC role file to validate.",
+    )
+    p_policy_rbac_validate.set_defaults(func=cmd_policy_rbac_validate)
     # Phase 3: sop policy evaluate — deferred
     p_policy.set_defaults(func=lambda a: (p_policy.print_help(), 0)[1])
 
@@ -586,6 +785,18 @@ For subcommand help: sop <command> --help
         ),
     )
     p_healthcheck.set_defaults(func=cmd_healthcheck)
+
+    # phase8-ga-readiness
+    p_phase8 = subparsers.add_parser(
+        "phase8-ga-readiness",
+        help="Generate Phase 8 burn-in artifacts",
+        description="Run fixed 5x6 Phase 8 matrix and write burn-in/slo/signoff artifacts.",
+    )
+    _add_repo_root_arg(p_phase8)
+    p_phase8.add_argument("--burnin-report", default="docs/context/burnin_report_latest.json")
+    p_phase8.add_argument("--slo-baseline", default="docs/context/slo_baseline_latest.json")
+    p_phase8.add_argument("--ga-signoff", default="docs/context/ga_signoff_packet_latest.md")
+    p_phase8.set_defaults(func=cmd_phase8_ga_readiness)
 
     # version
     p_version = subparsers.add_parser(

@@ -10,19 +10,19 @@ This guide covers running the governance control plane as a Kubernetes Job on Go
 - Docker image pushed to Artifact Registry
 - A PersistentVolumeClaim (PVC) named `governance-workspace` containing your governed repository
 
-## 1. Build and Push the Image
+## 1. Use Published Image (recommended)
 
 ```bash
-# From quant_current_scope/
-docker build -t terminal-zero-governance:0.2.0 .
+# Pull official image from GHCR
+docker pull ghcr.io/<org>/terminal-zero-governance:latest
 
-# Configure Docker for Artifact Registry
+# Optional: mirror into Artifact Registry
 REGION=us-central1
 PROJECT_ID=$(gcloud config get-value project)
 REPO=terminal-zero
 
 gcloud auth configure-docker ${REGION}-docker.pkg.dev
-docker tag terminal-zero-governance:0.2.0 \
+docker tag ghcr.io/<org>/terminal-zero-governance:latest \
   ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/terminal-zero-governance:0.2.0
 docker push \
   ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/terminal-zero-governance:0.2.0
@@ -94,5 +94,5 @@ gcloud iam service-accounts add-iam-policy-binding \
 | Symptom | Likely cause | Resolution |
 |---------|-------------|------------|
 | `ERROR: Missing script` on every step | PVC too narrow | Confirm full repo root at `/workspace` |
-| `FATAL failure_class=INSTALL_ERROR` | sop not on PATH in image | Rebuild image; check `ENV PATH=/install/bin:$PATH` |
-| `ImagePullBackOff` | Artifact Registry auth | 
+| `FATAL failure_class=INSTALL_ERROR` | `sop` not on PATH in image | Rebuild image; check `ENV PATH=/install/bin:$PATH` |
+| `ImagePullBackOff` | Artifact Registry auth | Run `gcloud auth configure-docker ${REGION}-docker.pkg.dev` and confirm image path/repo permissions |

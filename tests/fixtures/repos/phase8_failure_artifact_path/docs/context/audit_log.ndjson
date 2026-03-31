@@ -1,0 +1,1 @@
+{"schema_version":"1.0","timestamp_utc":"2026-03-31T00:00:00Z","decision":"FAIL","actor":"step:validate_loop_closure","outcome":"missing required artifact","gate":"step_execution","trace_id":"phase8-failure-001","artifact_refs":{}}

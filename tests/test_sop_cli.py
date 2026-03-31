@@ -27,6 +27,7 @@ class TestSopCLI:
         assert "validate" in result.stdout
         assert "takeover" in result.stdout
         assert "supervise" in result.stdout
+        assert "ops" in result.stdout
         assert "init" in result.stdout
 
     def test_version(self):
@@ -39,7 +40,7 @@ class TestSopCLI:
         )
         assert result.returncode == 0
         assert "sop" in result.stdout
-        assert "0.1" in result.stdout
+        assert "0.2" in result.stdout
 
     def test_startup_help(self):
         """sop startup --help works."""
@@ -108,6 +109,28 @@ class TestSopCLI:
         assert result.returncode == 0
         assert "target_dir" in result.stdout
         assert "--minimal" in result.stdout
+    def test_ops_help(self):
+        """sop ops --help works."""
+        result = subprocess.run(
+            [sys.executable, "-m", "sop", "ops", "--help"],
+            capture_output=True,
+            text=True,
+            cwd=CLI_ROOT.parent.parent,
+        )
+        assert result.returncode == 0
+        assert "nightly-audit" in result.stdout
+
+    def test_ops_nightly_audit_help(self):
+        """sop ops nightly-audit --help works."""
+        result = subprocess.run(
+            [sys.executable, "-m", "sop", "ops", "nightly-audit", "--help"],
+            capture_output=True,
+            text=True,
+            cwd=CLI_ROOT.parent.parent,
+        )
+        assert result.returncode == 0
+        assert "--repo-root" in result.stdout
+        assert "--format" in result.stdout
 
 
 class TestSopInit:

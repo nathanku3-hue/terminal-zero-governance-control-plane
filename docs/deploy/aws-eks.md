@@ -10,19 +10,19 @@ This guide covers running the governance control plane as a Kubernetes Job on Am
 - Docker image pushed to ECR or a registry accessible from the cluster
 - A PersistentVolumeClaim (PVC) named `governance-workspace` containing your governed repository
 
-## 1. Build and Push the Image
+## 1. Use Published Image (recommended)
 
 ```bash
-# From quant_current_scope/
-docker build -t terminal-zero-governance:0.2.0 .
+# Pull official image from GHCR
+docker pull ghcr.io/<org>/terminal-zero-governance:latest
 
-# Tag and push to ECR
+# Optional: mirror into ECR
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REGION=us-east-1
 ECR_REPO=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/terminal-zero-governance
 
 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ECR_REPO}
-docker tag terminal-zero-governance:0.2.0 ${ECR_REPO}:0.2.0
+docker tag ghcr.io/<org>/terminal-zero-governance:latest ${ECR_REPO}:0.2.0
 docker push ${ECR_REPO}:0.2.0
 ```
 

@@ -79,6 +79,8 @@ PHASE_0_SCRIPTS = [
     "tier_aware_compactor.py",
     # Phase 5.3 -- ArtifactLifecycleManager (D-183 dual-surface)
     "artifact_lifecycle_manager.py",
+    # Phase 10 -- nightly compliance audit (D-183 dual-surface)
+    "nightly_audit.py",
 ]
 
 # Exemption registry.  Key = script name, value = justification string.

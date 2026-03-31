@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-03-31T00:00:00Z",
+  "final_result": "HOLD",
+  "final_exit_code": 0,
+  "step_summary": {
+    "pass_count": 7,
+    "hold_count": 2,
+    "fail_count": 0,
+    "error_count": 0,
+    "skip_count": 1,
+    "total_steps": 10
+  }
+}

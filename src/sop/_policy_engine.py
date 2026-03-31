@@ -5,6 +5,7 @@ The caller (run_loop_cycle.py) is responsible for emitting audit log entries.
 
 Public API:
     load_policy_rules(rule_file) -> list[dict]
+    load_role_config(role_file) -> list[dict]
     evaluate_policy(action, rules) -> PolicyResult
     build_policy_result(decision, rule_id, reason, shadow) -> PolicyResult
 
@@ -20,16 +21,8 @@ Rule schema (each element in the JSON rules array)::
         },
         "scope": "str",             # required, e.g. "gate"
         "shadow": false,            # optional, default false
-        "description": "str"        # optional, human-readable
-    }
-
-Action dict (passed by run_loop_cycle.py at Gate A / Gate B)::
-
-    {
-        "gate": "exec_memory->advisory" | "advisory->summary",
-        "decision": "PROCEED" | "HOLD",
-        "trace_id": "<str>",
-        "actor": "gate_a" | "gate_b",
+        "description": "str",       # optional, human-readable
+        "roles": ["admin"]         # optional
     }
 """
 
@@ -41,30 +34,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-# ---------------------------------------------------------------------------
-# Exceptions
-# ---------------------------------------------------------------------------
-
 class PolicyLoadError(Exception):
-    """Raised when a policy rule file cannot be loaded or fails schema validation."""
+    """Raised when a policy file cannot be loaded or fails schema validation."""
 
-
-# ---------------------------------------------------------------------------
-# Result dataclass
-# ---------------------------------------------------------------------------
 
 @dataclass
 class PolicyResult:
-    """Outcome of a single policy evaluation.
-
-    Attributes:
-        decision: Final decision — "ALLOW", "BLOCK", "WARN",
-                  "SHADOW_BLOCK", or "SHADOW_WARN".
-        rule_id:  The rule_id of the rule that triggered, or "default" if
-                  no rule matched (default ALLOW).
-        reason:   Human-readable explanation.
-        shadow:   True when the result is a shadow simulation (no blocking).
-    """
+    """Outcome of a single policy evaluation."""
 
     decision: str
     rule_id: str
@@ -72,18 +48,31 @@ class PolicyResult:
     shadow: bool = field(default=False)
 
 
-# ---------------------------------------------------------------------------
-# Schema validation helpers
-# ---------------------------------------------------------------------------
-
 _REQUIRED_RULE_FIELDS = {"rule_id", "decision", "match", "scope"}
 _VALID_DECISIONS = {"ALLOW", "BLOCK", "WARN"}
 _REQUIRED_MATCH_FIELDS = {"field", "operator", "value"}
 _VALID_OPERATORS = {"eq"}
+_RBAC_SCHEMA_VERSION = "1.0"
+
+
+def _validate_rule_roles(rule: dict[str, Any], index: int) -> None:
+    roles = rule.get("roles")
+    if roles is None:
+        return
+    if not isinstance(roles, list) or len(roles) == 0:
+        raise PolicyLoadError(
+            f"Rule at index {index} (rule_id={rule.get('rule_id', '<unknown>')!r}): "
+            "roles must be a non-empty array of non-empty strings"
+        )
+    for role in roles:
+        if not isinstance(role, str) or not role.strip():
+            raise PolicyLoadError(
+                f"Rule at index {index} (rule_id={rule.get('rule_id', '<unknown>')!r}): "
+                "roles entries must be non-empty strings"
+            )
 
 
 def _validate_rule(rule: Any, index: int) -> None:
-    """Raise PolicyLoadError if *rule* does not conform to the schema."""
     if not isinstance(rule, dict):
         raise PolicyLoadError(
             f"Rule at index {index} must be a JSON object, got {type(rule).__name__}"
@@ -104,15 +93,12 @@ def _validate_rule(rule: Any, index: int) -> None:
 
     match = rule["match"]
     if not isinstance(match, dict):
-        raise PolicyLoadError(
-            f"Rule {rule['rule_id']!r}: 'match' must be a JSON object"
-        )
+        raise PolicyLoadError(f"Rule {rule['rule_id']!r}: 'match' must be a JSON object")
 
     missing_match = _REQUIRED_MATCH_FIELDS - set(match.keys())
     if missing_match:
         raise PolicyLoadError(
-            f"Rule {rule['rule_id']!r}: 'match' is missing fields: "
-            f"{sorted(missing_match)}"
+            f"Rule {rule['rule_id']!r}: 'match' is missing fields: {sorted(missing_match)}"
         )
 
     if match["operator"] not in _VALID_OPERATORS:
@@ -122,58 +108,64 @@ def _validate_rule(rule: Any, index: int) -> None:
         )
 
     if not isinstance(rule["rule_id"], str) or not rule["rule_id"].strip():
-        raise PolicyLoadError(
-            f"Rule at index {index}: rule_id must be a non-empty string"
-        )
+        raise PolicyLoadError(f"Rule at index {index}: rule_id must be a non-empty string")
 
     if not isinstance(rule["scope"], str) or not rule["scope"].strip():
+        raise PolicyLoadError(f"Rule {rule['rule_id']!r}: scope must be a non-empty string")
+
+    _validate_rule_roles(rule, index)
+
+
+def _validate_single_role(role: Any, index: int) -> dict[str, Any]:
+    if not isinstance(role, dict):
         raise PolicyLoadError(
-            f"Rule {rule['rule_id']!r}: scope must be a non-empty string"
+            f"Role at index {index} must be a JSON object, got {type(role).__name__}"
         )
 
+    for field_name in ("role_id", "permissions", "scope"):
+        if field_name not in role:
+            raise PolicyLoadError(
+                f"Role at index {index} is missing required field: {field_name}"
+            )
 
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
+    role_id = role["role_id"]
+    if not isinstance(role_id, str) or not role_id.strip():
+        raise PolicyLoadError(f"Role at index {index}: role_id must be a non-empty string")
+
+    permissions = role["permissions"]
+    if not isinstance(permissions, list):
+        raise PolicyLoadError(f"Role {role_id!r}: permissions must be an array of strings")
+    for permission in permissions:
+        if not isinstance(permission, str):
+            raise PolicyLoadError(f"Role {role_id!r}: permissions entries must be strings")
+
+    scope = role["scope"]
+    if not isinstance(scope, str) or not scope.strip():
+        raise PolicyLoadError(f"Role {role_id!r}: scope must be a non-empty string")
+
+    return role
+
 
 def load_policy_rules(rule_file: str | os.PathLike) -> list[dict]:
-    """Load and validate a JSON policy rule file.
-
-    Args:
-        rule_file: Path to a JSON file containing a ``rules`` array.
-
-    Returns:
-        A validated list of rule dicts.
-
-    Raises:
-        PolicyLoadError: If the file cannot be read, is not valid JSON,
-                         or fails schema validation.
-    """
+    """Load and validate a JSON policy rule file."""
     try:
         with open(rule_file, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except FileNotFoundError as exc:
         raise PolicyLoadError(f"Policy rule file not found: {rule_file}") from exc
     except json.JSONDecodeError as exc:
-        raise PolicyLoadError(
-            f"Policy rule file is not valid JSON ({rule_file}): {exc}"
-        ) from exc
+        raise PolicyLoadError(f"Policy rule file is not valid JSON ({rule_file}): {exc}") from exc
 
     if not isinstance(data, dict):
         raise PolicyLoadError(
-            f"Policy rule file must be a JSON object with a 'rules' key, "
-            f"got {type(data).__name__}"
+            f"Policy rule file must be a JSON object with a 'rules' key, got {type(data).__name__}"
         )
 
     rules = data.get("rules")
     if rules is None:
-        raise PolicyLoadError(
-            f"Policy rule file is missing the 'rules' key: {rule_file}"
-        )
+        raise PolicyLoadError(f"Policy rule file is missing the 'rules' key: {rule_file}")
     if not isinstance(rules, list):
-        raise PolicyLoadError(
-            f"'rules' must be a JSON array, got {type(rules).__name__}"
-        )
+        raise PolicyLoadError(f"'rules' must be a JSON array, got {type(rules).__name__}")
 
     for idx, rule in enumerate(rules):
         _validate_rule(rule, idx)
@@ -181,37 +173,62 @@ def load_policy_rules(rule_file: str | os.PathLike) -> list[dict]:
     return rules
 
 
-def evaluate_policy(
-    action: dict[str, Any],
-    rules: list[dict],
-) -> PolicyResult:
-    """Evaluate *action* against *rules* and return a PolicyResult.
+def load_role_config(role_file: str | os.PathLike) -> list[dict]:
+    """Load and validate an RBAC role config file."""
+    try:
+        with open(role_file, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError as exc:
+        raise PolicyLoadError(f"Role config file not found: {role_file}") from exc
+    except json.JSONDecodeError as exc:
+        raise PolicyLoadError(f"Role config file is not valid JSON ({role_file}): {exc}") from exc
 
-    Evaluation semantics:
-    - Rules are evaluated in order; the **first matching rule wins**.
-    - A rule matches when ``action[match.field] == match.value``
-      (only ``eq`` operator is supported in Phase 2).
-    - If the matching rule has ``shadow=true``, the decision is prefixed
-      with ``SHADOW_`` (e.g. ``SHADOW_BLOCK``) and does not block.
-    - If no rule matches, the default decision is **ALLOW**.
+    if not isinstance(data, dict):
+        raise PolicyLoadError(f"Role config file must be a JSON object, got {type(data).__name__}")
 
-    Args:
-        action: A dict describing the current gate action (see module docstring).
-        rules:  Validated rule list as returned by :func:`load_policy_rules`.
+    schema_version = data.get("schema_version")
+    if schema_version != _RBAC_SCHEMA_VERSION:
+        raise PolicyLoadError(
+            f"Role config schema_version must be {_RBAC_SCHEMA_VERSION!r}, got {schema_version!r}"
+        )
 
-    Returns:
-        A :class:`PolicyResult` describing the outcome.
-    """
+    roles = data.get("roles")
+    if not isinstance(roles, list) or len(roles) == 0:
+        raise PolicyLoadError("Role config 'roles' must be a non-empty array")
+
+    validated_roles: list[dict] = []
+    seen_role_ids: set[str] = set()
+    for idx, role in enumerate(roles):
+        validated = _validate_single_role(role, idx)
+        role_id = str(validated["role_id"])
+        if role_id in seen_role_ids:
+            raise PolicyLoadError(f"Duplicate role_id found: {role_id!r}")
+        seen_role_ids.add(role_id)
+        validated_roles.append(validated)
+
+    return validated_roles
+
+
+def evaluate_policy(action: dict[str, Any], rules: list[dict]) -> PolicyResult:
+    """Evaluate *action* against *rules* and return a PolicyResult."""
+    action_role_id = action.get("role_id")
+    has_role_context = isinstance(action_role_id, str) and bool(action_role_id.strip())
+
     for rule in rules:
+        rule_roles = rule.get("roles")
+        if rule_roles is not None:
+            if not has_role_context:
+                continue
+            if action_role_id not in rule_roles:
+                continue
+
         match_spec = rule["match"]
         field_name: str = match_spec["field"]
         expected_value = match_spec["value"]
-        # operator is always "eq" in Phase 2
         actual_value = action.get(field_name)
         if actual_value != expected_value:
             continue
 
-        # Rule matched
         base_decision: str = rule["decision"]
         is_shadow: bool = bool(rule.get("shadow", False))
 
@@ -236,7 +253,6 @@ def evaluate_policy(
             shadow=is_shadow,
         )
 
-    # No rule matched — default ALLOW
     return PolicyResult(
         decision="ALLOW",
         rule_id="default",
@@ -251,15 +267,5 @@ def build_policy_result(
     reason: str,
     shadow: bool = False,
 ) -> PolicyResult:
-    """Construct a PolicyResult directly (helper for tests and callers).
-
-    Args:
-        decision: Decision string (e.g. "ALLOW", "BLOCK", "SHADOW_BLOCK").
-        rule_id:  Rule identifier.
-        reason:   Human-readable explanation.
-        shadow:   Whether this is a shadow (non-enforced) result.
-
-    Returns:
-        A :class:`PolicyResult` instance.
-    """
+    """Construct a PolicyResult directly (helper for tests and callers)."""
     return PolicyResult(decision=decision, rule_id=rule_id, reason=reason, shadow=shadow)

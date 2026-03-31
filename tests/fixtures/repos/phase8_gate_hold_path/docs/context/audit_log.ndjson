@@ -1,0 +1,1 @@
+{"schema_version":"1.0","timestamp_utc":"2026-03-31T00:00:00Z","decision":"HOLD","actor":"gate:exec_memory->advisory","outcome":"criteria not met","gate":"exec_memory->advisory","trace_id":"phase8-hold-001","artifact_refs":{}}

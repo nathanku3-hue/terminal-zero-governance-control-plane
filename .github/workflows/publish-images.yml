@@ -1,0 +1,212 @@
+# publish-images.yml — Phase 1: Container Image Distribution
+# Builds and publishes signed images to GHCR and Docker Hub on release tags.
+# On pushes to main, publishes an unsigned `edge` image to GHCR only.
+#
+# Required repo secrets (Settings -> Secrets -> Actions):
+#   DOCKERHUB_USERNAME  -- Docker Hub username or org handle
+#   DOCKERHUB_TOKEN     -- Docker Hub access token (Read/Write)
+#
+# GHCR uses GITHUB_TOKEN automatically -- no secret required.
+# Signing uses keyless cosign (OIDC) -- no private key to manage.
+
+name: Publish Container Images
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  publish-images:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write      # required: push to GHCR
+      id-token: write      # required: cosign keyless signing via OIDC
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # QEMU enables future multi-arch builds (arm64).
+      # Today we only build linux/amd64; included for forward-compatibility.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Registry logins ──────────────────────────────────────────────────
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only log in to Docker Hub on release tags (not edge/main pushes).
+      - name: Log in to Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ── Image metadata ───────────────────────────────────────────────────
+      # Release tag v0.2.0  -> :0.2.0, :0, :latest  (GHCR + Docker Hub)
+      # Push to main        -> :edge                 (GHCR only)
+
+      - name: Extract Docker metadata (release)
+        id: meta-release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/terminal-zero-governance
+            ${{ secrets.DOCKERHUB_USERNAME }}/terminal-zero-governance
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=Terminal Zero Governance
+            org.opencontainers.image.description=Script-driven AI engineering governance control plane
+            org.opencontainers.image.vendor=Terminal Zero Maintainers
+            org.opencontainers.image.licenses=Apache-2.0
+
+      - name: Extract Docker metadata (edge)
+        id: meta-edge
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/terminal-zero-governance
+          tags: |
+            type=raw,value=edge
+          labels: |
+            org.opencontainers.image.title=Terminal Zero Governance (edge)
+            org.opencontainers.image.description=Script-driven AI engineering governance control plane (edge build)
+
+      # ── Build and push ───────────────────────────────────────────────────
+
+      - name: Build and push (release)
+        id: push-release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-release.outputs.tags }}
+          labels: ${{ steps.meta-release.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Build and push (edge)
+        id: push-edge
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-edge.outputs.tags }}
+          labels: ${{ steps.meta-edge.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      # ── Smoke test ───────────────────────────────────────────────────────
+      # Pull the pushed image and verify sop healthcheck exits 0.
+      # Runs before signing so a broken image never gets a valid signature.
+
+      - name: Smoke test pushed image (release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:${{ steps.meta-release.outputs.version }}"
+          echo "Smoke testing: $IMAGE"
+          docker pull "$IMAGE"
+          docker run --rm "$IMAGE" sop healthcheck
+          docker run --rm "$IMAGE" sop version
+          echo "Smoke test: PASS"
+
+      - name: Smoke test pushed image (edge)
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:edge"
+          echo "Smoke testing: $IMAGE"
+          docker pull "$IMAGE"
+          docker run --rm "$IMAGE" sop healthcheck
+          docker run --rm "$IMAGE" sop version
+          echo "Smoke test: PASS"
+
+      # ── Signing + SBOM (release tags only) ──────────────────────────────
+      # cosign keyless signing uses GitHub OIDC -- no private key stored.
+      #
+      # Verify a released image with:
+      #   cosign verify \
+      #     --certificate-identity-regexp='https://github.com/<org>/<repo>/.github/workflows/publish-images.yml' \
+      #     --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
+      #     ghcr.io/<org>/terminal-zero-governance:latest
+
+      - name: Install cosign
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign GHCR image (release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          DIGEST: ${{ steps.push-release.outputs.digest }}
+          TAGS: ${{ steps.meta-release.outputs.tags }}
+        run: |
+          IMAGE_REF="ghcr.io/${{ github.repository_owner }}/terminal-zero-governance@${DIGEST}"
+          echo "Signing: $IMAGE_REF"
+          cosign sign --yes "$IMAGE_REF"
+          echo "Signing: PASS"
+
+      - name: Generate SBOM and attest (release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: anchore/sbom-action@v0
+        with:
+          image: "ghcr.io/${{ github.repository_owner }}/terminal-zero-governance@${{ steps.push-release.outputs.digest }}"
+          format: cyclonedx-json
+          artifact-name: sbom.cyclonedx.json
+          upload-artifact: true
+          upload-release-assets: false
+          dependency-snapshot: false
+
+      - name: Attest SBOM to GHCR image
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cosign attest --yes \
+            --predicate sbom.cyclonedx.json \
+            --type cyclonedx \
+            "ghcr.io/${{ github.repository_owner }}/terminal-zero-governance@${{ steps.push-release.outputs.digest }}"
+          echo "SBOM attest: PASS"
+
+      # ── Summary ──────────────────────────────────────────────────────────
+
+      - name: Print published image references
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo "Published images:"
+          echo "  ${{ steps.meta-release.outputs.tags }}"
+          echo "Digest: ${{ steps.push-release.outputs.digest }}"
+          echo ""
+          echo "Verify signature:"
+          echo "  cosign verify \\"
+          echo "    --certificate-identity-regexp='https://github.com/${{ github.repository }}/.github/workflows/publish-images.yml' \\"
+          echo "    --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \\"
+          echo "    ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:latest"
+          echo ""
+          echo "Download SBOM:"
+          echo "  cosign download sbom ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:latest"
