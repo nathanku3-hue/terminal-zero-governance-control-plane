@@ -32,3 +32,8 @@ artifacts: docs/context/audit_log.ndjson, docs/context/loop_cycle_summary_latest
 
 ## Expected Decision
 If the governance result is `PASS` and no `BLOCK` records exist, continue to the next rollout wave. If any `BLOCK` appears, pause progression until mitigation evidence is logged.
+
+## Replay Proof (Rollout Scenario Class)
+- Proof type: rollout status and audit replay pair.
+- Required evidence commands: `sop status --repo-root rollout-governed-repo` and `sop audit --repo-root rollout-governed-repo --filter-outcome BLOCK`.
+- Verification rule: `final_result: PASS` with zero `BLOCK` records before wave advancement.

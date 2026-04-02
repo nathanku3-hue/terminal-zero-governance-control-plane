@@ -19,6 +19,15 @@ on:
       - main
       - master
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Manual run mode: edge for branch refs, release for tag refs"
+        required: true
+        default: "edge"
+        type: choice
+        options:
+          - edge
+          - release
 
 jobs:
   publish-images:
@@ -32,6 +41,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate manual dispatch mode/ref
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          REF="${{ github.ref }}"
+          if [ "$MODE" = "release" ] && [[ ! "$REF" =~ ^refs/tags/v ]]; then
+            echo "ERROR: mode=release requires a v* tag ref. Current ref: $REF"
+            exit 1
+          fi
+          if [ "$MODE" = "edge" ] && [[ "$REF" =~ ^refs/tags/v ]]; then
+            echo "ERROR: mode=edge is not valid on tag refs. Use mode=release. Current ref: $REF"
+            exit 1
+          fi
 
       # QEMU enables future multi-arch builds (arm64).
       # Today we only build linux/amd64; included for forward-compatibility.
@@ -203,10 +226,7 @@ jobs:
           echo "Digest: ${{ steps.push-release.outputs.digest }}"
           echo ""
           echo "Verify signature:"
-          echo "  cosign verify \\"
-          echo "    --certificate-identity-regexp='https://github.com/${{ github.repository }}/.github/workflows/publish-images.yml' \\"
-          echo "    --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \\"
-          echo "    ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:latest"
+          echo "  cosign verify --certificate-identity-regexp='https://github.com/${{ github.repository }}/.github/workflows/publish-images.yml' --certificate-oidc-issuer='https://token.actions.githubusercontent.com' ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:latest"
           echo ""
           echo "Download SBOM:"
           echo "  cosign download sbom ghcr.io/${{ github.repository_owner }}/terminal-zero-governance:latest"

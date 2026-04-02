@@ -1,31 +1,3 @@
-"""Policy engine for Terminal Zero governance control plane.
-
-Pure evaluation module — no I/O, no audit log calls.
-The caller (run_loop_cycle.py) is responsible for emitting audit log entries.
-
-Public API:
-    load_policy_rules(rule_file) -> list[dict]
-    load_role_config(role_file) -> list[dict]
-    evaluate_policy(action, rules) -> PolicyResult
-    build_policy_result(decision, rule_id, reason, shadow) -> PolicyResult
-
-Rule schema (each element in the JSON rules array)::
-
-    {
-        "rule_id": "str",          # required, unique identifier
-        "decision": "ALLOW|BLOCK|WARN",  # required
-        "match": {                  # required
-            "field": "str",         # key in the action dict
-            "operator": "eq",       # only "eq" supported in Phase 2
-            "value": "str|int|bool" # value to compare against
-        },
-        "scope": "str",             # required, e.g. "gate"
-        "shadow": false,            # optional, default false
-        "description": "str",       # optional, human-readable
-        "roles": ["admin"]         # optional
-    }
-"""
-
 from __future__ import annotations
 
 import json
@@ -72,6 +44,34 @@ def _validate_rule_roles(rule: dict[str, Any], index: int) -> None:
             )
 
 
+def _validate_rule_permissions(rule: dict[str, Any], index: int) -> None:
+    permissions = rule.get("permissions")
+    if permissions is None:
+        return
+    if not isinstance(permissions, list) or len(permissions) == 0:
+        raise PolicyLoadError(
+            f"Rule at index {index} (rule_id={rule.get('rule_id', '<unknown>')!r}): "
+            "permissions must be a non-empty array of non-empty strings"
+        )
+    for permission in permissions:
+        if not isinstance(permission, str) or not permission.strip():
+            raise PolicyLoadError(
+                f"Rule at index {index} (rule_id={rule.get('rule_id', '<unknown>')!r}): "
+                "permissions entries must be non-empty strings"
+            )
+
+
+def _validate_rule_tenant(rule: dict[str, Any], index: int) -> None:
+    tenant_id = rule.get("tenant_id")
+    if tenant_id is None:
+        return
+    if not isinstance(tenant_id, str) or not tenant_id.strip():
+        raise PolicyLoadError(
+            f"Rule at index {index} (rule_id={rule.get('rule_id', '<unknown>')!r}): "
+            "tenant_id must be a non-empty string"
+        )
+
+
 def _validate_rule(rule: Any, index: int) -> None:
     if not isinstance(rule, dict):
         raise PolicyLoadError(
@@ -114,6 +114,8 @@ def _validate_rule(rule: Any, index: int) -> None:
         raise PolicyLoadError(f"Rule {rule['rule_id']!r}: scope must be a non-empty string")
 
     _validate_rule_roles(rule, index)
+    _validate_rule_permissions(rule, index)
+    _validate_rule_tenant(rule, index)
 
 
 def _validate_single_role(role: Any, index: int) -> dict[str, Any]:
@@ -147,7 +149,6 @@ def _validate_single_role(role: Any, index: int) -> dict[str, Any]:
 
 
 def load_policy_rules(rule_file: str | os.PathLike) -> list[dict]:
-    """Load and validate a JSON policy rule file."""
     try:
         with open(rule_file, "r", encoding="utf-8") as fh:
             data = json.load(fh)
@@ -174,7 +175,6 @@ def load_policy_rules(rule_file: str | os.PathLike) -> list[dict]:
 
 
 def load_role_config(role_file: str | os.PathLike) -> list[dict]:
-    """Load and validate an RBAC role config file."""
     try:
         with open(role_file, "r", encoding="utf-8") as fh:
             data = json.load(fh)
@@ -209,18 +209,99 @@ def load_role_config(role_file: str | os.PathLike) -> list[dict]:
     return validated_roles
 
 
+def _normalize_permissions(value: Any) -> set[str]:
+    if isinstance(value, str) and value.strip():
+        return {value.strip()}
+    if not isinstance(value, list):
+        return set()
+    normalized: set[str] = set()
+    for item in value:
+        if isinstance(item, str) and item.strip():
+            normalized.add(item.strip())
+    return normalized
+
+
 def evaluate_policy(action: dict[str, Any], rules: list[dict]) -> PolicyResult:
-    """Evaluate *action* against *rules* and return a PolicyResult."""
     action_role_id = action.get("role_id")
     has_role_context = isinstance(action_role_id, str) and bool(action_role_id.strip())
 
+    action_scope = action.get("scope")
+    has_scope_context = isinstance(action_scope, str) and bool(action_scope.strip())
+
+    action_permissions = _normalize_permissions(action.get("permissions"))
+    if not action_permissions:
+        action_permissions = _normalize_permissions(action.get("permission"))
+
+    action_tenant_id = action.get("tenant_id")
+    has_tenant_context = isinstance(action_tenant_id, str) and bool(action_tenant_id.strip())
+
     for rule in rules:
+        rule_id = str(rule["rule_id"])
+
+        rule_scope = str(rule["scope"]).strip()
+        if rule_scope != "global":
+            if not has_scope_context:
+                return PolicyResult(
+                    decision="BLOCK",
+                    rule_id=rule_id,
+                    reason=f"Rule {rule_id!r} requires scope context but action.scope is missing.",
+                    shadow=False,
+                )
+            if str(action_scope).strip() != rule_scope:
+                continue
+
         rule_roles = rule.get("roles")
         if rule_roles is not None:
             if not has_role_context:
-                continue
+                return PolicyResult(
+                    decision="BLOCK",
+                    rule_id=rule_id,
+                    reason=f"Rule {rule_id!r} requires role context but action.role_id is missing.",
+                    shadow=False,
+                )
             if action_role_id not in rule_roles:
                 continue
+
+        rule_permissions = rule.get("permissions")
+        if rule_permissions is not None:
+            if not action_permissions:
+                return PolicyResult(
+                    decision="BLOCK",
+                    rule_id=rule_id,
+                    reason=f"Rule {rule_id!r} requires permissions context but action.permissions is missing.",
+                    shadow=False,
+                )
+            missing_permissions = [p for p in rule_permissions if p not in action_permissions]
+            if missing_permissions:
+                return PolicyResult(
+                    decision="BLOCK",
+                    rule_id=rule_id,
+                    reason=(
+                        f"Rule {rule_id!r} requires permissions {missing_permissions!r} "
+                        "not granted to action context."
+                    ),
+                    shadow=False,
+                )
+
+        rule_tenant_id = rule.get("tenant_id")
+        if rule_tenant_id is not None:
+            if not has_tenant_context:
+                return PolicyResult(
+                    decision="BLOCK",
+                    rule_id=rule_id,
+                    reason=f"Rule {rule_id!r} requires tenant context but action.tenant_id is missing.",
+                    shadow=False,
+                )
+            if str(action_tenant_id).strip() != str(rule_tenant_id).strip():
+                return PolicyResult(
+                    decision="BLOCK",
+                    rule_id=rule_id,
+                    reason=(
+                        f"Rule {rule_id!r} tenant boundary violation: "
+                        f"action tenant {action_tenant_id!r} != rule tenant {rule_tenant_id!r}."
+                    ),
+                    shadow=False,
+                )
 
         match_spec = rule["match"]
         field_name: str = match_spec["field"]
@@ -267,5 +348,4 @@ def build_policy_result(
     reason: str,
     shadow: bool = False,
 ) -> PolicyResult:
-    """Construct a PolicyResult directly (helper for tests and callers)."""
     return PolicyResult(decision=decision, rule_id=rule_id, reason=reason, shadow=shadow)

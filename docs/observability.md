@@ -33,11 +33,19 @@ For `sop metrics --repo-root ... --format prometheus`:
 
 ## Exported metrics and labels
 
-The v1 exporter emits exactly these metric families:
+The v1 exporter emits exactly these canonical metric families:
 
 - `policy_decisions_total{decision,actor}`
 - `gate_evaluation_duration_seconds{gate}`
 - `failure_count_total`
+
+Compatibility alias window (deprecated, still emitted in Phase C):
+
+- `policy_decision_total{decision,actor}` -> alias of `policy_decisions_total`
+- `gate_duration_seconds_total{gate}` -> alias of `gate_evaluation_duration_seconds`
+- `failures_total` -> alias of `failure_count_total`
+
+Alias families are temporary and must be treated as deprecated output for consumer migration.
 
 Label schema:
 - `policy_decisions_total`
@@ -64,8 +72,9 @@ Aggregate per gate using numeric `duration_seconds` values from audit entries.
 Phase 3 structured log scope in v1 applies only to:
 - `docs/context/audit_log.ndjson`
 
-Guarantee:
+Guarantees:
 - Every emitted audit log object includes `schema_version`.
+- Every emitted audit log object includes `event_tag` in `{"STEP_EXECUTION", "GATE_DECISION", "POLICY_DECISION"}`.
 
 No additional structured log stream is required in v1.
 

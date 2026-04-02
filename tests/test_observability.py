@@ -430,3 +430,65 @@ def test_gate_duration_metric_emitted(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert 'gate_evaluation_duration_seconds{gate="exec_memory->advisory"} 2.0' in result.stdout
     assert 'gate_evaluation_duration_seconds{gate="advisory->summary"}' not in result.stdout
+
+
+def test_metrics_alias_window_emits_deprecated_families(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    audit_dir = repo_root / "docs" / "context"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "audit_log.ndjson").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "timestamp_utc": "2026-03-31T00:00:00Z",
+                "decision": "FAIL",
+                "actor": "step:x",
+                "outcome": "failed",
+                "gate": "exec_memory->advisory",
+                "trace_id": "trace-1",
+                "artifact_refs": {},
+                "duration_seconds": 1.5,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "sop",
+            "metrics",
+            "--repo-root",
+            str(repo_root),
+            "--format",
+            "prometheus",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).parent.parent,
+    )
+
+    assert result.returncode == 0
+    assert "policy_decision_total{decision=\"FAIL\",actor=\"step:x\"} 1" in result.stdout
+    assert "gate_duration_seconds_total{gate=\"exec_memory->advisory\"} 1.5" in result.stdout
+    assert "failures_total 1" in result.stdout
+
+
+def test_structured_log_event_tag_present(tmp_path: Path) -> None:
+    args = _minimal_args(tmp_path)
+    _run_cycle_for_test(args)
+
+    audit_path = _context_dir(args) / "audit_log.ndjson"
+    entries = [
+        json.loads(line)
+        for line in audit_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+    assert entries, "audit_log.ndjson must contain at least one entry"
+    allowed_tags = {"STEP_EXECUTION", "GATE_DECISION", "POLICY_DECISION"}
+    for entry in entries:
+        assert "event_tag" in entry
+        assert entry["event_tag"] in allowed_tags

@@ -1,77 +1,88 @@
-# Phase 5 Plugin API v1 Evidence
+# Phase 5 Plugin API Evidence (Phase E Final Closure)
 
-Date: 2026-03-31
+Date: 2026-04-01
 Interpreter: Python 3.14.0 (`C:\Python314\python.exe`)
 
-## Scope Delivered
+## Final Delivered Scope (verified)
 
-- Plugin interface + deterministic loader implementation
-- `sop run` integration with `--plugin-dir` and default `.sop/plugins`
-- Gate-level plugin chain execution with sorted order + BLOCK short-circuit
-- Plugin BLOCK enforcement in gate outcome
-- Plugin audit logging (`plugin:<name>`, status, version, decision)
-- Example plugin
-- Documentation: `docs/plugin-api.md`
-- Acceptance tests: `tests/test_plugin_api_v1.py`
+- v2 contract frozen (`docs/context/phase_e_d1_contract_freeze.md`)
+- capability boundary enforced (deny-by-default, kind/capability validation in `src/sop/_plugins.py`)
+- 3 reference plugins present:
+  - `.sop/plugins/reference_policy_evaluator.py`
+  - `.sop/plugins/reference_decision_store.py`
+  - `.sop/plugins/reference_iam_siem_connector.py`
+- closure-grade D4 focused tests passed
 
-## Commands Executed
+No additional implementation claims beyond the verified D1-D4 scope.
 
-### Targeted acceptance tests
+---
 
-```bash
-python -m pytest "e:\Code\SOP\quant_current_scope\tests\test_plugin_api_v1.py" -q
-```
-
-Result: **10 passed**
+## Focused D4 Validation Command and Result
 
 ```bash
-python -m pytest "e:\Code\SOP\quant_current_scope\tests\test_plugin_api_v1.py" "e:\Code\SOP\quant_current_scope\tests\test_script_surface_sync.py" -q
+python -m pytest tests/test_plugin_api_v1.py tests/test_plugin_api_v2_capabilities.py tests/test_phase_e_d3_reference_plugins.py -q
 ```
 
-Result: **45 passed**
+Result: **25 passed**
 
-### Full suite
+Execution note:
+- Windows pytest temp cleanup `PermissionError` appeared after test completion during temp-directory cleanup; this is post-test cleanup noise and does not indicate test failure.
 
-```bash
-python -m pytest -q
-```
+---
 
-Result: **1090 passed, 5 skipped, 1 failed**
+## Compatibility and Safety Summary
 
-Failure:
-- `tests/test_endgame.py::test_context_count_within_max_artifacts_limit`
-- Reason: `docs/context/` has **103** artifacts, exceeding the test threshold (**100**).
-- This is a workspace state/hygiene failure (artifact count), not a plugin API runtime contract failure.
+### Compatibility
 
-Verification command:
+- v1 plugins remain operational under existing v1 semantics.
+- mixed v1/v2 plugin discovery and execution remain deterministic lexical order.
+- BLOCK short-circuit semantics are preserved in mixed chains.
 
-```bash
-(Get-ChildItem "e:\Code\SOP\quant_current_scope\docs\context" -File | Measure-Object).Count
-```
+### Safety / Governance
 
-Output: `103`
+- v2 capability declarations are enforced at load/validation boundary.
+- unknown, missing, malformed, cross-kind, and invalid-kind v2 declarations are rejected.
+- capability model is explicit allowlist with deny-by-default behavior.
+- reference integrations remain bounded to approved Phase E classes only.
 
-## Acceptance Test Coverage (Locked Set)
+---
 
-Implemented in `tests/test_plugin_api_v1.py`:
+## Review-Gate Outcomes (Phase E risk tier)
 
-1. `test_plugin_loader_discovers_example_plugin`
-2. `test_plugin_discovery_non_recursive_and_underscore_ignored`
-3. `test_plugin_export_contract_requires_plugin_symbol`
-4. `test_plugin_version_incompatible_is_skipped`
-5. `test_plugin_evaluate_called_in_policy_chain`
-6. `test_plugin_execution_order_sorted_by_filename`
-7. `test_plugin_block_short_circuits_remaining_plugins`
-8. `test_plugin_block_is_enforced_in_gate_outcome`
-9. `test_plugin_exception_is_captured_not_crashing_run`
-10. `test_plugin_result_written_to_audit_log`
+1. **Architecture review — PASS**
+   - v2 contract and capability boundary are explicitly separated and traceable (D1 + D2).
+2. **Code quality review — PASS**
+   - enforcement logic is centralized in plugin loader path; tests are focused and deterministic.
+3. **Test coverage/conformance review — PASS**
+   - focused D4 suite verifies conformance, negative-path rejection, coexistence, and ordering.
+4. **Performance review — PASS (bounded)**
+   - added checks are declaration-time validation on plugin load path; no new unbounded runtime loops introduced.
+5. **Security/governance review — PASS**
+   - deny-by-default capability gate and kind/capability constraints enforce governance boundary.
+
+---
 
 ## Artifacts
 
 - `src/sop/_plugins.py`
-- `src/sop/scripts/run_loop_cycle.py`
-- `src/sop/__main__.py`
-- `scripts/run_loop_cycle.py` (synced parity)
-- `.sop/plugins/example_warn.py`
-- `docs/plugin-api.md`
+- `.sop/plugins/reference_policy_evaluator.py`
+- `.sop/plugins/reference_decision_store.py`
+- `.sop/plugins/reference_iam_siem_connector.py`
 - `tests/test_plugin_api_v1.py`
+- `tests/test_plugin_api_v2_capabilities.py`
+- `tests/test_phase_e_d3_reference_plugins.py`
+- `docs/context/phase_e_d1_contract_freeze.md`
+- `docs/context/phase_e_d2_capability_matrix.md`
+- `docs/context/phase_e_d2_enforcement_test_plan.md`
+- `docs/context/phase_e_d4_validation_gates.md`
+- `docs/context/closure_packet_phase_e_extensions.md`
+- `docs/plans/phase_e_plugin_extension_strategy.plan.md`
+- `docs/evidence/phase5_plugin_api_evidence.md`
+
+---
+
+## Run Metadata
+
+- Date: 2026-04-01
+- Python: 3.14.0 (`C:\Python314\python.exe`)
+- Focused Phase E run: 25 passed (`tests/test_plugin_api_v1.py` + `tests/test_plugin_api_v2_capabilities.py` + `tests/test_phase_e_d3_reference_plugins.py`)

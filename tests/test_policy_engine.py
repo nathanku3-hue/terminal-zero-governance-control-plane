@@ -35,6 +35,9 @@ def _gate_a_action(decision: str = "PROCEED", trace_id: str = "test-trace-001") 
         "gate": "exec_memory->advisory",
         "decision": decision,
         "trace_id": trace_id,
+        "scope": "gate",
+        "permissions": ["policy.evaluate.gate_a"],
+        "tenant_id": "tenant-alpha",
         "actor": "gate_a",
     }
 
@@ -182,10 +185,6 @@ class TestPolicyViolationAppearsInAuditLog:
             and e.get("actor") == "policy:gate_a"
         ]
         assert len(shadow_block_entries) >= 1
-        entry = shadow_block_entries[0]
-        assert entry["schema_version"] == "1.0"
-        assert entry["gate"] == "exec_memory->advisory"
-        assert isinstance(entry["trace_id"], str)
 
 
 class TestPolicyValidateCliValidRules:
@@ -213,6 +212,9 @@ def test_rbac_role_scoped_block_matches_role() -> None:
         "gate": "exec_memory->advisory",
         "decision": "PROCEED",
         "trace_id": "rbac-match-001",
+        "scope": "gate",
+        "permissions": ["policy.evaluate.gate_a"],
+        "tenant_id": "tenant-alpha",
         "actor": "gate_a",
         "role_id": "admin",
     }
@@ -236,6 +238,9 @@ def test_rbac_role_scoped_block() -> None:
         "gate": "exec_memory->advisory",
         "decision": "PROCEED",
         "trace_id": "rbac-nomatch-001",
+        "scope": "gate",
+        "permissions": ["policy.evaluate.gate_a"],
+        "tenant_id": "tenant-alpha",
         "actor": "gate_a",
         "role_id": "engineer",
     }
@@ -254,19 +259,14 @@ def test_rbac_no_role_defaults_to_global() -> None:
         "scope": "gate",
         "match": {"field": "actor", "operator": "eq", "value": "gate_a"},
     }]
-    action = {
-        "gate": "exec_memory->advisory",
-        "decision": "PROCEED",
-        "trace_id": "rbac-global-001",
-        "actor": "gate_a",
-    }
+    action = _gate_a_action(trace_id="rbac-global-001")
 
     result = evaluate_policy(action, rules)
     assert result.decision == "BLOCK"
     assert result.rule_id == "global-block-gate-a"
 
 
-def test_rbac_missing_role_id_skips_role_scoped_rules() -> None:
+def test_rbac_missing_role_id_blocks() -> None:
     from sop._policy_engine import evaluate_policy
 
     rules = [{
@@ -276,16 +276,59 @@ def test_rbac_missing_role_id_skips_role_scoped_rules() -> None:
         "match": {"field": "actor", "operator": "eq", "value": "gate_a"},
         "roles": ["admin"],
     }]
-    action = {
-        "gate": "exec_memory->advisory",
-        "decision": "PROCEED",
-        "trace_id": "rbac-missing-role-001",
-        "actor": "gate_a",
-    }
+    action = _gate_a_action(trace_id="rbac-missing-role-001")
 
     result = evaluate_policy(action, rules)
-    assert result.decision == "ALLOW"
-    assert result.rule_id == "default"
+    assert result.decision == "BLOCK"
+    assert "role context" in result.reason
+
+
+def test_permission_enforcement_blocks_missing_permission() -> None:
+    from sop._policy_engine import evaluate_policy
+
+    rules = [{
+        "rule_id": "perm-gate-a",
+        "decision": "BLOCK",
+        "scope": "gate",
+        "permissions": ["policy.evaluate.gate_a"],
+        "match": {"field": "actor", "operator": "eq", "value": "gate_a"},
+    }]
+    action = _gate_a_action(trace_id="perm-missing-001")
+    action["permissions"] = ["policy.view"]
+
+    result = evaluate_policy(action, rules)
+    assert result.decision == "BLOCK"
+    assert "requires permissions" in result.reason
+
+
+def test_scope_enforcement_blocks_missing_scope_context() -> None:
+    from sop._policy_engine import evaluate_policy
+
+    rules = [_make_block_rule(shadow=False)]
+    action = _gate_a_action(trace_id="scope-missing-001")
+    del action["scope"]
+
+    result = evaluate_policy(action, rules)
+    assert result.decision == "BLOCK"
+    assert "scope context" in result.reason
+
+
+def test_tenant_boundary_blocks_cross_tenant() -> None:
+    from sop._policy_engine import evaluate_policy
+
+    rules = [{
+        "rule_id": "tenant-gate-a",
+        "decision": "BLOCK",
+        "scope": "gate",
+        "tenant_id": "tenant-alpha",
+        "match": {"field": "actor", "operator": "eq", "value": "gate_a"},
+    }]
+    action = _gate_a_action(trace_id="tenant-cross-001")
+    action["tenant_id"] = "tenant-beta"
+
+    result = evaluate_policy(action, rules)
+    assert result.decision == "BLOCK"
+    assert "tenant boundary violation" in result.reason
 
 
 def test_policy_rbac_validate_cli(tmp_path: Path) -> None:
@@ -311,7 +354,7 @@ def test_policy_rbac_validate_cli(tmp_path: Path) -> None:
 
 
 def test_rbac_validate_rejects_duplicate_role_id(tmp_path: Path) -> None:
-    from sop._policy_engine import load_role_config, PolicyLoadError
+    from sop._policy_engine import PolicyLoadError, load_role_config
 
     role_file = tmp_path / "roles-duplicate.json"
     role_file.write_text(

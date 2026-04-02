@@ -69,3 +69,8 @@ latest_audit_decision: PASS
 
 ## Expected Decision
 The CI job should complete with a governed decision artifact set. Teams typically treat `PASS` as merge-ready and `HOLD` as manual-review-required, with artifact evidence attached to the pull request.
+
+## Replay Proof (CI/CD Scenario Class)
+- Proof type: GitHub Actions governance run artifact capture.
+- Required artifact path: `governed-workspace/docs/context/*`.
+- Verification rule: workflow run logs include `sop run` and `sop status` output consistent with archived governance context artifacts.

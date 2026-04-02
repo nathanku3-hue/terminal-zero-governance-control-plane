@@ -1,61 +1,21 @@
 {
-  "title": "SOP Observability v1",
-  "uid": "sop-observability-v1",
-  "timezone": "browser",
-  "schemaVersion": 39,
-  "version": 1,
-  "editable": true,
+  "title": "Terminal Zero Governance — Starter Observability",
+  "description": "Phase C starter dashboard (minimal)",
   "panels": [
     {
-      "id": 1,
+      "title": "Policy Decisions Total",
+      "type": "timeseries",
+      "expr": "sum by (decision) (policy_decisions_total)"
+    },
+    {
+      "title": "Gate Evaluation Duration",
+      "type": "timeseries",
+      "expr": "sum by (gate) (gate_evaluation_duration_seconds)"
+    },
+    {
       "title": "Failure Count Total",
       "type": "stat",
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
-        "y": 0
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "failure_count_total"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "title": "Policy Decisions by Decision + Actor",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 10,
-        "w": 16,
-        "x": 8,
-        "y": 0
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "policy_decisions_total"
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "title": "Gate Evaluation Duration (Aggregate)",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 10
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "gate_evaluation_duration_seconds"
-        }
-      ]
+      "expr": "failure_count_total"
     }
   ]
 }

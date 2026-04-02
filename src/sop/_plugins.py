@@ -8,6 +8,20 @@ from typing import Any, Callable
 
 
 _VALID_DECISIONS = {"ALLOW", "BLOCK", "WARN"}
+_V2_API_VERSION = "2.0"
+_ALLOWED_KINDS = {"policy_evaluator", "decision_store", "iam_siem_connector"}
+_ALLOWED_CAPABILITIES = {
+    "policy.read_context",
+    "policy.emit_decision",
+    "decision_store.read",
+    "decision_store.write",
+    "iam_siem.emit_event",
+}
+_ALLOWED_CAPABILITIES_BY_KIND = {
+    "policy_evaluator": {"policy.read_context", "policy.emit_decision"},
+    "decision_store": {"decision_store.read", "decision_store.write"},
+    "iam_siem_connector": {"iam_siem.emit_event"},
+}
 
 
 @dataclass(frozen=True)
@@ -60,6 +74,40 @@ def _load_module_from_path(path: Path) -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _validate_v2_contract(plugin: Any) -> str | None:
+    api_version = str(getattr(plugin, "api_version", "")).strip()
+    if api_version != _V2_API_VERSION:
+        return None
+
+    kind = str(getattr(plugin, "kind", "")).strip()
+    if kind not in _ALLOWED_KINDS:
+        return (
+            "invalid v2 plugin kind; expected one of "
+            f"{sorted(_ALLOWED_KINDS)}"
+        )
+
+    capabilities = getattr(plugin, "capabilities", None)
+    if not isinstance(capabilities, list) or not capabilities:
+        return "v2 plugin capabilities must be a non-empty list[str]"
+
+    if not all(isinstance(item, str) and item.strip() for item in capabilities):
+        return "v2 plugin capabilities must be a non-empty list[str]"
+
+    normalized_caps = [item.strip() for item in capabilities]
+    unknown = sorted({cap for cap in normalized_caps if cap not in _ALLOWED_CAPABILITIES})
+    if unknown:
+        return f"unknown v2 capability keys: {unknown}"
+
+    allowed_for_kind = _ALLOWED_CAPABILITIES_BY_KIND[kind]
+    invalid_for_kind = sorted({cap for cap in normalized_caps if cap not in allowed_for_kind})
+    if invalid_for_kind:
+        return (
+            f"v2 capability/kind mismatch for kind='{kind}': {invalid_for_kind}"
+        )
+
+    return None
 
 
 def discover_plugins(plugin_dir: Path, sop_version: str) -> list[PluginCandidate]:
@@ -142,6 +190,22 @@ def discover_plugins(plugin_dir: Path, sop_version: str) -> list[PluginCandidate
                         evaluate=None,
                         compatible=False,
                         skip_reason=f"incompatible: sop version {sop_version} < plugin minimum {min_sop_version}",
+                    )
+                )
+                continue
+
+            v2_error = _validate_v2_contract(plugin)
+            if v2_error is not None:
+                candidates.append(
+                    PluginCandidate(
+                        file_path=path,
+                        file_name=path.name,
+                        plugin_name=str(getattr(plugin, "name", default_name)),
+                        plugin_version=str(getattr(plugin, "version", "0.0.0")),
+                        min_sop_version=min_sop_version,
+                        evaluate=None,
+                        compatible=False,
+                        skip_reason=v2_error,
                     )
                 )
                 continue

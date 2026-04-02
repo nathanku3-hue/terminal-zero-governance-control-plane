@@ -1,0 +1,144 @@
+name: Release Bump and Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Semver bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump-and-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compute next version and patch files
+        id: bump
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import datetime
+          import os
+          import pathlib
+          import re
+          import tomllib
+
+          bump_type = "${{ github.event.inputs.bump }}"
+
+          root = pathlib.Path('.')
+          pyproject_path = root / 'pyproject.toml'
+          init_path = root / 'src' / 'sop' / '__init__.py'
+          changelog_path = root / 'CHANGELOG.md'
+
+          pyproject_data = tomllib.loads(pyproject_path.read_text(encoding='utf-8'))
+          current = pyproject_data['project']['version']
+          major, minor, patch = map(int, current.split('.'))
+
+          if bump_type == 'major':
+              major += 1
+              minor = 0
+              patch = 0
+          elif bump_type == 'minor':
+              minor += 1
+              patch = 0
+          elif bump_type == 'patch':
+              patch += 1
+          else:
+              raise SystemExit(f'Unsupported bump type: {bump_type}')
+
+          next_version = f"{major}.{minor}.{patch}"
+          today = datetime.date.today().isoformat()
+
+          pyproject_text = pyproject_path.read_text(encoding='utf-8')
+          pyproject_text = re.sub(
+              r'(?m)^version\s*=\s*"[^"]+"\s*$',
+              f'version = "{next_version}"',
+              pyproject_text,
+              count=1,
+          )
+          pyproject_path.write_text(pyproject_text, encoding='utf-8')
+
+          init_text = init_path.read_text(encoding='utf-8')
+          init_text = re.sub(
+              r'(?m)^__version__\s*=\s*"[^"]+"\s*$',
+              f'__version__ = "{next_version}"',
+              init_text,
+              count=1,
+          )
+          init_path.write_text(init_text, encoding='utf-8')
+
+          changelog_text = changelog_path.read_text(encoding='utf-8')
+          section_header = f'## [{next_version}] - {today}'
+          if section_header not in changelog_text and f'## [{next_version}]' not in changelog_text:
+              insert_block = (
+                  f"\n## [{next_version}] - {today}\n\n"
+                  "### Added\n\n"
+                  "- Placeholder release notes.\n"
+              )
+              marker = '## [Unreleased]'
+              if marker in changelog_text:
+                  changelog_text = changelog_text.replace(marker, marker + insert_block, 1)
+              else:
+                  changelog_text += insert_block
+              changelog_path.write_text(changelog_text, encoding='utf-8')
+
+          output_path = pathlib.Path(os.environ['GITHUB_OUTPUT'])
+          with output_path.open('a', encoding='utf-8') as fh:
+              fh.write(f'current_version={current}\n')
+              fh.write(f'next_version={next_version}\n')
+              fh.write(f'tag=v{next_version}\n')
+
+          print(f'current={current} next={next_version}')
+          PY
+
+      - name: Commit version bump (if changed)
+        id: commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml src/sop/__init__.py CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "No file changes detected; skipping commit/tag push."
+            echo "commit_created=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore(release): bump to v${{ steps.bump.outputs.next_version }}"
+            echo "commit_created=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.commit.outputs.commit_created == 'true'
+        shell: bash
+        run: |
+          git tag "v${{ steps.bump.outputs.next_version }}"
+          git push origin HEAD
+          git push origin "v${{ steps.bump.outputs.next_version }}"
+
+      - name: Summary
+        run: |
+          echo "Bumped from v${{ steps.bump.outputs.current_version }} to v${{ steps.bump.outputs.next_version }}"
+          if [ "${{ steps.commit.outputs.commit_created }}" = "true" ]; then
+            echo "Tag pushed: v${{ steps.bump.outputs.next_version }}"
+          else
+            echo "No changes committed; tag push skipped."
+          fi

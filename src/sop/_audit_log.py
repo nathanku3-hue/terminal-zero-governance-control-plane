@@ -16,6 +16,7 @@ Audit log entry schema
     gate            str   — lifecycle phase / gate name (e.g. "exec_memory→advisory")
     artifact_refs   dict  — {name: mtime_utc} of relevant artifacts
     trace_id        str   — loop run trace_id
+    event_tag       str   — "STEP_EXECUTION" | "GATE_DECISION" | "POLICY_DECISION"
     schema_version  str   — "1.0"
 
 Public API
@@ -50,6 +51,20 @@ SCHEMA_VERSION = "1.0"
 _VALID_DECISIONS = frozenset(
     {"ALLOW", "BLOCK", "HOLD", "PASS", "FAIL", "ERROR", "WARN", "SKIP"}
 )
+
+
+def _derive_event_tag(actor: str, provided: str | None = None) -> str:
+    candidate = (provided or "").strip().upper()
+    if candidate in {"STEP_EXECUTION", "GATE_DECISION", "POLICY_DECISION"}:
+        return candidate
+    actor_norm = actor.strip().lower()
+    if actor_norm.startswith("step:"):
+        return "STEP_EXECUTION"
+    if actor_norm.startswith("policy:"):
+        return "POLICY_DECISION"
+    if actor_norm.startswith("gate_"):
+        return "GATE_DECISION"
+    return "STEP_EXECUTION"
 
 
 def _utc_now_iso() -> str:

@@ -51,3 +51,12 @@ cosign download sbom ghcr.io/<org>/terminal-zero-governance:latest
 - Getting started: `docs/getting-started.md`
 - User guide: `USER_GUIDE.md`
 - Cloud deployment guides: `docs/deploy/`
+
+## Release Entry Policy
+
+- Intended release entrypoint: `.github/workflows/release-bump-and-tag.yml`
+- `.github/workflows/publish-images.yml` manual dispatch is for controlled operator use only.
+- Manual dispatch requires explicit `mode`:
+  - `mode=edge` for branch refs
+  - `mode=release` for `v*` tag refs
+- Mode/ref mismatch fails fast by design to prevent accidental release-mode misuse.

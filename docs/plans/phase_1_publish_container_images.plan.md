@@ -2,7 +2,7 @@
 
 **Sprint:** External Maturity Sprint  
 **Date:** 2026-03-31  
-**Status:** Ready to execute  
+**Status:** Implementation-complete, evidence-closure pending first live tag run  
 **Impact:** Production Readiness 6 -> 7/10
 
 ---
@@ -11,7 +11,7 @@
 
 Publish official container images for Terminal Zero Governance and make them consumable by external operators.
 
-Primary success outcome: a user can run:
+Primary success outcome:
 
 ```bash
 docker pull ghcr.io/<org>/terminal-zero-governance:latest
@@ -26,9 +26,10 @@ docker run --rm ghcr.io/<org>/terminal-zero-governance:latest sop healthcheck
 - CI publish workflow for GHCR + Docker Hub
 - Release-tag publish path with signing + SBOM
 - Edge publish path for main/master
+- Semver bump/tag automation workflow
 - Registry README (`docs/deploy/image-registry.md`)
 - Docs updates:
-  - `docs/getting-started.md` (container path)
+  - `docs/getting-started.md`
   - `docs/deploy/aws-eks.md`
   - `docs/deploy/azure-aks.md`
   - `docs/deploy/gcp-gke.md`
@@ -42,36 +43,40 @@ docker run --rm ghcr.io/<org>/terminal-zero-governance:latest sop healthcheck
 
 ## Baseline / Current State
 
-- `.github/workflows/publish-images.yml` exists and is structurally correct.
-- `CHANGELOG.md` contains `0.2.0` entry (no semver gate gap).
-- Gap: `docs/getting-started.md` has no container path.
-- Gap: cloud deploy docs still emphasize local build/push instead of published image pull.
-- Gap: `docs/deploy/image-registry.md` missing.
-- Gap: this plan file was previously truncated at Step 9.
+- `.github/workflows/publish-images.yml` present and patched with manual-dispatch mode/ref guard.
+- `.github/workflows/release-bump-and-tag.yml` present and patched with no-op commit guard.
+- `.github/workflows/release-validation.yml` present.
+- `docs/deploy/image-registry.md` present and updated with release-entry policy.
+- Phase owner artifact present in working repo: `docs/context/phase_scope_phase1.md`.
+- Evidence doc present as readiness state: `docs/evidence/phase1_image_publish_evidence.md`.
 
 ---
 
-## Workflow Behavior Clarification (patched)
+## Workflow Behavior Clarification
 
-`workflow_dispatch` runs against the selected ref.
+Release entrypoint policy:
+- Primary release entrypoint: `.github/workflows/release-bump-and-tag.yml`
+- `.github/workflows/publish-images.yml` manual dispatch is controlled operator use only.
 
-Current behavior is ref-based:
-- Tag refs (`v*`) -> full publish/sign/SBOM path (GHCR + Docker Hub + sign + SBOM)
-- Branch refs -> edge publish path
-
-In short: full publish/sign/SBOM only occur on tag refs (`v*`), while branch refs follow edge path.
+`publish-images.yml` behavior:
+- Tag refs (`v*`) -> full publish/sign/SBOM path.
+- Branch refs -> edge publish path.
+- Manual dispatch requires explicit `mode` (`edge` or `release`) and validates mode/ref compatibility.
 
 ---
 
 ## Deliverables
 
 - [x] `.github/workflows/publish-images.yml` present
-- [ ] `docs/deploy/image-registry.md` created
-- [ ] `docs/getting-started.md` updated with container quickstart
-- [ ] `docs/deploy/aws-eks.md` updated for published image-first flow
-- [ ] `docs/deploy/azure-aks.md` updated for published image-first flow
-- [ ] `docs/deploy/gcp-gke.md` updated for published image-first flow
-- [ ] `docs/evidence/phase1_image_publish_evidence.md` captured after first publish run
+- [x] `.github/workflows/release-bump-and-tag.yml` present
+- [x] `.github/workflows/release-validation.yml` present
+- [x] `docs/deploy/image-registry.md` present
+- [x] `docs/getting-started.md` container quickstart present
+- [x] `docs/deploy/aws-eks.md` image-first flow present
+- [x] `docs/deploy/azure-aks.md` image-first flow present
+- [x] `docs/deploy/gcp-gke.md` image-first flow present
+- [x] `docs/evidence/phase1_image_publish_evidence.md` readiness state present
+- [ ] First live release-tag run evidence appended (digest/signature/SBOM/run IDs)
 
 ---
 
@@ -84,43 +89,28 @@ In short: full publish/sign/SBOM only occur on tag refs (`v*`), while branch ref
 5. `cosign verify` succeeds for GHCR release image.
 6. Publish workflow run is green on release tag push.
 7. `sop healthcheck` in container exits 0.
-8. Getting-started doc references published image path.
+8. Evidence doc includes live run IDs/URLs/timestamps and Evidence Footer.
 
 ---
 
-## Execution Steps
+## Remaining Closure Steps
 
-### Step 1 — Pre-flight (human)
-- Ensure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets exist in GitHub repo.
-- Confirm Docker Hub repo exists.
-- After first successful publish, set GHCR package visibility to public.
-
-### Step 2 — Docs patch set
-- Create `docs/deploy/image-registry.md`.
-- Update getting-started to include container quickstart.
-- Update AWS/Azure/GCP deploy docs to show pull-from-GHCR first.
-
-### Step 3 — Commit
-```bash
-cd e:\Code\SOP\quant_current_scope
-git add .github/workflows/publish-images.yml docs/
-git commit -m "docs(phase1): patch container publish gaps and deployment docs"
-```
-
-### Step 4 — Release publish trigger
-```bash
-git push origin main
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-### Step 5 — Verify gates + capture evidence
-Create `docs/evidence/phase1_image_publish_evidence.md` with pull, signature, and SBOM outputs.
+1. Trigger Release Bump and Tag once in GitHub.
+2. Confirm tag-triggered `release-validation.yml` passes.
+3. Confirm tag-triggered `publish-images.yml` passes.
+4. Append live outputs to `docs/evidence/phase1_image_publish_evidence.md`:
+   - tag
+   - image refs
+   - digest
+   - `cosign verify` output
+   - SBOM retrieval output
+   - smoke output
+   - workflow URLs / run IDs / timestamps
+5. Re-mark Phase 1 as fully closed.
 
 ---
 
 ## Risk Notes
 
-- If `DOCKERHUB_USERNAME` secret is missing, release path will fail on Docker Hub-related push/tag generation; GHCR path still validates workflow wiring.
-- `workflow_dispatch` on branches publishes edge path only by design.
-- Phase 1 completion unblocks Phase 3, 4, and 6 execution in parallel.
+- Missing Docker Hub secrets will fail Docker Hub publication.
+- Phase 1 is currently **PASS for implementation** and **BLOCK for final closure** until live proof is appended.

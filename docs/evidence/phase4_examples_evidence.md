@@ -1,59 +1,52 @@
 # Phase 4 Examples Documentation Evidence
 
-**Date**: 2026-03-31  
+**Date**: 2026-04-01  
 **Python Version**: 3.14.0  
-**Interpreter**: C:\Python314\python.exe  
+**Interpreter**: C:\Python314\python.exe
 
 ## Test Execution
 
-**Command**:
+**Commands**:
 ```bash
-python -m pytest tests/test_phase5_docs.py::test_examples_docs_complete -v
+python -m pytest tests/test_phase5_docs.py::test_examples_docs_complete -q
+python -m pytest tests/test_phase6_tutorials.py -q
 ```
 
-**Result**: PASSED (1/1)
+**Results**:
+- `tests/test_phase5_docs.py::test_examples_docs_complete`: PASSED (1/1)
+- `tests/test_phase6_tutorials.py`: PASSED (6/6)
 
 ## Validation Checklist
 
-- [x] All 3 target example files exist:
+- [x] All 3 canonical example files exist:
   - `docs/examples/cicd-pipeline-governance.md`
   - `docs/examples/kubernetes-admission-governance.md`
   - `docs/examples/multi-service-rollout-governance.md`
 
-- [x] All 5 required headers present in each file:
+- [x] All required structural headers remain present in each example file:
   - `## Context`
   - `## Inputs`
   - `## Commands`
   - `## Output`
   - `## Expected Decision`
 
-- [x] Each file includes at least one realistic output block under `## Output`:
-  - CI/CD: Contains `final_result=HOLD`, `ready_to_escalate: false`, `latest_audit_decision: PASS`
-  - Kubernetes: Contains `decision=PASS`, `decision=HOLD`, `status=READY_TO_ESCALATE`
-  - Multi-Service: Contains `final_result: PASS`, `ready_to_escalate: true`, `(no BLOCK records)`
+- [x] Each canonical scenario now includes explicit replay-proof contract section:
+  - `## Replay Proof (CI/CD Scenario Class)`
+  - `## Replay Proof (Kubernetes Scenario Class)`
+  - `## Replay Proof (Rollout Scenario Class)`
 
-- [x] `docs/getting-started.md` contains exact `## Examples` header
+- [x] Representative output blocks remain present and decision semantics are preserved.
 
-- [x] `docs/getting-started.md` includes framing sentence: "external adoption patterns"
+## D2 Status
 
-- [x] `docs/getting-started.md` links to all 3 examples:
-  - `docs/examples/cicd-pipeline-governance.md`
-  - `docs/examples/kubernetes-admission-governance.md`
-  - `docs/examples/multi-service-rollout-governance.md`
+D2 entry contract is now concretely applied to all three canonical scenarios:
 
-- [x] CI/CD example YAML block contains all required workflow elements:
-  - `name: Governance Gate`
-  - `on: pull_request`
-  - `jobs: governance`
-  - `runs-on: ubuntu-latest`
-  - Step: `pip install terminal-zero-governance`
-  - Step: `sop run --repo-root governed-workspace --skip-phase-end`
-  - Step: `actions/upload-artifact@v4` with `path: governed-workspace/docs/context/*`
+- runnable commands: present
+- representative output: present
+- replay-proof requirement: explicitly documented per scenario class
+
+**D2 Gate Recommendation:** PASS (subject to closure packet transition).
 
 ## Summary
 
-All Phase 4 locked requirements satisfied:
-- 3 example docs created with required headers and realistic output blocks
-- Getting-started.md updated with exact `## Examples` section and external adoption framing
-- CI/CD workflow YAML includes complete copy-pasteable workflow with all required keys and steps
-- Test contract fully validated with concrete governance result markers (PASS/HOLD/FAIL/BLOCK/READY_TO_ESCALATE)
+Phase 4 example surfaces are aligned with the frozen Phase D D1 contract and ready for D3 tutorial/troubleshooting hardening and D4 validation-gate consolidation.

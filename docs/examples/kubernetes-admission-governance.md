@@ -31,3 +31,8 @@ status=READY_TO_ESCALATE
 
 ## Expected Decision
 Proceed when governance indicates `PASS` or a documented `HOLD` with human sign-off. Do not roll out admission policy changes if governance emits `FAIL` or `BLOCK`.
+
+## Replay Proof (Kubernetes Scenario Class)
+- Proof type: cluster governance replay excerpt.
+- Required evidence commands: `sop audit --repo-root admission-governed-repo --tail 10` and `sop validate --repo-root admission-governed-repo`.
+- Verification rule: decision trail and readiness status must be coherent with rollout approval policy.

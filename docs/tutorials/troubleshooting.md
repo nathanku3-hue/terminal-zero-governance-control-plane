@@ -4,6 +4,9 @@
 Resolve common operator onboarding failures when running container and Helm tutorials.
 
 ## Failure Modes
+
+### Category: Container/Registry/Image
+
 ### Image pull denied
 Symptom: Container start fails with `pull access denied`.
 Likely cause: Missing registry auth or incorrect org path.
@@ -16,11 +19,7 @@ Likely cause: Docker service is stopped.
 Check: `docker info`
 Fix: Start Docker Desktop/service and rerun quickstart commands.
 
-### Workspace mount path invalid
-Symptom: `sop run` fails with repo path not found in container.
-Likely cause: Host path not mounted to `/workspace`.
-Check: `docker run --rm -v "$PWD:/workspace" ghcr.io/<org>/terminal-zero-governance:latest ls /workspace`
-Fix: Use the correct host path and ensure read/write permissions.
+### Category: Kubernetes/Helm/Runtime Infra
 
 ### Helm chart path not found
 Symptom: Helm reports `path "./charts/terminal-zero-governance" not found`.
@@ -40,11 +39,13 @@ Likely cause: `workspace.pvcName` points to missing claim.
 Check: `kubectl -n governance get pvc`
 Fix: Create the PVC or set `workspace.pvcName` to an existing claim.
 
-### Job pod CrashLoopBackOff
-Symptom: Pod restarts repeatedly and job does not complete.
-Likely cause: Invalid command args or missing runtime dependency.
-Check: `kubectl -n governance describe pod <pod-name>`
-Fix: Correct Helm values/command and redeploy release.
+### Category: Governance/Artifact/Validation Flow
+
+### Workspace mount path invalid
+Symptom: `sop run` fails with repo path not found in container.
+Likely cause: Host path not mounted to `/workspace`.
+Check: `docker run --rm -v "$PWD:/workspace" ghcr.io/<org>/terminal-zero-governance:latest ls /workspace`
+Fix: Use the correct host path and ensure read/write permissions.
 
 ### Missing governance artifacts
 Symptom: Run completes but `docs/context` artifacts are absent.
@@ -57,6 +58,14 @@ Symptom: `sop validate` output is `NOT_READY`.
 Likely cause: Required closure artifacts incomplete for this round.
 Check: `sop audit --repo-root /workspace --tail 20`
 Fix: Rerun `sop run --skip-phase-end` and verify expected artifact generation.
+
+### Category: Recovery/Rollback/Escalation
+
+### Job pod CrashLoopBackOff
+Symptom: Pod restarts repeatedly and job does not complete.
+Likely cause: Invalid command args or missing runtime dependency.
+Check: `kubectl -n governance describe pod <pod-name>`
+Fix: Correct Helm values/command and redeploy release.
 
 ### Rollback does not restore healthy state
 Symptom: Post-rollback job still fails with same error.

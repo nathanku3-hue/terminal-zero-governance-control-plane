@@ -1386,7 +1386,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 gate='step_execution',
                 trace_id=runtime.trace_id,
                 artifact_refs={},
-                extra={'exit_code': _step_result.get('exit_code'), 'duration_seconds': _step_result.get('duration_seconds', 0.0)},
+                extra={'event_tag': 'STEP_EXECUTION', 'exit_code': _step_result.get('exit_code'), 'duration_seconds': _step_result.get('duration_seconds', 0.0)},
             ),
         )
 
@@ -2090,6 +2090,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             gate='exec_memory->advisory',
             trace_id=runtime.trace_id,
             artifact_refs=_build_artifact_refs(_GATE_ARTIFACT_PATHS),
+            extra={'event_tag': 'GATE_DECISION'},
         ),
     )
     # Phase 2 -- Policy engine evaluation at Gate A
@@ -2102,6 +2103,9 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
             _policy_rules_a = []
     _policy_action_a = {
         "gate": "exec_memory->advisory",
+        "scope": "gate",
+        "permissions": ["policy.evaluate.gate_a"],
+        "tenant_id": "tenant-system",
         "decision": _gate_a_result.decision,
         "trace_id": runtime.trace_id,
         "actor": "gate_a",
@@ -2134,7 +2138,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 gate='exec_memory->advisory',
                 trace_id=runtime.trace_id,
                 artifact_refs={},
-                extra={"rule_id": _policy_result_a.rule_id, "shadow": _policy_result_a.shadow},
+                extra={"event_tag": "POLICY_DECISION", "rule_id": _policy_result_a.rule_id, "shadow": _policy_result_a.shadow},
             ),
         )
     # Enforce mode: BLOCK + shadow=False -> force gate to HOLD before checkpoint
@@ -2228,6 +2232,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 gate='advisory->summary',
                 trace_id=runtime.trace_id,
                 artifact_refs=_build_artifact_refs(_GATE_ARTIFACT_PATHS),
+                extra={'event_tag': 'GATE_DECISION'},
             ),
         )
         # Phase 2 -- Policy engine evaluation at Gate B
@@ -2239,6 +2244,9 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                 _policy_rules_b = []
         _policy_action_b = {
             "gate": "advisory->summary",
+            "scope": "gate",
+            "permissions": ["policy.evaluate.gate_b"],
+            "tenant_id": "tenant-system",
             "decision": _gate_b_result.decision,
             "trace_id": runtime.trace_id,
             "actor": "gate_b",
@@ -2270,7 +2278,7 @@ def run_cycle(args: argparse.Namespace) -> tuple[int, dict[str, Any], str]:
                     gate='advisory->summary',
                     trace_id=runtime.trace_id,
                     artifact_refs={},
-                    extra={"rule_id": _policy_result_b.rule_id, "shadow": _policy_result_b.shadow},
+                    extra={"event_tag": "POLICY_DECISION", "rule_id": _policy_result_b.rule_id, "shadow": _policy_result_b.shadow},
                 ),
             )
         # Enforce mode: BLOCK + shadow=False -> force gate to HOLD before checkpoint

@@ -331,6 +331,45 @@ def _render_prometheus_metrics(entries: list[dict]) -> str:
         ]
     )
 
+    # Compatibility alias window (C5): deprecated aliases mirror canonical values.
+    lines.extend(
+        [
+            "# HELP policy_decision_total DEPRECATED alias for policy_decisions_total.",
+            "# TYPE policy_decision_total counter",
+        ]
+    )
+    for (decision, actor), count in sorted(policy_counts.items()):
+        lines.append(
+            "policy_decision_total{decision=\""
+            + _escape_prometheus_label(decision)
+            + "\",actor=\""
+            + _escape_prometheus_label(actor)
+            + "\"} "
+            + str(count)
+        )
+
+    lines.extend(
+        [
+            "# HELP gate_duration_seconds_total DEPRECATED alias for gate_evaluation_duration_seconds.",
+            "# TYPE gate_duration_seconds_total gauge",
+        ]
+    )
+    for gate, total in sorted(gate_duration_totals.items()):
+        lines.append(
+            "gate_duration_seconds_total{gate=\""
+            + _escape_prometheus_label(gate)
+            + "\"} "
+            + str(total)
+        )
+
+    lines.extend(
+        [
+            "# HELP failures_total DEPRECATED alias for failure_count_total.",
+            "# TYPE failures_total counter",
+            f"failures_total {failure_count_total}",
+        ]
+    )
+
     return "\n".join(lines) + "\n"
 
 

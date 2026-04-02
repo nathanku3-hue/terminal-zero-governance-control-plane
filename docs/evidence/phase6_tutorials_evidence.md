@@ -1,21 +1,20 @@
 # Phase 6 Tutorials Evidence
 
-- date: 2026-03-31
+- date: 2026-04-01
 - python/interpreter: Python 3.14.0 (`C:\Python314\python.exe`)
 
 ## Exact Commands Run
 
 ```bash
-python -m pytest tests/test_phase6_tutorials.py -q -x
+python -m pytest tests/test_phase5_docs.py::test_examples_docs_complete -q
 python -m pytest tests/test_phase6_tutorials.py -q
-python -m pytest -q
-python --version && python -c "import sys; print(sys.executable)"
 ```
 
 ## Pytest Count
 
-- Targeted Phase 6 tutorial suite: `6 passed`
-- Full suite: collection interrupted with `1 error` in unrelated `tests/test_phase8_ga_readiness.py` (`ModuleNotFoundError: No module named 'sop.phase8_ga_readiness'`)
+- examples docs contract: `1 passed`
+- Phase 6 tutorial suite: `6 passed`
+- Combined targeted checks in this run: `7 passed`
 
 ## Phase 6 Tutorial Test Summary
 
@@ -32,12 +31,18 @@ python --version && python -c "import sys; print(sys.executable)"
   - `docs/tutorials/quickstart-container.md`
   - `docs/tutorials/quickstart-helm.md`
   - `docs/tutorials/troubleshooting.md`
-- [x] `## Tutorials` section added to `docs/getting-started.md`
+- [x] `## Tutorials` section present in `docs/getting-started.md`
 - [x] Image convention followed: `ghcr.io/<org>/terminal-zero-governance:latest`
 - [x] Helm chart source convention followed: `./charts/terminal-zero-governance`
+- [x] Troubleshooting minimum matrix categories remain covered:
+  - registry/image access
+  - local runtime environment
+  - Kubernetes/Helm deployment path
+  - governance runtime outcome path
+  - rollback/recovery path
 
-## Notes
+## D3 Status
 
-- Tutorials include required locked headers per file.
-- Each tutorial contains concrete fenced output under `## Output`.
-- Troubleshooting contains 10 failure modes with exact `Symptom`, `Likely cause`, `Check`, `Fix` structure.
+D3 baseline hardening contract remains satisfied with minimum troubleshooting breadth and test-backed tutorial integrity.
+
+**D3 Gate Recommendation:** PASS (subject to closure packet transition).

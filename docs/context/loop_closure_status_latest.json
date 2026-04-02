@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at_utc": "2026-03-31T09:11:28Z",
+  "generated_at_utc": "2026-03-31T11:29:44Z",
   "result": "READY_TO_ESCALATE",
   "exit_code": 0,
   "freshness_hours": 72.0,
@@ -133,7 +133,7 @@
         "--loop-summary-json",
         "E:\\Code\\SOP\\quant_current_scope\\docs\\context\\loop_cycle_summary_latest.json",
         "--closure-json",
-        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmpugq4z4ht\\closure_preview.json"
+        "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\tmpsk4ii_5q\\closure_preview.json"
       ],
       "exit_code": 0,
       "details": "[OK] DONE_WHEN_CHECKS validation passed."
