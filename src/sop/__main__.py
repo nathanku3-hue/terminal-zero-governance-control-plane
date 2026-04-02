@@ -575,10 +575,10 @@ def cmd_healthcheck(args: argparse.Namespace) -> int:
     error = _run_preflight_spec_check(repo_root=".")
     if error is not None:
         print(
-            f"FATAL failure_class=INSTALL_ERROR"
-            f" failed_component=preflight_spec_check"
-            f" recoverability=REQUIRES_FIX"
-            f" artifact_write_failed=true",
+            "FATAL failure_class=INSTALL_ERROR"
+            " failed_component=preflight_spec_check"
+            " recoverability=REQUIRES_FIX"
+            " artifact_write_failed=true",
             file=sys.stderr,
         )
         print(f"healthcheck FAILED: {error}", file=sys.stderr)

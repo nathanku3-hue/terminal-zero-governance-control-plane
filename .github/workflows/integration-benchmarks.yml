@@ -21,15 +21,13 @@ jobs:
         run: python -m venv .venv
 
       - name: Install development dependencies
-        working-directory: quant_current_scope
         run: |
-          ../.venv/bin/python -m pip install --upgrade pip
-          ../.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install -c constraints-dev.txt ".[dev]"
 
       - name: Run integration and benchmark tests
-        working-directory: quant_current_scope
         run: |
-          ../.venv/bin/python -m pytest \
+          ./.venv/bin/python -m pytest \
             tests/test_governance_scenarios.py \
             tests/test_policy_engine_benchmarks.py \
             -v --tb=short
@@ -39,5 +37,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: benchmarks
-          path: quant_current_scope/docs/benchmarks.md
+          path: docs/benchmarks.md
           if-no-files-found: ignore
